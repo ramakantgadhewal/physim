@@ -1,8 +1,10 @@
 
+
 // author:          Lorenzo Liuzzo
 // email:           lorenzoliuzzo@outlook.com
 // description:     physim(namespace) containing the basic tools for computational physics. 
-// last updated:    19/08/2022
+// last updated:    20/08/2022
+
 
 #include <algorithm>
 #include <array>
@@ -23,6 +25,7 @@
 
 namespace physim {
 
+
     namespace utilities {
 
         // reading the template data from a file to an std::vector<>
@@ -33,7 +36,7 @@ namespace physim {
             filein.open(filename); 
             T appo; 
             if (filein.fail()) {
-                std::cerr << "Error! It was not possible to open the selected file" << std::endl; 
+                std::cerr << "Error! It was not possible to open the selected file \n"; 
                 exit(11); 
             } 
             for (unsigned int i{}; !filein.eof(); i++) {
@@ -88,7 +91,7 @@ namespace physim {
                     return m_elapsed_seconds.count(); 
                 }
                 
-                void print() { std::cout << "elapsed time = " << elapsed_time() << std::endl; }
+                void print() { std::cout << "elapsed time = " << elapsed_time() << "\n"; }
 
         }; // class timer
 
@@ -126,14 +129,6 @@ namespace physim {
             template<typename T> 
             constexpr T pow_small(const T& value, const int& power) { 
                 return (power == 1) ? value : ((power == -1) ? T(1.0) / value : T(1.0));
-            }
-
-            // generate an integer power of a value
-            template<typename T> 
-            constexpr T pow(const T& value, const int& power) {
-                return (power > 1) ? square(pow(value, power / 2)) * (power % 2 == 0 ? T(1.0) : value) :
-                    (power < -1) ? T(1.0) / (square(pow(value, (-power) / 2)) * ((-power) % 2 == 0 ? T(1.0) : value)) :
-                    pow_small(value, power);
             }
 
             // generate _root power of a value
@@ -232,7 +227,7 @@ namespace physim {
             template <typename K>
             double chi_sq(const std::vector<K>& v, const double& expected_value) {
                 double accu{}; 
-                for (auto x : v) accu += pow(x - expected_value, 2) / sd(v); 
+                for (auto x : v) accu += std::pow(x - expected_value, 2) / sd(v); 
                 return accu; 
             }           
 
@@ -240,7 +235,7 @@ namespace physim {
             template <typename K>
             double chi_sq_r(const std::vector<K>& v, const double& expected_value, const unsigned int& gdl) {
                 double accu{}; 
-                for (auto x : v) accu += pow(x - expected_value, 2) / sd(v); 
+                for (auto x : v) accu += std::pow(x - expected_value, 2) / sd(v); 
                 return accu / gdl; 
             }
             
@@ -277,7 +272,7 @@ namespace physim {
                     // =============================================
                 
                     void print_eval(const double& x, const double& precision = 1.e-6) const {
-                        std::cout << "f (" << x << ") = " << std::fixed << std::setprecision((int)-log10(precision)) << eval(x) << std::endl; 
+                        std::cout << "f (" << x << ") = " << std::setprecision((int)-log10(precision)) << eval(x) << "\n"; 
                     }
                 
                     virtual void print_equation() const = 0;
@@ -355,6 +350,72 @@ namespace physim {
             }; // class functor
 
 
+            // line function
+            class line : public function_base {
+
+                private: 
+
+                    // =============================================
+                    // class members
+                    // =============================================
+                    
+                    // y = m * x + q
+                    double m_m, m_q; 
+
+
+                public: 
+            
+                    // =============================================
+                    // constructor and destructor
+                    // =============================================     
+            
+                    explicit line(const double& m = 1, const double& q = 0) noexcept : m_m{m}, m_q{q} {}
+                    
+                    ~line() {}
+
+            
+                    // =============================================
+                    // set & get methods
+                    // =============================================
+            
+                    constexpr void m(const double& m) { m_m = m; } 
+
+                    constexpr void q(const double& q) { m_q = q; }
+            
+                    constexpr double m() const { return m_m; }
+
+                    constexpr double q() const { return m_q; } 
+
+
+                    // =============================================
+                    // eval methods
+                    // =============================================
+
+                    constexpr double eval(const double& x) const override { return m_m * x + m_q; }
+            
+            
+                    // =============================================
+                    // print methods
+                    // =============================================
+
+                    void print_equation() const override {
+                        std::cout << " y = "; 
+                        if (m_m != 1 && m_m != -1) std::cout << m_m; 
+                        else {
+                            if (m_m == 1) std::cout << "+";
+                            if (m_m == -1) std::cout << "-";
+                        }
+                        std::cout << "x"; 
+                        if (m_q != 0) {
+                            if (m_q > 0) std::cout << " + " << m_q << "\n"; 
+                            else std::cout << " - " << std::fabs(m_q) << "\n"; 
+                        } else std::cout << "\n";
+                    }  
+
+            
+            }; // class line
+
+
             // quadratic function
             class quadratic : public function_base {
 
@@ -375,7 +436,7 @@ namespace physim {
                     // =============================================     
             
                     explicit quadratic(const double& a, const double& b, const double& c) noexcept 
-                        : m_a{a}, m_b{b}, m_c{c}, m_delta{pow(m_b, 2) - 4 * m_a * m_c} {}
+                        : m_a{a}, m_b{b}, m_c{c}, m_delta{math::algebra::square(m_b) - 4 * m_a * m_c} {}
                     
                     ~quadratic() {}
 
@@ -401,7 +462,7 @@ namespace physim {
                     std::pair<double, double> roots() const {
                         if (m_delta == 0) return std::make_pair(- m_b / (2 * m_a), - m_b / (2 * m_a));
                         else if (m_delta > 0) return std::make_pair(- m_b - algebra::sqrt(m_delta) / (2 * m_a), (- m_b + algebra::sqrt(m_delta)) / (2 * m_a));
-                        else std::cout << std::endl << "There are not real solutions..." << std::endl << std::endl; // note: create a complex class then come back here
+                        else std::cout << "\nThere are not real solutions...\n\n"; // note: create a complex class then come back here
                         return std::make_pair(NAN, NAN); 
                     }
 
@@ -421,14 +482,20 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_a != 1) std::cout << m_a; 
-                        std::cout << "x^2 "; 
+                        if (m_a != 1 && m_a != -1) std::cout << m_a; 
+                        else if (m_a == -1) std::cout << "-"; 
+                        else std::cout << "x^2 "; 
                         if (m_b != 0) {
-                            if (m_b != 1) std::cout << "+ " << m_b << "x "; 
-                            else std::cout << "+ x ";                       
-                        }
-                        if (m_c != 0) { std::cout << "+ " << m_c << std::endl; }
-                        else std::cout << std::endl;
+                            if (m_b > 0) std::cout << "+ ";
+                            else std::cout << "- ";
+                            if (m_b != 1 && m_b != -1) std::cout << std::fabs(m_b) << "x ";  
+                            else std::cout << "x "; 
+                        } 
+                        if (m_c != 0) {
+                            if (m_c > 0) std::cout << "+ ";
+                            else std::cout << "- "; 
+                            std::cout << std::fabs(m_c) << "\n";
+                        } else std::cout << "\n";
                     }  
 
             
@@ -511,8 +578,8 @@ namespace physim {
                             if (m_c != 1) std::cout << "+ " << m_c << "x"; 
                             else std::cout << "+ x"; 
                         }
-                        if (m_d != 0) std::cout << " + " << m_d << std::endl;
-                        else std::cout << std::endl;  
+                        if (m_d != 0) std::cout << " + " << m_d << "\n";
+                        else std::cout << "\n";  
                     }
 
             
@@ -566,7 +633,7 @@ namespace physim {
                     void print_equation() const override {
                         std::cout << " y = "; 
                         if (m_c != 1) std::cout << m_c; 
-                        std::cout << "x^(1/2)" << std::endl;
+                        std::cout << "x^(1/2) \n";
                     }        
                 
                 
@@ -620,7 +687,7 @@ namespace physim {
                     void print_equation() const override {
                         std::cout << " y = "; 
                         if (m_c != 1) std::cout << m_c; 
-                        std::cout << "x^(1/3)" << std::endl;
+                        std::cout << "x^(1/3) \n";
                     }        
                 
 
@@ -636,7 +703,7 @@ namespace physim {
                     // class members
                     // =============================================
                     
-                    // y = c1 * (base ^ (c2 * x))
+                    // y = c1 * base ^ (c2 * x)
                     double m_base, m_c1, m_c2;
 
                 
@@ -648,7 +715,7 @@ namespace physim {
             
                     explicit exponential(const double& base = math::constants::e, const double& c1 = 1, const double& c2 = 1) noexcept
                         : m_base{base}, m_c1{c1}, m_c2{c2} {}
-                
+
                     ~exponential() {} 
             
 
@@ -673,7 +740,7 @@ namespace physim {
                     // eval methods
                     // =============================================
             
-                    constexpr double eval(const double& x) const override { return m_c1 * math::algebra::pow(m_base, m_c2 * x); }
+                    constexpr double eval(const double& x) const override { return m_c1 * std::pow(m_base, m_c2 * x); }
                             
                 
                     // =============================================
@@ -685,8 +752,9 @@ namespace physim {
                         if (m_c1 != 1) std::cout << m_c1;
                         if (m_base != math::constants::e) std::cout << m_base << "^"; 
                         else std::cout << "e^(";
-                        if (m_c2 != 1) std::cout << m_c2; 
-                        std::cout << "x)" << std::endl; 
+                        if (m_c2 != 1 && m_c2 != -1) std::cout << m_c2; 
+                        if (m_c2 == -1) std::cout << "-"; 
+                        std::cout << "x) \n"; 
                     }
 
 
@@ -750,8 +818,8 @@ namespace physim {
                         if (m_c1 != 1) std::cout << m_c1;
                         std::cout << "log";
                         if (m_base != math::constants::e) std::cout << "_( " << m_base << ")";
-                        if (m_c2 != 1) std::cout << "(" << m_c2 << "x)" << std::endl; 
-                        else std::cout << "(x)" << std::endl;
+                        if (m_c2 != 1) std::cout << "(" << m_c2 << "x) \n"; 
+                        else std::cout << "(x) \n";
                     }                
 
 
@@ -811,7 +879,7 @@ namespace physim {
                         if (m_c1 != 1) std::cout << m_c1;
                         std::cout << "sin(";
                         if (m_c2 != 1) std::cout << m_c2; 
-                        std::cout << "x)" << std::endl;
+                        std::cout << "x) \n";
                     }
 
 
@@ -872,7 +940,7 @@ namespace physim {
                         if (m_c1 != 1) std::cout << m_c1;
                         std::cout << "cos(";
                         if (m_c2 != 1) std::cout << m_c2; 
-                        std::cout << "x)" << std::endl;
+                        std::cout << "x) \n";
                     }
 
 
@@ -937,7 +1005,7 @@ namespace physim {
                         if (m_c1 != 1) std::cout << m_c1;
                         std::cout << "tan(";
                         if (m_c2 != 1) std::cout << m_c2; 
-                        std::cout << "x)" << std::endl;
+                        std::cout << "x) \n";
                     }
 
 
@@ -947,6 +1015,279 @@ namespace physim {
         } // namespace functions
         
 
+        // class random_generator for generating pseudo-casual numbers
+        class random_generator {
+
+            private: 
+
+                // =============================================
+                // class members
+                // =============================================        
+                
+                unsigned int m_a, m_c, m_m, m_seed;
+
+
+            public: 
+        
+                // =============================================
+                // constructors
+                // =============================================
+                
+                random_generator() : 
+                    m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))} {}
+
+                random_generator(const unsigned int& seed) 
+                    : m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))}, m_seed{seed} {}
+
+
+                // =============================================
+                // set & get methods
+                // =============================================
+
+                constexpr void a(const unsigned int& a) { m_a = a; }
+                
+                constexpr void c(const unsigned int& c) { m_c = c; }
+                
+                constexpr void m(const unsigned int& m) { m_m = m; }
+                
+                constexpr void seed(const unsigned int& seed) { m_seed = seed; }
+
+                constexpr unsigned int a() const { return m_a; }
+                
+                constexpr unsigned int c() const { return m_c; }
+                
+                constexpr unsigned int m() const { return m_m; }
+                
+                constexpr unsigned int seed() const { return m_seed; }
+
+
+                // =============================================
+                // distributions methods
+                // =============================================
+
+                constexpr double rand(const double& min = 0., const double& max = 1.) {
+                    seed(static_cast<unsigned int>((m_a * m_seed + m_c) % m_m)); 
+                    return min + std::fabs(max - min) * m_seed / m_m; 
+                }
+
+                constexpr double exp(const double& mean) {
+                    return - std::log(1 - rand()) / mean; 
+                }
+
+                double gauss_box_muller(const double& mean, const double& sigma) {
+                    double s{rand()}, t{rand()}; 
+                    double x = math::algebra::sqrt(-2 * std::log(s)) * std::cos(2 * math::constants::pi * t);
+                    return mean + sigma * x;
+                }
+
+                double gauss_accept_reject(const double& mean, const double& sigma) {
+                    double x{}, y{}, g{}; 
+                    while (true) {
+                        x = rand(-5., 5.); 
+                        y = rand(); 
+                        g = exp(math::algebra::square(x) / 2); 
+                        if (y <= g) break;
+                    }
+                    return mean + x * sigma;
+                }
+
+        }; // class random_generator
+
+
+        // class integral for evaluating the integrals
+        class integral {
+
+            private: 
+
+                // =============================================
+                // class members
+                // =============================================
+
+                double m_a{}, m_b{}, m_h{};
+                
+                unsigned int m_steps{};
+
+                int m_sign{}; 
+
+                double m_sum{}, m_integral{}, m_old_integral{}, m_error{};  
+
+                math::random_generator m_rg;
+
+
+                // =============================================
+                // set methods
+                // =============================================
+
+                constexpr void steps(const unsigned int& n) { 
+                    m_steps = n; 
+                    m_h = std::fabs(m_b - m_a) / m_steps;
+                }        
+
+                constexpr void check_range() { m_sign = (m_a == m_b ? 0. : (m_b > m_a ? 1. : -1)); }
+                
+                constexpr void sum(const double& sum) { m_sum = sum; }
+
+                constexpr void reset_integral() { m_integral = 0; }    
+
+                constexpr void begin_integration(const double& a, const double& b, unsigned int n = 1000, const double& sum0 = 0) {
+                    m_a = a; 
+                    m_b = b; 
+                    check_range(); 
+                    steps(n);
+                    reset_integral(); 
+                    sum(sum0); 
+                }
+
+
+            public: 
+
+                // =============================================
+                // constructors
+                // =============================================
+
+                integral() {}
+                
+                ~integral() {} 
+
+            
+                // =============================================
+                // get methods
+                // =============================================
+
+                constexpr double a() const { return m_a; }
+
+                constexpr double b() const { return m_b; }
+
+                constexpr int sign() const { return m_sign; }
+
+                constexpr unsigned int steps() const { return m_steps; }
+
+                constexpr double h() const { return m_h; }
+
+                constexpr double sum() const { return m_sum; }
+
+                constexpr double value() const { return m_integral; }
+
+                constexpr double error() const { return m_error; }
+
+
+                // =============================================
+                // print methods
+                // =============================================
+
+                constexpr void error_integral(const double& delta) { m_error = 4 * delta / 3.; } 
+
+                void print_value(const double& precision = 1.e-6) {
+                    std::cout << "\nIntegral of f(x) in [" << m_a << ", " << m_b << "] = " << std::setprecision((int)-log10(precision)) << m_integral << "\n";
+                }
+
+                void print_error(const double& precision = 1.e-6) {
+                    std::cout << "error = " << std::setprecision((int)-log10(precision)) << m_error << "\n";
+                }        
+
+                void print(const double& precision = 1.e-6) {
+                    print_value(); 
+                    print_error(); 
+                }
+                
+                
+                // =============================================
+                // integration methods
+                // =============================================
+
+                void midpoint(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                    begin_integration(a, b, n); 
+                    for (unsigned int i{}; i < m_steps; i++) { m_sum += (f.eval(m_a + (i + 0.5) * m_h)); }
+                    m_integral = m_sum * m_h; 
+                }
+
+                void midpoint_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    begin_integration(a, b, 1); 
+                    while (true) {
+                        m_old_integral = m_integral; 
+                        midpoint(m_a, m_b, f, m_steps * 2);
+                        error_integral(std::fabs(m_integral - m_old_integral));
+                        if (m_error < prec) break;
+                    }    
+                }
+                
+                void trapexoid(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                    begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 2.);
+                    for (unsigned int i{1}; i < m_steps; i++) m_sum += f.eval(m_a + i * m_h); 
+                    m_integral = m_sum * m_h; 
+                } 
+
+                void trapexoid_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    begin_integration(a, b, 2, f.eval(a) + f.eval(b) / 2. + f.eval((a + b) / 2.)); 
+                    while (true) {
+                        m_old_integral = m_integral; 
+                        trapexoid(m_a, m_b, f, m_steps * 2);
+                        error_integral(std::fabs(m_integral - m_old_integral));
+                        if (m_error < prec) break;
+                    }
+                }
+
+                void simpson(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                    if (n % 2 == 0) begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 3.);
+                    else begin_integration(a, b, n + 1);  
+                    for (unsigned int i{1}; i < m_steps; i++) m_sum += 2 * (1 + i % 2) * (f.eval(m_a + i * m_h)) / 3.; 
+                    m_integral = m_sum * m_h; 
+                }
+
+                void simpson_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    begin_integration(a, b, 2, (f.eval(a) + f.eval(b)) / 3.); 
+                    while (true) {
+                        m_old_integral = m_integral; 
+                        simpson(m_a, m_b, f, m_steps * 2);
+                        error_integral(std::fabs(m_integral - m_old_integral));
+                        if (m_error < prec) break; 
+                    }
+                }
+
+                void mean(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                    begin_integration(a, b, n); 
+                    for (unsigned int i{}; i < n; i ++) m_sum += f.eval(m_rg.rand(a, b)); 
+                    m_integral = (m_b - m_a) * m_sum / m_steps; 
+                }
+
+                void mean_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    std::vector<double> k{};
+                    for (unsigned i{}; i < 10000; i++) {
+                        mean(a, b, f);
+                        k.emplace_back(m_integral); 
+                    }
+                    double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
+                    mean(a, b, f, static_cast<unsigned int>(math::algebra::square(k_mean / prec))); 
+                }
+        
+                void hit_or_miss(const double& a, const double& b, const functions::function_base& f, const double& fmax, unsigned int n = 1000) {
+                    begin_integration(a, b, n); 
+                    double x{}, y{}; 
+                    unsigned int hits{};
+                    for (unsigned int i{}; i < n; i ++) {
+                        x = m_rg.rand(a, b); 
+                        y = m_rg.rand(0., fmax);  
+                        if (y <= f.eval(x)) hits++; 
+                    }
+                    m_integral = (m_b - m_a) * fmax * hits / n; 
+                }
+
+                void hit_or_miss_fixed(const double& a, const double& b, const functions::function_base& f, const double& fmax, const double& prec = 1.e-6) {
+                    std::vector<double> k{};
+                    for (unsigned i{}; i < 10000; i++) {
+                        hit_or_miss(a, b, f, fmax);
+                        k.emplace_back(m_integral); 
+                    }
+                    double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
+                    unsigned int N = static_cast<unsigned int>(math::algebra::square(k_mean / prec)); 
+                    hit_or_miss(a, b, f, fmax, N); 
+                }
+
+
+        }; // class integral
+
+
     } // namespace math
+
 
 } // namespace physim

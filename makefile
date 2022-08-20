@@ -1,8 +1,8 @@
 CXXFLAGS = -g -Wall --pedantic -std=c++17
 
-compile: main.cpp
-	g++ $(CXXFLAGS) $< -o main
-	rm main
+compile: compile.cpp
+	g++ $(CXXFLAGS) $< -o compile
+	rm compile
 
 execute: main.cpp	
 	g++ $(CXXFLAGS) $< -o main
