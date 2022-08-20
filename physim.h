@@ -165,29 +165,6 @@ namespace physim {
             template <typename T> 
             T cbrt(const T& value) { return root(value, 3); }
 
-            // round a value to the expected level of precision of a double
-            inline double cround(double val) {
-                std::uint64_t bits;
-                std::memcpy(&bits, &val, sizeof(bits));
-                bits += 0x800ULL;
-                bits &= 0xFFFFFFFFFFFFF000ULL;
-                std::memcpy(&val, &bits, sizeof(bits));
-                return val;
-            }
-
-            // rounding compare for equality on double
-            inline bool compare_round_equals(double val1, double val2) {
-                static constexpr double half_precise_precision{5e-13};
-                auto v1 = val1 - val2;
-                if (v1 == 0.0 || std::fpclassify(v1) == FP_SUBNORMAL) { return true; }
-                auto c1 = cround(val1);
-                auto c2 = cround(val2);
-                return (c1 == c2) ||
-                    (cround(val2 * (1.0 + half_precise_precision)) == c1) ||
-                    (cround(val2 * (1.0 - half_precise_precision)) == c1) ||
-                    (cround(val1 * (1.0 + half_precise_precision)) == c2) ||
-                    (cround(val1 * (1.0 - half_precise_precision)) == c2);
-            }
 
         } // namespace algebra
         
@@ -1047,7 +1024,30 @@ namespace physim {
                 return std::fabs(calculated - expected) <= epsilon;
             }
 
-                
+            // round a value to the expected level of precision of a double
+            inline double cround(double val) {
+                std::uint64_t bits;
+                std::memcpy(&bits, &val, sizeof(bits));
+                bits += 0x800ULL;
+                bits &= 0xFFFFFFFFFFFFF000ULL;
+                std::memcpy(&val, &bits, sizeof(bits));
+                return val;
+            }
+
+            // rounding compare for equality on double
+            inline bool compare_round_equals(double val1, double val2) {
+                static constexpr double half_precise_precision{5e-13};
+                auto v1 = val1 - val2;
+                if (v1 == 0.0 || std::fpclassify(v1) == FP_SUBNORMAL) { return true; }
+                auto c1 = cround(val1);
+                auto c2 = cround(val2);
+                return (c1 == c2) ||
+                    (cround(val2 * (1.0 + half_precise_precision)) == c1) ||
+                    (cround(val2 * (1.0 - half_precise_precision)) == c1) ||
+                    (cround(val1 * (1.0 + half_precise_precision)) == c2) ||
+                    (cround(val1 * (1.0 - half_precise_precision)) == c2);
+            }
+
             // class random_generator for generating pseudo-casual numbers
             class random_generator {
 
@@ -1623,7 +1623,7 @@ namespace physim {
                     // comparison operators
                     constexpr bool operator==(const unit_prefix& other) const {
                         if (multiplier_ == other.multiplier_) return true;    
-                        else return math::algebra::compare_round_equals(multiplier_, other.multiplier_);
+                        else return math::tools::compare_round_equals(multiplier_, other.multiplier_);
                     }
 
                     // definitely not a comparison operators
@@ -1783,7 +1783,7 @@ namespace physim {
                     constexpr bool operator==(const unit& other) const {
                         if (data_ != other.data_) { return false; }
                         if (prefix_ == other.prefix_) { return true; }
-                        return math::algebra::compare_round_equals(multiplier(), other.multiplier());
+                        return math::tools::compare_round_equals(multiplier(), other.multiplier());
                     }
 
                     // equality operator
@@ -2018,7 +2018,7 @@ namespace physim {
             // measurement class with a value and an unit
             class measurement {
 
-                private:
+                protected:
 
                     // =============================================                                                                                         
                     // class members
@@ -2081,7 +2081,7 @@ namespace physim {
                     } 
 
                     constexpr bool operator==(double val) const {
-                        return (value_ == val) ? true : math::algebra::compare_round_equals(value_, val);
+                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
                     }
 
                     constexpr bool operator!=(double val) const { return !operator==(val); }
@@ -2137,16 +2137,21 @@ namespace physim {
                         return measurement(value_ * unit_.prefix_.multiplier_, unit_.as_unit());
                     }
 
-                    // get the numerical value as a particular unit type
-                    double value_as(const units::unit& desired_units) const {
-                        return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
-                    }
+                    
+                    // =============================================                                                                                         
+                    // get methods
+                    // =============================================  
 
                     // get the numerical component of the measurement
                     constexpr double value() const { return value_; }                        
                     
                     // set the numerical component of the measurement
                     constexpr void value(const double& value) { value_ = value; }
+
+                    // get the numerical value as a particular unit type
+                    double value_as(const units::unit& desired_units) const {
+                        return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
+                    }
 
                     // get the unit component of a measurement
                     constexpr units::unit units() const { return unit_; }
@@ -2165,25 +2170,24 @@ namespace physim {
                 private:
 
                     // does a numerical equality check on the value accounting for tolerances
-                    bool value_equality_check(double otherval) const {
-                        return (value_ == otherval) ? true : math::algebra::compare_round_equals(value_, otherval);
+                    bool value_equality_check(const double& otherval) const {
+                        return (value_ == otherval) ? true : math::tools::compare_round_equals(value_, otherval);
                     } 
 
 
             }; // class measurement
 
-/*
 
-            // class using a fixed unit and a value
+            // measurement class with a value and a fixed unit
             class fixed_measurement {
 
-                private:
+                protected:
 
                     // =============================================                                                                                         
                     // class members
                     // =============================================  
 
-                    double value_{0.0};  
+                    double value_{};  
 
                     const units::unit unit_;  
 
@@ -2191,24 +2195,23 @@ namespace physim {
                 public:
 
                     // =============================================                                                                                         
-                    // constructors
+                    // constructors & destructor
                     // =============================================  
 
+                    // default constructor
+                    fixed_measurement() noexcept {};
+
                     // constructor from a value and a unit 
-                    fixed_measurement(double val, const units::unit& base) :
-                        value_(val), units_(base) {}
+                    explicit constexpr fixed_measurement(double val, const units::unit& unit) noexcept :
+                        value_(val), unit_(unit) {}
 
                     // constructor from a measurement
-                    explicit fixed_measurement(const measurement& val) :
-                        value_(val.value()), units_(val.units()) {}
+                    constexpr fixed_measurement(const measurement& other) :
+                        value_(other.value()), unit_(other.units()) {}
 
                     // constructor from a fixed measurement
-                    fixed_measurement(const fixed_measurement& val) :
-                        value_(val.value()), units_(val.units()) {}
-
-                    // constructor from a fixed measurement
-                    fixed_measurement(fixed_measurement&& val) noexcept :
-                        value_(val.value()), units_(val.units()) {}
+                    fixed_measurement(const fixed_measurement& other) :
+                        value_(other.value_), unit_(other.unit_) {}
 
                     // destructor
                     ~fixed_measurement() = default;
@@ -2218,37 +2221,20 @@ namespace physim {
                     // operators
                     // =============================================  
 
-                    measurement operator*(const measurement& other) const {
-                        return {value_ * other.value(), units_ * other.units()};
-                    }
-                    
-                    fixed_measurement operator*(double val) const {
-                        return {value_ * val, units_ };
+                    fixed_measurement& operator=(const measurement& other) noexcept {
+                        value_ = (unit_ == other.units()) ? other.value() : other.value_as(unit_);
+                        return *this;
                     }
 
-                    measurement operator/(const measurement& other) const {
-                        return {value_ / other.value(), units_ / other.units()};
+                    fixed_measurement& operator=(const fixed_measurement& other) noexcept {
+                        value_ = (unit_ == other.units()) ? other.value() : other.value_as(unit_);
+                        return *this;
                     }
 
-                    fixed_measurement operator/(double val) const {
-                        return {value_ / val, units_ };
-                    }
-
-                    fixed_measurement operator+(const measurement& other) const {
-                        return {value_ + other.value_as(units_), units_ };
-                    }
-
-                    fixed_measurement operator-(const measurement& other) const {
-                        return {value_ - other.value_as(units_), units_ };
-                    }
-
-                    fixed_measurement operator+(double val) const {
-                        return {value_ + val, units_ };
-                    }
-
-                    fixed_measurement operator-(double val) const {
-                        return {value_ - val, units_ };
-                    }
+                    fixed_measurement& operator=(double val) noexcept {
+                        value_ = val;
+                        return *this;
+                    }     
 
                     fixed_measurement& operator+=(double val) {
                         value_ += val;
@@ -2270,28 +2256,32 @@ namespace physim {
                         return *this;
                     }
 
-                    fixed_measurement& operator=(const measurement& val) noexcept {
-                        value_ = (units_ == val.units()) ? val.value() : val.value_as(units_);
-                        return *this;
+                    constexpr fixed_measurement operator*(double val) const {
+                        return fixed_measurement(value_ * val, unit_);
                     }
 
-                    fixed_measurement& operator=(const fixed_measurement& val) noexcept {
-                        value_ = (units_ == val.units()) ? val.value() : val.value_as(units_);
-                        return *this;
+                    constexpr fixed_measurement operator/(double val) const {
+                        return fixed_measurement(value_ / val, unit_);
                     }
 
-                    fixed_measurement& operator=(fixed_measurement&& val) noexcept {
-                        value_ = (units_ == val.units()) ? val.value() : val.value_as(units_);
-                        return *this;
+                    inline fixed_measurement operator+(const measurement& other) const {
+                        return fixed_measurement(value_ + other.value_as(unit_), unit_);
                     }
 
-                    fixed_measurement& operator=(double val) noexcept {
-                        value_ = val;
-                        return *this;
+                    constexpr fixed_measurement operator+(double val) const {
+                        return fixed_measurement(value_ + val, unit_);
+                    }
+
+                    inline fixed_measurement operator-(const measurement& other) const {
+                        return fixed_measurement(value_ - other.value_as(unit_), unit_);
+                    }
+
+                    constexpr fixed_measurement operator-(double val) const {
+                        return fixed_measurement(value_ - val, unit_);
                     }
 
                     constexpr bool operator==(double val) const {
-                        return (value_ == val) ? true : math::op::compare_round_equals(value_, val);
+                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
                     }
 
                     constexpr bool operator!=(double val) const { return !operator==(val); }
@@ -2308,36 +2298,36 @@ namespace physim {
                         return value_ <= val ? true : operator==(val);
                     }
 
-                    bool operator==(const fixed_measurement& val) const {
-                        return operator==((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator==(const fixed_measurement& val) const {
+                        return operator==((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator!=(const fixed_measurement& val) const {
-                        return operator!=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator!=(const fixed_measurement& val) const {
+                        return operator!=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator==(const measurement& val) const {
-                        return operator==((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator==(const measurement& val) const {
+                        return operator==((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator!=(const measurement& val) const {
-                        return operator!=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator!=(const measurement& val) const {
+                        return operator!=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator>(const measurement& val) const {
-                        return operator>((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator>(const measurement& val) const {
+                        return operator>((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator<(const measurement& val) const {
-                        return operator<((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator<(const measurement& val) const {
+                        return operator<((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator>=(const measurement& val) const {
-                        return operator>=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator>=(const measurement& val) const {
+                        return operator>=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    bool operator<=(const measurement& val) const {
-                        return operator<=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    inline bool operator<=(const measurement& val) const {
+                        return operator<=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
 
@@ -2346,46 +2336,52 @@ namespace physim {
                     // =============================================  
 
                     // direct conversion operator
-                    operator measurement() { return {value_, units_ }; }
-
-                    // set the numerical value
-                    constexpr void value(double val) { value_ = val; }
-
-                    // get the numerical value
-                    constexpr double value() const { return value_; }
-
-                    // get the unit
-                    units::unit units() const { return units_; }
-
-                    // convert the measurement to a unit
-                    units::unit as_unit() const { return {value_, units_ }; }
-
-                    // get the numerical value as a particular unit type
-                    double value_as(const units::unit& desired_units) const {
-                        return (units_ == desired_units) ? value_ : math::op::convert(value_, units_, desired_units);
-                    }
+                    operator measurement() { return measurement(value_, unit_); }
 
                     // convert a unit to have a new base
                     measurement convert_to(const units::unit& newUnits) const {
-                        return { math::op::convert(value_, units_, newUnits), newUnits };
+                        return measurement(math::tools::convert(value_, unit_, newUnits), newUnits);
                     }
 
                     // convert a unit into its base units
                     measurement convert_to_base() const {
-                        return { value_ * units_.multiplier(), units::unit(units_.base_units()) };
+                        return measurement(value_ * unit_.multiplier(), units::unit(unit_.base_units()));
                     }
 
+
+                    // =============================================                                                                                         
+                    // get methods
+                    // =============================================  
+
+                    // get the numerical component of the measurement
+                    constexpr double value() const { return value_; }                        
+                    
+                    // set the numerical component of the measurement
+                    constexpr void value(const double& value) { value_ = value; }
+
+                    // get the numerical value as a particular unit type
+                    double value_as(const units::unit& desired_units) const {
+                        return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
+                    }
+
+                    // get the unit component of a measurement
+                    constexpr units::unit units() const { return unit_; }
+
+                    // convert the measurement to a single unit
+                    constexpr units::unit as_unit() const { return {value_, unit_ }; }
+
                     // print the measurement
-                    inline void print() const { 
-                        std::cout << value() << " "; 
-                        units_.print(); 
+                    void print() const { 
+                        std::cout << value_ << " "; 
+                        unit_.print(); 
+                        std::cout << "\n"; 
                     }
 
 
             }; // class fixed_measurement
     
 
-            // class using fixed units, a value and an uncertain value
+            // measurement class with an uncertain value and an unit
             class uncertain_measurement {
 
                 private:
@@ -2394,38 +2390,43 @@ namespace physim {
                     // class members
                     // =============================================  
 
-                    double value_{0.0}; 
+                    double value_{}, uncertainty_{};
 
-                    double uncertainty_{0.0};
-
-                    units::unit units_;       
+                    units::unit unit_;       
                 
 
                 public: 
 
                     // =============================================                                                                                         
-                    // constructors
+                    // constructors & destructor 
                     // =============================================  
 
                     // default constructor
-                    uncertain_measurement() = default;
-                    
+                    uncertain_measurement() noexcept {};
+
                     // constructor from a value, uncertainty, and unit
-                    uncertain_measurement(double val, double uncertainty_val, const units::unit& base) noexcept :
-                        value_(val), uncertainty_(uncertainty_val), units_(base) {}
+                    explicit constexpr uncertain_measurement(const double& val, const double& uncertainty_val, const units::unit& unit) noexcept :
+                        value_(val), uncertainty_(uncertainty_val), unit_(unit) {}
 
                     // constructpr from a value and an unit, assuming the uncertainty is 0
-                    explicit uncertain_measurement(double val, const units::unit& base) noexcept :
-                        value_(val), units_(base) {}
+                    explicit constexpr uncertain_measurement(const double& val, const units::unit& unit) noexcept :
+                        value_(val), unit_(unit) {}
 
-                    // constructor from a regular measurement and uncertainty value
-                    explicit uncertain_measurement(const measurement& val, double uncertainty_val) noexcept : 
-                        value_(val.value()), uncertainty_(uncertainty_val), units_(val.units()) {}
+                    // constructor from a measurement and uncertainty value
+                    explicit constexpr uncertain_measurement(const measurement& other, const double& uncertainty_val) noexcept : 
+                        value_(other.value()), uncertainty_(uncertainty_val), unit_(other.units()) {}
 
-                    // constructor from a regular measurement and an uncertainty measurement
-                    explicit uncertain_measurement(const measurement& val, const measurement& uncertainty_meas) noexcept :
-                        value_(val.value()), uncertainty_(uncertainty_meas.value_as(val.units())), units_(val.units()) {}
+                    // constructor from a fixed_measurement and uncertainty value
+                    explicit constexpr uncertain_measurement(const fixed_measurement& other, const double& uncertainty_val) noexcept : 
+                        value_(other.value()), uncertainty_(uncertainty_val), unit_(other.units()) {}
 
+                    // constructor from a uncertain_measurement
+                    constexpr uncertain_measurement(const uncertain_measurement& other) :
+                        value_(other.value_), uncertainty_(other.uncertainty_), unit_(other.unit_) {}
+
+                    // default constructor
+                    ~uncertain_measurement() = default;
+                    
 
                     // =============================================                                                                                         
                     // operators
@@ -2437,30 +2438,27 @@ namespace physim {
                         double tval2 = other.uncertainty_ / other.value_;
                         double ntol = std::sqrt(tval1 * tval1 + tval2 * tval2);
                         double nval = value_ * other.value_;
-                        return { nval, nval * ntol, units_ * other.units() };
+                        return uncertain_measurement(nval, nval * ntol, unit_ * other.units());
                     }
 
                     // perform a multiplication with uncertain measurements using the simple method for uncertainty propagation
                     uncertain_measurement simple_product(const uncertain_measurement& other) const {
                         double ntol = uncertainty_ / value_ + other.uncertainty_ / other.value_;
                         double nval = value_ * other.value_;
-                        return { nval, nval * ntol, units_ * other.units() };
+                        return uncertain_measurement(nval, nval * ntol, unit_ * other.units());
                     }
 
                     // multiply with another measurement equivalent to uncertain_measurement multiplication with 0 uncertainty
                     uncertain_measurement operator*(const measurement& other) const {
-                        return { 
-                            value() * other.value(),
-                            other.value() * uncertainty(),
-                            units_ * other.units() };
+                        return uncertain_measurement(value() * other.value(), other.value() * uncertainty(), unit_ * other.units());
                     }
 
                     uncertain_measurement operator*(const units::unit& other) const {
-                        return { value_, uncertainty_, units_ * other};
+                        return uncertain_measurement(value_, uncertainty_, unit_ * other);
                     }
 
                     uncertain_measurement operator*(double val) const {
-                        return { value_ * val, uncertainty_ * val, units_ };
+                        return uncertain_measurement(value_ * val, uncertainty_ * val, unit_);
                     }
 
                     // compute a unit division and calculate the new uncertainties using the root sum of squares(rss) method
@@ -2469,120 +2467,120 @@ namespace physim {
                         double tval2 = other.uncertainty_ / other.value_;
                         double ntol = std::sqrt(tval1 * tval1 + tval2 * tval2);
                         double nval = value_ / other.value_;
-                        return { nval, nval * ntol, units_ / other.units() };
+                        return uncertain_measurement(nval, nval * ntol, unit_ / other.units());
                     }
 
                     // division operator propagate uncertainty using simple method
                     uncertain_measurement simple_divide(const uncertain_measurement& other) const {
                         double ntol = uncertainty_ / value_ + other.uncertainty_ / other.value_;
                         double nval = value_ / other.value_;
-                        return { nval, nval * ntol, units_ / other.units() };
+                        return uncertain_measurement(nval, nval * ntol, unit_ / other.units());
                     }
 
                     uncertain_measurement operator/(const measurement& other) const {
-                        return { static_cast<double>(value() / other.value()),
-                            static_cast<double>(uncertainty() / other.value()), units_ / other.units() };
+                        return uncertain_measurement(static_cast<double>(value() / other.value()),
+                            static_cast<double>(uncertainty() / other.value()), unit_ / other.units());
                     }
 
                     uncertain_measurement operator/(const units::unit& other) const {
-                        return { value_, uncertainty_, units_ / other};
+                        return uncertain_measurement(value_, uncertainty_, unit_ / other);
                     }
 
                     uncertain_measurement operator/(double val) const {
-                        return { value_ / val, uncertainty_ / val, units_ };
+                        return uncertain_measurement(value_ / val, uncertainty_ / val, unit_);
                     }
 
                     // compute a unit addition and calculate the new uncertainties using the root sum of squares(rss) method
                     uncertain_measurement operator+(const uncertain_measurement& other) const {
-                        auto cval = static_cast<double>(math::op::convert(other.units_, units_));
+                        auto cval = static_cast<double>(math::tools::convert(other.unit_, unit_));
                         double ntol = std::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
-                        return { value_ + cval * other.value_, ntol, units_ };
+                        return uncertain_measurement(value_ + cval * other.value_, ntol, unit_);
                     }
 
                     uncertain_measurement simple_add(const uncertain_measurement& other) const {
-                        auto cval = static_cast<double>(math::op::convert(other.units_, units_));
+                        auto cval = static_cast<double>(math::tools::convert(other.unit_, unit_));
                         double ntol = uncertainty_ + other.uncertainty_ * cval;
-                        return { value_ + cval * other.value_, ntol, units_ };
+                        return uncertain_measurement(value_ + cval * other.value_, ntol, unit_);
                     }
 
                     // compute a unit subtraction and calculate the new uncertainties using the root sum of squares(rss) method
                     uncertain_measurement operator-(const uncertain_measurement& other) const {
-                        auto cval = static_cast<double>(math::op::convert(other.units_, units_));
+                        auto cval = static_cast<double>(math::tools::convert(other.unit_, unit_));
                         double ntol = std::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
-                        return { value_ - cval * other.value_, ntol, units_ };
+                        return uncertain_measurement(value_ - cval * other.value_, ntol, unit_);
                     }
 
                     // compute a unit subtraction and calculate the new uncertainties using the simple uncertainty summation method
                     uncertain_measurement simple_subtract(const uncertain_measurement& other) const {
-                        auto cval = math::op::convert(other.units_, units_);
+                        auto cval = math::tools::convert(other.unit_, unit_);
                         double ntol = uncertainty_ + other.uncertainty_ * cval;
-                        return { value_ - cval * other.value_, ntol, units_ };
+                        return uncertain_measurement(value_ - cval * other.value_, ntol, unit_);
                     }
 
                     uncertain_measurement operator+(const measurement& other) const {
-                        auto cval = other.value_as(units_);
-                        return { value_ + cval, uncertainty_, units_ };
+                        auto cval = other.value_as(unit_);
+                        return uncertain_measurement(value_ + cval, uncertainty_, unit_);
                     }
 
                     uncertain_measurement operator-(const measurement& other) const {
-                        auto cval = other.value_as(units_);
-                        return { value_ - cval, uncertainty_, units_ };
+                        auto cval = other.value_as(unit_);
+                        return uncertain_measurement(value_ - cval, uncertainty_, unit_);
                     }
 
                     // comparison operators 
                     bool operator==(const measurement& other) const {
-                        auto val = other.value_as(units_);
-                        if (uncertainty_ == 0.0F) { return (value_ == val) ? true : math::op::compare_round_equals(value_, val); }
+                        auto val = other.value_as(unit_);
+                        if (uncertainty_ == 0.0F) { return (value_ == val) ? true : math::tools::compare_round_equals(value_, val); }
                         return (val >= (value_ - uncertainty_) && val <= (value_ + uncertainty_));
                     }
 
-                    bool operator>(const measurement& other) const {
-                        return value_ > other.value_as(units_);
+                    inline bool operator>(const measurement& other) const {
+                        return value_ > other.value_as(unit_);
                     }
 
-                    bool operator<(const measurement& other) const {
-                        return value_ < other.value_as(units_);
+                    inline bool operator<(const measurement& other) const {
+                        return value_ < other.value_as(unit_);
                     }
 
                     bool operator>=(const measurement& other) const {
-                        auto val = other.value_as(units_);
-                        return (value() >= val) ? true : operator==(measurement(val, units_));
+                        auto val = other.value_as(unit_);
+                        return (value() >= val) ? true : operator==(measurement(val, unit_));
                     }
 
                     bool operator<=(const measurement& other) const {
-                        auto val = other.value_as(units_);
-                        return (value() <= val) ? true : operator==(measurement(val, units_));
+                        auto val = other.value_as(unit_);
+                        return (value() <= val) ? true : operator==(measurement(val, unit_));
                     }
 
-                    bool operator!=(const measurement& other) const {
+                    inline bool operator!=(const measurement& other) const {
                         return !operator==(other);
                     }
 
                     bool operator==(const uncertain_measurement& other) const {
                         auto zval = simple_subtract(other);
-                        return (zval == measurement(0.0, units_));
+                        return (zval == measurement(0.0, unit_));
                     }
 
-                    bool operator>(const uncertain_measurement& other) const {
-                        return value_ > other.value_as(units_);
+                    inline bool operator>(const uncertain_measurement& other) const {
+                        return value_ > other.value_as(unit_);
                     }
 
-                    bool operator<(const uncertain_measurement& other) const {
-                        return value_ < other.value_as(units_);
+                    inline bool operator<(const uncertain_measurement& other) const {
+                        return value_ < other.value_as(unit_);
                     }
 
                     bool operator>=(const uncertain_measurement& other) const {
                         auto zval = simple_subtract(other);
                         return (zval.value_ >= 0.0F) ? true :
-                                                    (zval == measurement(0.0, units_));
+                                                    (zval == measurement(0.0, unit_));
                     }
 
                     bool operator<=(const uncertain_measurement& other) const {
                         auto zval = simple_subtract(other);
-                        return (zval.value_ <= 0.0F) ? true : (zval == measurement(0.0, units_));
+                        return (zval.value_ <= 0.0F) ? true : (zval == measurement(0.0, unit_));
                     }
 
-                    bool operator!=(const uncertain_measurement& other) const {
+                    inline bool operator!=(const uncertain_measurement& other) const {
                         return !operator==(other);
                     }
 
@@ -2602,15 +2600,15 @@ namespace physim {
 
                     // set the uncertainty
                     uncertain_measurement& uncertainty(const measurement& newUncertainty) {
-                        uncertainty_ = newUncertainty.value_as(units_);
+                        uncertainty_ = newUncertainty.value_as(unit_);
                         return *this;
                     }
 
                     // get the uncertainty as a separate measurement
-                    measurement uncertainty_measurement() const { return { uncertainty(), units_ }; }
+                    constexpr measurement uncertainty_measurement() const { return uncertain_measurement(uncertainty(), unit_); }
 
                     // // cast operator to a measurement
-                    operator measurement() const { return { value(), units_ }; }
+                    constexpr operator measurement() const { return measurement(value(), unit_); }
 
                     // get the numerical value 
                     constexpr double value() const { return value_; }
@@ -2619,34 +2617,34 @@ namespace physim {
                     constexpr double uncertainty() const { return uncertainty_; }
 
                     // get the underlying units value
-                    units::unit units() const { return units_; }
+                    constexpr units::unit units() const { return unit_; }
 
                     // get the numerical value as a particular unit type
-                    double value_as(const units::unit& desired_units) const {
-                        return (units_ == desired_units) ? value_ : math::op::convert(value_, units_, desired_units);
+                    inline double value_as(const units::unit& desired_units) const {
+                        return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
                     }
 
                     // get the numerical value of the uncertainty as a particular unit
-                    double uncertainty_as(const units::unit& desired_units) const {
-                        return (units_ == desired_units) ? uncertainty_ : math::op::convert(uncertainty_, units_, desired_units);
+                    inline double uncertainty_as(const units::unit& desired_units) const {
+                        return (unit_ == desired_units) ? uncertainty_ : math::tools::convert(uncertainty_, unit_, desired_units);
                     }
 
                     // convert a unit to have a new base
                     uncertain_measurement convert_to(const units::unit& newUnits) const {
-                        auto cval = math::op::convert(units_, newUnits);
-                        return { cval * value_, uncertainty_ * cval, newUnits };
+                        auto cval = math::tools::convert(unit_, newUnits);
+                        return uncertain_measurement(cval * value_, uncertainty_ * cval, newUnits);
                     }
 
                     // print the uncertain measurement
-                    inline void print() const { 
+                    void print() const { 
                         std::cout << value() << " ± " << uncertainty() << " "; 
-                        units_.print(); 
+                        unit_.print(); 
+                        std::cout << "\n";
                     }
 
 
             }; // class uncertain_measurement
 
-*/ 
 
         } // namespace measurements
 

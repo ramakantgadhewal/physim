@@ -24,6 +24,13 @@ int main() {
     meas2.print(); 
     meas3.print(); 
 
+    measurements::uncertain_measurement umeas1(15.6, 0.3, units::SI::m.pow(2));
+    measurements::uncertain_measurement umeas2(23.7, 0.6, units::SI::m.pow(2));
+    measurements::uncertain_measurement umeas3 = umeas1 * umeas2;
+    
+    umeas1.print();
+    umeas2.print();
+    umeas3.print();
 
     return 0; 
 }
