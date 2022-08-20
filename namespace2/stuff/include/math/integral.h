@@ -9,7 +9,7 @@
 #pragma once
 #include "functions.h"
 #include "statistics.h"
-#include "random_generator.h"
+#include "tools::random_generator.h"
 
 
 class Integral {

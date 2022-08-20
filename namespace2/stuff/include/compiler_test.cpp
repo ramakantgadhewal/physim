@@ -5,7 +5,7 @@
 #include "math/functions.h"
 #include "math/integral.h"
 #include "math/ode.h"
-#include "math/random_generator.h"
+#include "math/tools::random_generator.h"
 #include "math/statistics.h"
 #include "math/vector_algebra.h"
 

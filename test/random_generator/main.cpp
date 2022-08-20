@@ -1,7 +1,7 @@
 
 // author:          Lorenzo Liuzzo
 // email:           lorenzoliuzzo@outlook.com
-// description:     testing the math::random_generator class
+// description:     testing the math::tools::random_generator class
 // last updated:    20/08/2022
 
 #include "physim.h"
@@ -12,7 +12,7 @@ using namespace physim;
 int main() {    
 
     unsigned int nmax{100000}; 
-    math::random_generator rg(1);
+    math::tools::random_generator rg(1);
     std::vector<double> rand{}, exp{}, gaussBM{}, gaussAR{}; 
     Gnuplot plot{};
     plot.redirect_to_png("distributions.png");

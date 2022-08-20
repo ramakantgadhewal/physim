@@ -57,7 +57,7 @@
 
         namespace functions {}
         namespace statistics {}
-        class random_generator {};
+        class tools::random_generator {};
         class integral {}; 
 
     }
@@ -2817,7 +2817,7 @@ namespace physim {
         } // namespace statistics
 
 
-        class random_generator {
+        class tools::random_generator {
 
             private: 
 
@@ -2834,9 +2834,9 @@ namespace physim {
                 // constructors
                 // =============================================
                 
-                random_generator() { set_a(1664525); set_c(1013904223); set_m(pow(2, 31)); }
+                tools::random_generator() { set_a(1664525); set_c(1013904223); set_m(pow(2, 31)); }
 
-                random_generator(unsigned int seed) : random_generator() { m_seed = seed; }
+                tools::random_generator(unsigned int seed) : tools::random_generator() { m_seed = seed; }
 
 
                 // =============================================
@@ -2890,7 +2890,7 @@ namespace physim {
                     return mean + x * sigma;
                 }
 
-        }; // class random_generator
+        }; // class tools::random_generator
 
 
         class integral {
@@ -2909,7 +2909,7 @@ namespace physim {
 
                 int m_sign; 
 
-                random_generator m_rg;
+                tools::random_generator m_rg;
 
 
             private: 

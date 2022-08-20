@@ -18,7 +18,6 @@
 #include <iomanip> 
 #include <iostream>
 #include <limits>
-#include <list>
 #include <numeric>
 #include <unordered_map>
 #include <vector>
@@ -46,11 +45,6 @@ namespace physim {
             }
             filein.close();
             return vec;    
-        }
-
-        // check if the two value given differ from each other less than the precision given
-        constexpr bool are_close(const double& calculated, const double& expected, const double& epsilon = 1e-6){
-            return std::fabs(calculated - expected) <= epsilon;
         }
 
         // class for keeping track of the inexorable passage of time
@@ -194,7 +188,6 @@ namespace physim {
                     (cround(val1 * (1.0 + half_precise_precision)) == c2) ||
                     (cround(val1 * (1.0 - half_precise_precision)) == c2);
             }
-
 
         } // namespace algebra
         
@@ -1046,276 +1039,288 @@ namespace physim {
         } // namespace functions
         
 
-        // class random_generator for generating pseudo-casual numbers
-        class random_generator {
-
-            private: 
-
-                // =============================================
-                // class members
-                // =============================================        
-                
-                unsigned int m_a, m_c, m_m, m_seed;
-
-
-            public: 
-        
-                // =============================================
-                // constructors
-                // =============================================
-                
-                random_generator() : 
-                    m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))} {}
-
-                random_generator(const unsigned int& seed) :
-                    m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))}, m_seed{seed} {}
-
-
-                // =============================================
-                // set & get methods
-                // =============================================
-
-                constexpr void a(const unsigned int& a) { m_a = a; }
-                
-                constexpr void c(const unsigned int& c) { m_c = c; }
-                
-                constexpr void m(const unsigned int& m) { m_m = m; }
-                
-                constexpr void seed(const unsigned int& seed) { m_seed = seed; }
-
-                constexpr unsigned int a() const { return m_a; }
-                
-                constexpr unsigned int c() const { return m_c; }
-                
-                constexpr unsigned int m() const { return m_m; }
-                
-                constexpr unsigned int seed() const { return m_seed; }
-
-
-                // =============================================
-                // distributions methods
-                // =============================================
-
-                constexpr double rand(const double& min = 0., const double& max = 1.) {
-                    seed(static_cast<unsigned int>((m_a * m_seed + m_c) % m_m)); 
-                    return min + std::fabs(max - min) * m_seed / m_m; 
-                }
-
-                constexpr double exp(const double& mean) {
-                    return - std::log(1 - rand()) / mean; 
-                }
-
-                double gauss_box_muller(const double& mean, const double& sigma) {
-                    double s{rand()}, t{rand()}; 
-                    double x = math::algebra::sqrt(-2 * std::log(s)) * std::cos(2 * math::constants::pi * t);
-                    return mean + sigma * x;
-                }
-
-                double gauss_accept_reject(const double& mean, const double& sigma) {
-                    double x{}, y{}, g{}; 
-                    while (true) {
-                        x = rand(-5., 5.); 
-                        y = rand(); 
-                        g = exp(math::algebra::square(x) / 2); 
-                        if (y <= g) break;
-                    }
-                    return mean + x * sigma;
-                }
-
-        }; // class random_generator
-
-
-        // class integral for evaluating the integrals
-        class integral {
-
-            private: 
-
-                // =============================================
-                // class members
-                // =============================================
-
-                double m_a{}, m_b{}, m_h{};
-                
-                unsigned int m_steps{};
-
-                int m_sign{}; 
-
-                double m_sum{}, m_integral{}, m_old_integral{}, m_error{};  
-
-                math::random_generator m_rg;
-
-
-                // =============================================
-                // set methods
-                // =============================================
-
-                constexpr void steps(const unsigned int& n) { 
-                    m_steps = n; 
-                    m_h = std::fabs(m_b - m_a) / m_steps;
-                }        
-
-                constexpr void check_range() { m_sign = (m_a == m_b ? 0. : (m_b > m_a ? 1. : -1)); }
-                
-                constexpr void sum(const double& sum) { m_sum = sum; }
-
-                constexpr void reset_integral() { m_integral = 0; }    
-
-                constexpr void begin_integration(const double& a, const double& b, unsigned int n = 1000, const double& sum0 = 0) {
-                    m_a = a; 
-                    m_b = b; 
-                    check_range(); 
-                    steps(n);
-                    reset_integral(); 
-                    sum(sum0); 
-                }
-
-
-            public: 
-
-                // =============================================
-                // constructors
-                // =============================================
-
-                integral() {}
-                
-                ~integral() {} 
-
+        // namespace defining some usefull operations
+        namespace tools {
             
-                // =============================================
-                // get methods
-                // =============================================
+            // check if the two value given differ from each other less than the precision given
+            constexpr bool are_close(const double& calculated, const double& expected, const double& epsilon = 1e-6){
+                return std::fabs(calculated - expected) <= epsilon;
+            }
 
-                constexpr double a() const { return m_a; }
-
-                constexpr double b() const { return m_b; }
-
-                constexpr int sign() const { return m_sign; }
-
-                constexpr unsigned int steps() const { return m_steps; }
-
-                constexpr double h() const { return m_h; }
-
-                constexpr double sum() const { return m_sum; }
-
-                constexpr double value() const { return m_integral; }
-
-                constexpr double error() const { return m_error; }
-
-
-                // =============================================
-                // print methods
-                // =============================================
-
-                constexpr void error_integral(const double& delta) { m_error = 4 * delta / 3.; } 
-
-                void print_value(const double& precision = 1.e-6) {
-                    std::cout << "\nIntegral of f(x) in [" << m_a << ", " << m_b << "] = " << std::setprecision((int)-log10(precision)) << m_integral << "\n";
-                }
-
-                void print_error(const double& precision = 1.e-6) {
-                    std::cout << "error = " << std::setprecision((int)-log10(precision)) << m_error << "\n";
-                }        
-
-                void print(const double& precision = 1.e-6) {
-                    print_value(); 
-                    print_error(); 
-                }
                 
+            // class random_generator for generating pseudo-casual numbers
+            class random_generator {
+
+                private: 
+
+                    // =============================================
+                    // class members
+                    // =============================================        
+                    
+                    unsigned int m_a, m_c, m_m, m_seed;
+
+
+                public: 
+            
+                    // =============================================
+                    // constructors & destructor
+                    // =============================================
+                    
+                    random_generator() : 
+                        m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))} {}
+
+                    random_generator(const unsigned int& seed) :
+                        m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))}, m_seed{seed} {}
+
+                    ~random_generator() {}
+
+                    // =============================================
+                    // set & get methods
+                    // =============================================
+
+                    constexpr void a(const unsigned int& a) { m_a = a; }
+                    
+                    constexpr void c(const unsigned int& c) { m_c = c; }
+                    
+                    constexpr void m(const unsigned int& m) { m_m = m; }
+                    
+                    constexpr void seed(const unsigned int& seed) { m_seed = seed; }
+
+                    constexpr unsigned int a() const { return m_a; }
+                    
+                    constexpr unsigned int c() const { return m_c; }
+                    
+                    constexpr unsigned int m() const { return m_m; }
+                    
+                    constexpr unsigned int seed() const { return m_seed; }
+
+
+                    // =============================================
+                    // distributions methods
+                    // =============================================
+
+                    constexpr double rand(const double& min = 0., const double& max = 1.) {
+                        seed(static_cast<unsigned int>((m_a * m_seed + m_c) % m_m)); 
+                        return min + std::fabs(max - min) * m_seed / m_m; 
+                    }
+
+                    constexpr double exp(const double& mean) {
+                        return - std::log(1 - rand()) / mean; 
+                    }
+
+                    double gauss_box_muller(const double& mean, const double& sigma) {
+                        double s{rand()}, t{rand()}; 
+                        double x = math::algebra::sqrt(-2 * std::log(s)) * std::cos(2 * math::constants::pi * t);
+                        return mean + sigma * x;
+                    }
+
+                    double gauss_accept_reject(const double& mean, const double& sigma) {
+                        double x{}, y{}, g{}; 
+                        while (true) {
+                            x = rand(-5., 5.); 
+                            y = rand(); 
+                            g = exp(math::algebra::square(x) / 2); 
+                            if (y <= g) break;
+                        }
+                        return mean + x * sigma;
+                    }
+
+            }; // class tools::random_generator
+
+
+            // class integral for evaluating the integrals
+            class integral {
+
+                private: 
+
+                    // =============================================
+                    // class members
+                    // =============================================
+
+                    double m_a{}, m_b{}, m_h{};
+                    
+                    unsigned int m_steps{};
+
+                    int m_sign{}; 
+
+                    double m_sum{}, m_integral{}, m_old_integral{}, m_error{};  
+
+                    random_generator m_rg;
+
+
+                    // =============================================
+                    // set methods
+                    // =============================================
+
+                    constexpr void steps(const unsigned int& n) { 
+                        m_steps = n; 
+                        m_h = std::fabs(m_b - m_a) / m_steps;
+                    }        
+
+                    constexpr void check_range() { m_sign = (m_a == m_b ? 0. : (m_b > m_a ? 1. : -1)); }
+                    
+                    constexpr void sum(const double& sum) { m_sum = sum; }
+
+                    constexpr void reset_integral() { m_integral = 0; }    
+
+                    constexpr void begin_integration(const double& a, const double& b, unsigned int n = 1000, const double& sum0 = 0) {
+                        m_a = a; 
+                        m_b = b; 
+                        check_range(); 
+                        steps(n);
+                        reset_integral(); 
+                        sum(sum0); 
+                    }
+
+
+                public: 
+
+                    // =============================================
+                    // constructors
+                    // =============================================
+
+                    integral() {}
+                    
+                    ~integral() {} 
+
                 
-                // =============================================
-                // integration methods
-                // =============================================
+                    // =============================================
+                    // get methods
+                    // =============================================
 
-                void midpoint(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
-                    begin_integration(a, b, n); 
-                    for (unsigned int i{}; i < m_steps; i++) { m_sum += (f.eval(m_a + (i + 0.5) * m_h)); }
-                    m_integral = m_sum * m_h; 
-                }
+                    constexpr double a() const { return m_a; }
 
-                void midpoint_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
-                    begin_integration(a, b, 1); 
-                    while (true) {
-                        m_old_integral = m_integral; 
-                        midpoint(m_a, m_b, f, m_steps * 2);
-                        error_integral(std::fabs(m_integral - m_old_integral));
-                        if (m_error < prec) break;
-                    }    
-                }
-                
-                void trapexoid(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
-                    begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 2.);
-                    for (unsigned int i{1}; i < m_steps; i++) m_sum += f.eval(m_a + i * m_h); 
-                    m_integral = m_sum * m_h; 
-                } 
+                    constexpr double b() const { return m_b; }
 
-                void trapexoid_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
-                    begin_integration(a, b, 2, f.eval(a) + f.eval(b) / 2. + f.eval((a + b) / 2.)); 
-                    while (true) {
-                        m_old_integral = m_integral; 
-                        trapexoid(m_a, m_b, f, m_steps * 2);
-                        error_integral(std::fabs(m_integral - m_old_integral));
-                        if (m_error < prec) break;
+                    constexpr int sign() const { return m_sign; }
+
+                    constexpr unsigned int steps() const { return m_steps; }
+
+                    constexpr double h() const { return m_h; }
+
+                    constexpr double sum() const { return m_sum; }
+
+                    constexpr double value() const { return m_integral; }
+
+                    constexpr double error() const { return m_error; }
+
+
+                    // =============================================
+                    // print methods
+                    // =============================================
+
+                    constexpr void error_integral(const double& delta) { m_error = 4 * delta / 3.; } 
+
+                    void print_value(const double& precision = 1.e-6) {
+                        std::cout << "\nIntegral of f(x) in [" << m_a << ", " << m_b << "] = " << std::setprecision((int)-log10(precision)) << m_integral << "\n";
                     }
-                }
 
-                void simpson(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
-                    if (n % 2 == 0) begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 3.);
-                    else begin_integration(a, b, n + 1);  
-                    for (unsigned int i{1}; i < m_steps; i++) m_sum += 2 * (1 + i % 2) * (f.eval(m_a + i * m_h)) / 3.; 
-                    m_integral = m_sum * m_h; 
-                }
+                    void print_error(const double& precision = 1.e-6) {
+                        std::cout << "error = " << std::setprecision((int)-log10(precision)) << m_error << "\n";
+                    }        
 
-                void simpson_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
-                    begin_integration(a, b, 2, (f.eval(a) + f.eval(b)) / 3.); 
-                    while (true) {
-                        m_old_integral = m_integral; 
-                        simpson(m_a, m_b, f, m_steps * 2);
-                        error_integral(std::fabs(m_integral - m_old_integral));
-                        if (m_error < prec) break; 
+                    void print(const double& precision = 1.e-6) {
+                        print_value(); 
+                        print_error(); 
                     }
-                }
+                    
+                    
+                    // =============================================
+                    // integration methods
+                    // =============================================
 
-                void mean(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
-                    begin_integration(a, b, n); 
-                    for (unsigned int i{}; i < n; i ++) m_sum += f.eval(m_rg.rand(a, b)); 
-                    m_integral = (m_b - m_a) * m_sum / m_steps; 
-                }
-
-                void mean_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
-                    std::vector<double> k{};
-                    for (unsigned i{}; i < 10000; i++) {
-                        mean(a, b, f);
-                        k.emplace_back(m_integral); 
+                    void midpoint(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                        begin_integration(a, b, n); 
+                        for (unsigned int i{}; i < m_steps; i++) { m_sum += (f.eval(m_a + (i + 0.5) * m_h)); }
+                        m_integral = m_sum * m_h; 
                     }
-                    double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
-                    mean(a, b, f, static_cast<unsigned int>(math::algebra::square(k_mean / prec))); 
-                }
-        
-                void hit_or_miss(const double& a, const double& b, const functions::function_base& f, const double& fmax, unsigned int n = 1000) {
-                    begin_integration(a, b, n); 
-                    double x{}, y{}; 
-                    unsigned int hits{};
-                    for (unsigned int i{}; i < n; i ++) {
-                        x = m_rg.rand(a, b); 
-                        y = m_rg.rand(0., fmax);  
-                        if (y <= f.eval(x)) hits++; 
+
+                    void midpoint_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                        begin_integration(a, b, 1); 
+                        while (true) {
+                            m_old_integral = m_integral; 
+                            midpoint(m_a, m_b, f, m_steps * 2);
+                            error_integral(std::fabs(m_integral - m_old_integral));
+                            if (m_error < prec) break;
+                        }    
                     }
-                    m_integral = (m_b - m_a) * fmax * hits / n; 
-                }
+                    
+                    void trapexoid(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                        begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 2.);
+                        for (unsigned int i{1}; i < m_steps; i++) m_sum += f.eval(m_a + i * m_h); 
+                        m_integral = m_sum * m_h; 
+                    } 
 
-                void hit_or_miss_fixed(const double& a, const double& b, const functions::function_base& f, const double& fmax, const double& prec = 1.e-6) {
-                    std::vector<double> k{};
-                    for (unsigned i{}; i < 10000; i++) {
-                        hit_or_miss(a, b, f, fmax);
-                        k.emplace_back(m_integral); 
+                    void trapexoid_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                        begin_integration(a, b, 2, f.eval(a) + f.eval(b) / 2. + f.eval((a + b) / 2.)); 
+                        while (true) {
+                            m_old_integral = m_integral; 
+                            trapexoid(m_a, m_b, f, m_steps * 2);
+                            error_integral(std::fabs(m_integral - m_old_integral));
+                            if (m_error < prec) break;
+                        }
                     }
-                    double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
-                    unsigned int N = static_cast<unsigned int>(math::algebra::square(k_mean / prec)); 
-                    hit_or_miss(a, b, f, fmax, N); 
-                }
+
+                    void simpson(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                        if (n % 2 == 0) begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 3.);
+                        else begin_integration(a, b, n + 1);  
+                        for (unsigned int i{1}; i < m_steps; i++) m_sum += 2 * (1 + i % 2) * (f.eval(m_a + i * m_h)) / 3.; 
+                        m_integral = m_sum * m_h; 
+                    }
+
+                    void simpson_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                        begin_integration(a, b, 2, (f.eval(a) + f.eval(b)) / 3.); 
+                        while (true) {
+                            m_old_integral = m_integral; 
+                            simpson(m_a, m_b, f, m_steps * 2);
+                            error_integral(std::fabs(m_integral - m_old_integral));
+                            if (m_error < prec) break; 
+                        }
+                    }
+
+                    void mean(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                        begin_integration(a, b, n); 
+                        for (unsigned int i{}; i < n; i ++) m_sum += f.eval(m_rg.rand(a, b)); 
+                        m_integral = (m_b - m_a) * m_sum / m_steps; 
+                    }
+
+                    void mean_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                        std::vector<double> k{};
+                        for (unsigned i{}; i < 10000; i++) {
+                            mean(a, b, f);
+                            k.emplace_back(m_integral); 
+                        }
+                        double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
+                        mean(a, b, f, static_cast<unsigned int>(math::algebra::square(k_mean / prec))); 
+                    }
+            
+                    void hit_or_miss(const double& a, const double& b, const functions::function_base& f, const double& fmax, unsigned int n = 1000) {
+                        begin_integration(a, b, n); 
+                        double x{}, y{}; 
+                        unsigned int hits{};
+                        for (unsigned int i{}; i < n; i ++) {
+                            x = m_rg.rand(a, b); 
+                            y = m_rg.rand(0., fmax);  
+                            if (y <= f.eval(x)) hits++; 
+                        }
+                        m_integral = (m_b - m_a) * fmax * hits / n; 
+                    }
+
+                    void hit_or_miss_fixed(const double& a, const double& b, const functions::function_base& f, const double& fmax, const double& prec = 1.e-6) {
+                        std::vector<double> k{};
+                        for (unsigned i{}; i < 10000; i++) {
+                            hit_or_miss(a, b, f, fmax);
+                            k.emplace_back(m_integral); 
+                        }
+                        double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
+                        unsigned int N = static_cast<unsigned int>(math::algebra::square(k_mean / prec)); 
+                        hit_or_miss(a, b, f, fmax, N); 
+                    }
 
 
-        }; // class integral
+            }; // class integral
+
+        } // namespace tools
 
 
     } // namespace math
@@ -1330,7 +1335,7 @@ namespace physim {
             namespace bitwidth {
 
                 constexpr uint32_t base_size = sizeof(uint32_t) == 8 ? 8 : 4;
-                constexpr uint32_t meter{(base_size == 8) ? 8 : 4};
+                constexpr uint32_t metre{(base_size == 8) ? 8 : 4};
                 constexpr uint32_t second{(base_size == 8) ? 8 : 4};
                 constexpr uint32_t kilogram{(base_size == 8) ? 6 : 3};
                 constexpr uint32_t ampere{(base_size == 8) ? 6 : 3};
@@ -1346,7 +1351,7 @@ namespace physim {
 
                 private: 
 
-                    signed int meter_ : bitwidth::meter;
+                    signed int metre_ : bitwidth::metre;
                     signed int second_ : bitwidth::second;  
                     signed int kilogram_ : bitwidth::kilogram;
                     signed int ampere_ : bitwidth::ampere;
@@ -1361,7 +1366,7 @@ namespace physim {
 
                     // the seven SI base units 
                     enum base {
-                        Meter = 0,
+                        Metre = 0,
                         Second = 1,
                         Kilogram = 2,
                         Ampere = 3,
@@ -1371,7 +1376,7 @@ namespace physim {
                     };
 
                     static constexpr uint32_t bits[7] = { 
-                        bitwidth::meter, bitwidth::second, 
+                        bitwidth::metre, bitwidth::second, 
                         bitwidth::kilogram, bitwidth::ampere, 
                         bitwidth::kelvin, bitwidth::mole, 
                         bitwidth::candela
@@ -1383,17 +1388,17 @@ namespace physim {
                     // ============================================= 
                     
                     // constructor from powers
-                    constexpr unit_data(const int& meters, const int& seconds, const int& kilograms, const int& amperes, const int& kelvins,  const int& moles, const int& candelas) :
-                        meter_(meters), second_(seconds), kilogram_(kilograms),
+                    constexpr unit_data(const int& metres, const int& seconds, const int& kilograms, const int& amperes, const int& kelvins,  const int& moles, const int& candelas) :
+                        metre_(metres), second_(seconds), kilogram_(kilograms),
                         ampere_(amperes), kelvin_(kelvins), mole_(moles), candela_(candelas) {};
 
                     // constructor from powers and name
-                    constexpr unit_data(const int& meters, const int& seconds, const int& kilograms, const int& amperes, const int& kelvins,  const int& moles, const int& candelas, const char* name_) :
-                        meter_(meters), second_(seconds), kilogram_(kilograms), ampere_(amperes), 
+                    constexpr unit_data(const int& metres, const int& seconds, const int& kilograms, const int& amperes, const int& kelvins,  const int& moles, const int& candelas, const char* name_) :
+                        metre_(metres), second_(seconds), kilogram_(kilograms), ampere_(amperes), 
                         kelvin_(kelvins), mole_(moles), candela_(candelas), name_(name_) {};
 
                     explicit constexpr unit_data(std::nullptr_t) :
-                        meter_(math::constants::max_neg(bitwidth::meter)), 
+                        metre_(math::constants::max_neg(bitwidth::metre)), 
                         second_(math::constants::max_neg(bitwidth::second)), 
                         kilogram_(math::constants::max_neg(bitwidth::kilogram)), 
                         ampere_(math::constants::max_neg(bitwidth::ampere)),
@@ -1409,7 +1414,7 @@ namespace physim {
                     // perform a multiply operation by adding the powers together
                     constexpr unit_data operator*(const unit_data& other) const {
                         return { 
-                            meter_ + other.meter_,
+                            metre_ + other.metre_,
                             second_ + other.second_,
                             kilogram_ + other.kilogram_,
                             ampere_ + other.ampere_,
@@ -1422,7 +1427,7 @@ namespace physim {
                     // perform a division operation by subtract the powers together
                     constexpr unit_data operator/(const unit_data& other) const {
                         return { 
-                            meter_ - other.meter_,
+                            metre_ - other.metre_,
                             second_ - other.second_,
                             kilogram_ - other.kilogram_,
                             ampere_ - other.ampere_,
@@ -1435,7 +1440,7 @@ namespace physim {
                     // invert the unit
                     constexpr unit_data inv() const {
                         return { 
-                            -meter_,
+                            -metre_,
                             -second_,
                             -kilogram_,
                             -ampere_,
@@ -1448,7 +1453,7 @@ namespace physim {
                     // take a unit_data to some power
                     constexpr unit_data pow(const int& power) const { 
                         return { 
-                            meter_ * power,
+                            metre_ * power,
                             (second_ * power) + root_Hertz_modifier(power),
                             kilogram_ * power,
                             ampere_ * power,
@@ -1460,7 +1465,7 @@ namespace physim {
                     
                     // take some root of a unit_data
                     constexpr unit_data root(const int& power) const {
-                        if (has_valid_root(power)) return unit_data(meter_ / power,
+                        if (has_valid_root(power)) return unit_data(metre_ / power,
                                                                     second_ / power,
                                                                     kilogram_ / power,
                                                                     ampere_ / power,
@@ -1470,18 +1475,14 @@ namespace physim {
                         else exit(-11);
                     }
                     
-                    
-                    // =============================================
-                    // check methods
-                    // ============================================= 
-
                     // comparison operators
                     constexpr bool operator==(const unit_data& other) const {
-                        return meter_ == other.meter_ && second_ == other.second_ &&
+                        return metre_ == other.metre_ && second_ == other.second_ &&
                             kilogram_ == other.kilogram_ && ampere_ == other.ampere_ &&
                             candela_ == other.candela_ && kelvin_ == other.kelvin_ && mole_ == other.mole_;         
                     }
 
+                    // definitely not a comparison operators
                     constexpr bool operator!=(const unit_data& other) const {
                         return !(*this == other);
                     }
@@ -1493,7 +1494,7 @@ namespace physim {
 
                     // check if the unit is empty
                     constexpr bool empty() const {
-                        return meter_ == 0 && second_ == 0 && kilogram_ == 0 &&
+                        return metre_ == 0 && second_ == 0 && kilogram_ == 0 &&
                             ampere_ == 0 && candela_ == 0 && kelvin_ == 0 && mole_ == 0;
                     }
                     
@@ -1502,7 +1503,7 @@ namespace physim {
                     // get methods
                     // =============================================
                     
-                    constexpr int meter() const { return meter_; }
+                    constexpr int metre() const { return metre_; }
 
                     constexpr int second() const { return second_; }
 
@@ -1519,17 +1520,15 @@ namespace physim {
                     constexpr const char* name() const { return name_; }
 
                     constexpr int unit_type_count() const {
-                        return ((meter_ != 0) ? 1 : 0) + ((second_ != 0) ? 1 : 0) +
+                        return ((metre_ != 0) ? 1 : 0) + ((second_ != 0) ? 1 : 0) +
                             ((kilogram_ != 0) ? 1 : 0) + ((ampere_ != 0) ? 1 : 0) +
                             ((kelvin_ != 0) ? 1 : 0) + ((mole_ != 0) ? 1 : 0) + ((candela_ != 0) ? 1 : 0);
                     }
 
-                    constexpr unit_data base_units() const { return *this; }
-
                     constexpr void print() const {
                         if (name_[0] == '-') {
-                            if (meter_ != 0 && meter_ != 1) std::cout << "m^" << meter_; 
-                            if (meter_ == 1) std::cout << "m";
+                            if (metre_ != 0 && metre_ != 1) std::cout << "m^" << metre_; 
+                            if (metre_ == 1) std::cout << "m";
                             if (second_ != 0 && second_ != 1) std::cout << "s^" << second_; 
                             if (second_ == 1) std::cout << "s"; 
                             if (kilogram_ != 0 && kilogram_ != 1) std::cout << "kg^" << kilogram_; 
@@ -1551,7 +1550,7 @@ namespace physim {
 
                     // check if the base_unit has a valid root
                     constexpr bool has_valid_root(const int& power) const {
-                        return meter_ % power == 0 && second_ % power == 0 &&
+                        return metre_ % power == 0 && second_ % power == 0 &&
                             kilogram_ % power == 0 && ampere_ % power == 0 &&
                             candela_ % power == 0 && kelvin_ % power == 0 &&
                             mole_ % power == 0;
@@ -1569,7 +1568,7 @@ namespace physim {
             // class defining a basic unit module 
             class unit_prefix {
 
-                protected: 
+                public:  
 
                     // =============================================
                     // class members
@@ -1577,8 +1576,6 @@ namespace physim {
                     
                     double multiplier_{1.0};  
 
-
-                public: 
 
                     // =============================================
                     // constructors
@@ -1595,12 +1592,12 @@ namespace physim {
 
                     // perform a multiply operation by adding the powers together
                     constexpr unit_prefix operator*(const unit_prefix& other) const {
-                        return unit_prefix(multiplier_ * other.multiplier());
+                        return unit_prefix(multiplier_ * other.multiplier_);
                     }
 
                     // perform a division operation by subtract the powers together
                     constexpr unit_prefix operator/(const unit_prefix& other) const {
-                        return unit_prefix(multiplier_ / other.multiplier());
+                        return unit_prefix(multiplier_ / other.multiplier_);
                     }
 
                     // invert the unit
@@ -1658,9 +1655,6 @@ namespace physim {
                     // =============================================
                     // get & print methods
                     // ============================================= 
-                    
-                    // get the multiplier
-                    constexpr double multiplier() const { return multiplier_; }
 
                     // get the prefix
                     constexpr unit_prefix prefix() const { return *this; }
@@ -1695,7 +1689,7 @@ namespace physim {
             // class defining a basic unit module 
             class unit {
 
-                private: 
+                public:
 
                     // =============================================
                     // class members
@@ -1705,8 +1699,6 @@ namespace physim {
 
                     unit_prefix prefix_{}; 
 
-
-                public:
 
                     // =============================================
                     // constructors
@@ -1791,7 +1783,7 @@ namespace physim {
                     constexpr bool operator==(const unit& other) const {
                         if (data_ != other.data_) { return false; }
                         if (prefix_ == other.prefix_) { return true; }
-                        return math::algebra::compare_round_equals(prefix_.multiplier(), other.prefix_.multiplier());
+                        return math::algebra::compare_round_equals(multiplier(), other.multiplier());
                     }
 
                     // equality operator
@@ -1807,6 +1799,12 @@ namespace physim {
                     // get & print methods
                     // ============================================= 
 
+                    // get the multiplier
+                    constexpr double multiplier() const { return prefix_.multiplier_; }
+                    
+                    // get the unit_data
+                    constexpr unit_data base_units() const { return data_; }
+
                     // get the unit
                     constexpr unit as_unit() const { return *this; }
 
@@ -1820,13 +1818,13 @@ namespace physim {
             }; // class unit     
 
 
-            // namespace with some defined units 
-            namespace defined {
+            // namespace with some SI units 
+            namespace SI {
                 
-                // SI_base
-                namespace SI_base {
+                // base
+                namespace base {
 
-                    constexpr unit_data meter(1, 0, 0, 0, 0, 0, 0);
+                    constexpr unit_data metre(1, 0, 0, 0, 0, 0, 0);
                     constexpr unit_data second(0, 1, 0, 0, 0, 0, 0);
                     constexpr unit_data kilogram(0, 0, 1, 0, 0, 0, 0);
                     constexpr unit_data Ampere(0, 0, 0, 1, 0, 0, 0);
@@ -1836,8 +1834,9 @@ namespace physim {
 
                 } // namespace SI
 
-                // SI_prefix
-                namespace SI_prefix {
+
+                // prefix
+                namespace prefix {
 
                     constexpr unit_prefix deci(1e-1); 
                     constexpr unit_prefix centi(1e-2); 
@@ -1859,56 +1858,70 @@ namespace physim {
                     constexpr unit_prefix zetta(1e21); 
                     constexpr unit_prefix yotta(1e24); 
 
-                } // namespace SI_prefix
+                } // namespace prefix
     
-                // SI 
-                unit m = unit(SI_base::meter);
-                unit s = unit(SI_base::second);
-                unit kg = unit(SI_base::kilogram);
-                unit A = unit(SI_base::Ampere);
-                unit K = unit(SI_base::Kelvin);
-                unit mol = unit(SI_base::mol); 
-                unit cd = unit(SI_base::candela);
 
-                // // some unitless numbers
-                // unit one;
-                // unit hundred = unit(100.0, one);
-                // unit ten = unit(10.0, one);
-                // unit percent(one, 0.01, "%");
-                // unit infinite(unit_data(0, 0, 0, 0, 0, 0, 0), constants::infinity, "inf");
-                // unit neginfinite(unit_data(0, 0, 0, 0, 0, 0, 0), -constants::infinity, "-inf");
-                // unit nan(unit_data(0, 0, 0, 0, 0, 0, 0), constants::invalid_conversion, "NaN");
+                // SI units
+                unit m = unit(base::metre);
+                unit s = unit(base::second);
+                unit kg = unit(base::kilogram);
+                unit A = unit(base::Ampere);
+                unit K = unit(base::Kelvin);
+                unit mol = unit(base::mol); 
+                unit cd = unit(base::candela);
 
-                // // some specialized units
-                // unit defunit(unit_data(0, 0, 0, 0, 0, 0, 0));
-                // unit invalid(unit_data(nullptr), constants::invalid_conversion, "NaN");
-                // unit error(unit_data(nullptr));
-            
-                // // SI_derived units
-                // unit hertz(unit_data(0, 0, -1, 0, 0, 0, 0), "Hz");
-                // unit Hz = hertz;
-                // unit volt(unit_data(2, 1, -3, -1, 0, 0, 0), "V");
-                // unit V = volt;
-                // unit newton(unit_data(1, 1, -2, 0, 0, 0, 0), "N");
-                // unit N = newton;
-                // unit Pa(unit_data(-1, 1, -2, 0, 0, 0, 0), "Pa");
-                // unit pascal = Pa;
-                // unit joule(unit_data(2, 1, -2, 0, 0, 0, 0), "J");
-                // unit J = joule;
-                // unit watt(unit_data(2, 1, -3, 0, 0, 0, 0), "W");
-                // unit W = watt;
-                // unit coulomb(unit_data(0, 0, 1, 1, 0, 0, 0), "C");
-                // unit C = coulomb;
-                // unit farad(unit_data(-2, -1, 4, 2, 0, 0, 0), "F");
-                // unit F = farad;
-                // unit weber(unit_data(2, 1, -2, -1, 0, 0, 0), "Wb");
-                // unit Wb = weber;
-                // unit tesla(unit_data(0, 1, -2, -1, 0, 0, 0), "T");
-                // unit T = tesla;
-                // unit henry(unit_data(2, 1, -2, -2, 0, 0, 0), "H");                    
-                // unit H = henry;
-                // unit mps(m / s);
-                // unit mpss(m / s.pow(2)); 
+
+                // special units 
+                namespace special {
+
+                    // some unitless numbers
+                    unit one;
+                    unit hundred = unit(100.0, one);
+                    unit ten = unit(10.0, one);
+                    unit percent(one, 0.01);
+                    unit infinite(unit_data(0, 0, 0, 0, 0, 0, 0), math::constants::infinity);
+                    unit neginfinite(unit_data(0, 0, 0, 0, 0, 0, 0), -math::constants::infinity);
+                    unit nan(unit_data(0, 0, 0, 0, 0, 0, 0), math::constants::invalid_conversion);
+
+                    // some specialized units
+                    unit defunit(unit_data(0, 0, 0, 0, 0, 0, 0));
+                    unit invalid(unit_data(nullptr), math::constants::invalid_conversion);
+                    unit error(unit_data(nullptr));                
+                
+                } // namespace special
+                
+/*
+                // derived_units
+                namespace derived_units {
+
+                    unit hertz(unit_data(0, 0, -1, 0, 0, 0, 0), "Hz");
+                    unit Hz = hertz;
+                    unit volt(unit_data(2, 1, -3, -1, 0, 0, 0), "V");
+                    unit V = volt;
+                    unit newton(unit_data(1, 1, -2, 0, 0, 0, 0), "N");
+                    unit N = newton;
+                    unit Pa(unit_data(-1, 1, -2, 0, 0, 0, 0), "Pa");
+                    unit pascal = Pa;
+                    unit joule(unit_data(2, 1, -2, 0, 0, 0, 0), "J");
+                    unit J = joule;
+                    unit watt(unit_data(2, 1, -3, 0, 0, 0, 0), "W");
+                    unit W = watt;
+                    unit coulomb(unit_data(0, 0, 1, 1, 0, 0, 0), "C");
+                    unit C = coulomb;
+                    unit farad(unit_data(-2, -1, 4, 2, 0, 0, 0), "F");
+                    unit F = farad;
+                    unit weber(unit_data(2, 1, -2, -1, 0, 0, 0), "Wb");
+                    unit Wb = weber;
+                    unit tesla(unit_data(0, 1, -2, -1, 0, 0, 0), "T");
+                    unit T = tesla;
+                    unit henry(unit_data(2, 1, -2, -2, 0, 0, 0), "H");                    
+                    unit H = henry;
+                    unit mps(m / s);
+                    unit mpss(m / s.pow(2)); 
+
+                } // namespace derived_units
+                
+
 
                 // // distance units
                 // unit km(SI_prefix::kilo, m);
@@ -1939,11 +1952,703 @@ namespace physim {
                 // unit cL{0.01, L, "cL"};
                 // unit mL{0.001, L, "mL"};                    
 
-
-            } // namespace defined
+*/
+            } // namespace SI
 
 
         } // namespace units
+
+
+    } // namespace physics
+
+
+    namespace math {
+
+        // namespace defining some usefull operations
+        namespace tools {
+
+            // generate a conversion factor between two physics::units::units in a constexpr function, the
+            // physics::units::units will only convert if they have the same base physics::units::unit
+            template<typename UX, typename UX2>
+            constexpr double quick_convert(UX start, UX2 result) { return quick_convert(1.0, start, result); }
+
+            // generate a conversion factor between two physics::units::units in a constexpr function, the physics::units::units will only convert if they have the same base physics::units::unit
+            template<typename UX, typename UX2>
+            constexpr double quick_convert(double val, const UX& start, const UX2& result) {
+                static_assert(std::is_same<UX, physics::units::unit>::value || std::is_same<UX, physics::units::unit>::value,
+                    "convert argument types must be physics::units::unit or physics::units::unit");
+                static_assert(std::is_same<UX2, physics::units::unit>::value || std::is_same<UX2, physics::units::unit>::value,
+                    "convert argument types must be physics::units::unit or physics::units::unit");
+                return (start.base_units() == result.base_units()) ?  val * start.multiplier() / result.multiplier() : 
+                    constants::invalid_conversion;
+            }
+
+            // convert a value from one physics::units::unit base to another
+            template<typename UX, typename UX2>
+            double convert(double val, const UX& start, const UX2& result) {
+                static_assert(std::is_same<UX, physics::units::unit>::value || std::is_same<UX, physics::units::unit>::value,
+                    "convert argument types must be physics::units::unit or physics::units::unit");
+                static_assert(std::is_same<UX2, physics::units::unit>::value || std::is_same<UX2, physics::units::unit>::value, 
+                    "convert argument types must be physics::units::unit or physics::units::unit");     
+                if (start == result) { return val; }
+                if (start.base_units() == result.base_units()) { return val * start.multiplier() / result.multiplier(); }
+                auto base_start = start.base_units();
+                auto base_result = result.base_units();
+                if (base_start.has_same_base(base_result)) { return val * start.multiplier() / result.multiplier(); }
+                if (base_start.has_same_base(base_result.inv())) { return 1.0 / (val * start.multiplier() * result.multiplier()); }
+                return constants::invalid_conversion;
+            }     
+                            
+            // generate a conversion factor between two physics::units::units
+            template<typename UX, typename UX2>
+            double convert(const UX& start, const UX2& result) { return convert(1.0, start, result); }
+
+
+        } // namespace tools
+
+
+    } // namespace math
+
+
+    namespace physics {
+
+        // namespace defining some usefull measurement structures
+        namespace measurements {
+
+            // measurement class with a value and an unit
+            class measurement {
+
+                private:
+
+                    // =============================================                                                                                         
+                    // class members
+                    // =============================================  
+
+                    double value_{};
+
+                    units::unit unit_;
+
+
+                public:
+
+                    // =============================================                                                                                         
+                    // constructors & destructor 
+                    // =============================================  
+
+                    // default constructor
+                    measurement() noexcept {};
+
+                    // constructor from a value and a unit 
+                    explicit constexpr measurement(double val, const units::unit& unit) noexcept :
+                        value_(val), unit_(unit) {}
+
+                    // constructor from a measurement
+                    constexpr measurement(const measurement& other) :
+                        value_(other.value_), unit_(other.unit_) {}
+                        
+                    // destructor
+                    ~measurement() = default;
+
+
+                    // =============================================                                                                                         
+                    // operators
+                    // =============================================  
+
+                    measurement& operator=(const measurement& val) noexcept {
+                        value_ = (unit_ == val.units()) ? val.value() : val.value_as(unit_);
+                        return *this;
+                    }
+
+                    measurement& operator=(double val) noexcept {
+                        value_ = val;
+                        return *this;
+                    }     
+    
+                    constexpr measurement operator*(const measurement& other) const {
+                        return measurement(value_ * other.value_, unit_ * other.unit_);
+                    }
+                
+                    constexpr measurement operator*(double val) const {
+                        return measurement(value_ * val, unit_);
+                    }
+                    
+                    constexpr measurement operator/(const measurement& other) const {
+                        return measurement(value_ / other.value_, unit_ / other.unit_);
+                    }
+
+                    constexpr measurement operator/(double val) const {
+                        return measurement(value_ / val, unit_);
+                    } 
+
+                    constexpr bool operator==(double val) const {
+                        return (value_ == val) ? true : math::algebra::compare_round_equals(value_, val);
+                    }
+
+                    constexpr bool operator!=(double val) const { return !operator==(val); }
+
+                    constexpr bool operator>(double val) const { return value_ > val; }
+
+                    constexpr bool operator<(double val) const { return value_ < val; }
+
+                    constexpr bool operator>=(double val) const {
+                        return (value_ >= val) ? true : operator==(val);
+                    }
+
+                    constexpr bool operator<=(double val) const {
+                        return value_ <= val ? true : operator==(val);
+                    }
+
+                    inline bool operator==(const measurement& other) const {
+                        return value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_));
+                    }
+
+                    inline bool operator!=(const measurement& other) const {
+                        return !value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_));
+                    }
+
+                    inline bool operator>(const measurement& other) const {
+                        return value_ > other.value_as(unit_);
+                    }
+
+                    inline bool operator<(const measurement& other) const {
+                        return value_ < other.value_as(unit_);
+                    }
+
+                    inline bool operator>=(const measurement& other) const {
+                        return (value_ > other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_));
+                    }
+
+                    inline bool operator<=(const measurement& other) const {
+                        return (value_ < other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_));
+                    }       
+
+
+                    // =============================================                                                                                         
+                    // convert methods
+                    // =============================================  
+
+                    // convert a unit to have a new base
+                    measurement convert_to(const units::unit& newUnits) const {
+                        return measurement(math::tools::convert(value_, unit_, newUnits), newUnits);
+                    }
+
+                    // convert a unit into its base units
+                    constexpr measurement convert_to_base() const {
+                        return measurement(value_ * unit_.prefix_.multiplier_, unit_.as_unit());
+                    }
+
+                    // get the numerical value as a particular unit type
+                    double value_as(const units::unit& desired_units) const {
+                        return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
+                    }
+
+                    // get the numerical component of the measurement
+                    constexpr double value() const { return value_; }                        
+                    
+                    // set the numerical component of the measurement
+                    constexpr void value(const double& value) { value_ = value; }
+
+                    // get the unit component of a measurement
+                    constexpr units::unit units() const { return unit_; }
+
+                    // convert the measurement to a single unit
+                    constexpr units::unit as_unit() const { return {value_, unit_ }; }
+
+                    // print the measurement
+                    void print() const { 
+                        std::cout << value_ << " "; 
+                        unit_.print(); 
+                        std::cout << "\n"; 
+                    }
+
+
+                private:
+
+                    // does a numerical equality check on the value accounting for tolerances
+                    bool value_equality_check(double otherval) const {
+                        return (value_ == otherval) ? true : math::algebra::compare_round_equals(value_, otherval);
+                    } 
+
+
+            }; // class measurement
+
+/*
+
+            // class using a fixed unit and a value
+            class fixed_measurement {
+
+                private:
+
+                    // =============================================                                                                                         
+                    // class members
+                    // =============================================  
+
+                    double value_{0.0};  
+
+                    const units::unit unit_;  
+
+
+                public:
+
+                    // =============================================                                                                                         
+                    // constructors
+                    // =============================================  
+
+                    // constructor from a value and a unit 
+                    fixed_measurement(double val, const units::unit& base) :
+                        value_(val), units_(base) {}
+
+                    // constructor from a measurement
+                    explicit fixed_measurement(const measurement& val) :
+                        value_(val.value()), units_(val.units()) {}
+
+                    // constructor from a fixed measurement
+                    fixed_measurement(const fixed_measurement& val) :
+                        value_(val.value()), units_(val.units()) {}
+
+                    // constructor from a fixed measurement
+                    fixed_measurement(fixed_measurement&& val) noexcept :
+                        value_(val.value()), units_(val.units()) {}
+
+                    // destructor
+                    ~fixed_measurement() = default;
+
+
+                    // =============================================                                                                                         
+                    // operators
+                    // =============================================  
+
+                    measurement operator*(const measurement& other) const {
+                        return {value_ * other.value(), units_ * other.units()};
+                    }
+                    
+                    fixed_measurement operator*(double val) const {
+                        return {value_ * val, units_ };
+                    }
+
+                    measurement operator/(const measurement& other) const {
+                        return {value_ / other.value(), units_ / other.units()};
+                    }
+
+                    fixed_measurement operator/(double val) const {
+                        return {value_ / val, units_ };
+                    }
+
+                    fixed_measurement operator+(const measurement& other) const {
+                        return {value_ + other.value_as(units_), units_ };
+                    }
+
+                    fixed_measurement operator-(const measurement& other) const {
+                        return {value_ - other.value_as(units_), units_ };
+                    }
+
+                    fixed_measurement operator+(double val) const {
+                        return {value_ + val, units_ };
+                    }
+
+                    fixed_measurement operator-(double val) const {
+                        return {value_ - val, units_ };
+                    }
+
+                    fixed_measurement& operator+=(double val) {
+                        value_ += val;
+                        return *this;
+                    }
+
+                    fixed_measurement& operator-=(double val) {
+                        value_ -= val;
+                        return *this;
+                    }
+
+                    fixed_measurement& operator*=(double val) {
+                        value_ *= val;
+                        return *this;
+                    }
+
+                    fixed_measurement& operator/=(double val) {
+                        value_ /= val;
+                        return *this;
+                    }
+
+                    fixed_measurement& operator=(const measurement& val) noexcept {
+                        value_ = (units_ == val.units()) ? val.value() : val.value_as(units_);
+                        return *this;
+                    }
+
+                    fixed_measurement& operator=(const fixed_measurement& val) noexcept {
+                        value_ = (units_ == val.units()) ? val.value() : val.value_as(units_);
+                        return *this;
+                    }
+
+                    fixed_measurement& operator=(fixed_measurement&& val) noexcept {
+                        value_ = (units_ == val.units()) ? val.value() : val.value_as(units_);
+                        return *this;
+                    }
+
+                    fixed_measurement& operator=(double val) noexcept {
+                        value_ = val;
+                        return *this;
+                    }
+
+                    constexpr bool operator==(double val) const {
+                        return (value_ == val) ? true : math::op::compare_round_equals(value_, val);
+                    }
+
+                    constexpr bool operator!=(double val) const { return !operator==(val); }
+
+                    constexpr bool operator>(double val) const { return value_ > val; }
+
+                    constexpr bool operator<(double val) const { return value_ < val; }
+
+                    constexpr bool operator>=(double val) const {
+                        return (value_ >= val) ? true : operator==(val);
+                    }
+
+                    constexpr bool operator<=(double val) const {
+                        return value_ <= val ? true : operator==(val);
+                    }
+
+                    bool operator==(const fixed_measurement& val) const {
+                        return operator==((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator!=(const fixed_measurement& val) const {
+                        return operator!=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator==(const measurement& val) const {
+                        return operator==((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator!=(const measurement& val) const {
+                        return operator!=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator>(const measurement& val) const {
+                        return operator>((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator<(const measurement& val) const {
+                        return operator<((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator>=(const measurement& val) const {
+                        return operator>=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+                    bool operator<=(const measurement& val) const {
+                        return operator<=((units_ == val.units()) ? val.value() : val.value_as(units_));
+                    }
+
+
+                    // =============================================                                                                                         
+                    // convert methods
+                    // =============================================  
+
+                    // direct conversion operator
+                    operator measurement() { return {value_, units_ }; }
+
+                    // set the numerical value
+                    constexpr void value(double val) { value_ = val; }
+
+                    // get the numerical value
+                    constexpr double value() const { return value_; }
+
+                    // get the unit
+                    units::unit units() const { return units_; }
+
+                    // convert the measurement to a unit
+                    units::unit as_unit() const { return {value_, units_ }; }
+
+                    // get the numerical value as a particular unit type
+                    double value_as(const units::unit& desired_units) const {
+                        return (units_ == desired_units) ? value_ : math::op::convert(value_, units_, desired_units);
+                    }
+
+                    // convert a unit to have a new base
+                    measurement convert_to(const units::unit& newUnits) const {
+                        return { math::op::convert(value_, units_, newUnits), newUnits };
+                    }
+
+                    // convert a unit into its base units
+                    measurement convert_to_base() const {
+                        return { value_ * units_.multiplier(), units::unit(units_.base_units()) };
+                    }
+
+                    // print the measurement
+                    inline void print() const { 
+                        std::cout << value() << " "; 
+                        units_.print(); 
+                    }
+
+
+            }; // class fixed_measurement
+    
+
+            // class using fixed units, a value and an uncertain value
+            class uncertain_measurement {
+
+                private:
+
+                    // =============================================                                                                                         
+                    // class members
+                    // =============================================  
+
+                    double value_{0.0}; 
+
+                    double uncertainty_{0.0};
+
+                    units::unit units_;       
+                
+
+                public: 
+
+                    // =============================================                                                                                         
+                    // constructors
+                    // =============================================  
+
+                    // default constructor
+                    uncertain_measurement() = default;
+                    
+                    // constructor from a value, uncertainty, and unit
+                    uncertain_measurement(double val, double uncertainty_val, const units::unit& base) noexcept :
+                        value_(val), uncertainty_(uncertainty_val), units_(base) {}
+
+                    // constructpr from a value and an unit, assuming the uncertainty is 0
+                    explicit uncertain_measurement(double val, const units::unit& base) noexcept :
+                        value_(val), units_(base) {}
+
+                    // constructor from a regular measurement and uncertainty value
+                    explicit uncertain_measurement(const measurement& val, double uncertainty_val) noexcept : 
+                        value_(val.value()), uncertainty_(uncertainty_val), units_(val.units()) {}
+
+                    // constructor from a regular measurement and an uncertainty measurement
+                    explicit uncertain_measurement(const measurement& val, const measurement& uncertainty_meas) noexcept :
+                        value_(val.value()), uncertainty_(uncertainty_meas.value_as(val.units())), units_(val.units()) {}
+
+
+                    // =============================================                                                                                         
+                    // operators
+                    // =============================================  
+
+                    // compute a product and calculate the new uncertainties using the root sum of squares(rss) method
+                    uncertain_measurement operator*(const uncertain_measurement& other) const {
+                        double tval1 = uncertainty_ / value_;
+                        double tval2 = other.uncertainty_ / other.value_;
+                        double ntol = std::sqrt(tval1 * tval1 + tval2 * tval2);
+                        double nval = value_ * other.value_;
+                        return { nval, nval * ntol, units_ * other.units() };
+                    }
+
+                    // perform a multiplication with uncertain measurements using the simple method for uncertainty propagation
+                    uncertain_measurement simple_product(const uncertain_measurement& other) const {
+                        double ntol = uncertainty_ / value_ + other.uncertainty_ / other.value_;
+                        double nval = value_ * other.value_;
+                        return { nval, nval * ntol, units_ * other.units() };
+                    }
+
+                    // multiply with another measurement equivalent to uncertain_measurement multiplication with 0 uncertainty
+                    uncertain_measurement operator*(const measurement& other) const {
+                        return { 
+                            value() * other.value(),
+                            other.value() * uncertainty(),
+                            units_ * other.units() };
+                    }
+
+                    uncertain_measurement operator*(const units::unit& other) const {
+                        return { value_, uncertainty_, units_ * other};
+                    }
+
+                    uncertain_measurement operator*(double val) const {
+                        return { value_ * val, uncertainty_ * val, units_ };
+                    }
+
+                    // compute a unit division and calculate the new uncertainties using the root sum of squares(rss) method
+                    uncertain_measurement operator/(const uncertain_measurement& other) const {
+                        double tval1 = uncertainty_ / value_;
+                        double tval2 = other.uncertainty_ / other.value_;
+                        double ntol = std::sqrt(tval1 * tval1 + tval2 * tval2);
+                        double nval = value_ / other.value_;
+                        return { nval, nval * ntol, units_ / other.units() };
+                    }
+
+                    // division operator propagate uncertainty using simple method
+                    uncertain_measurement simple_divide(const uncertain_measurement& other) const {
+                        double ntol = uncertainty_ / value_ + other.uncertainty_ / other.value_;
+                        double nval = value_ / other.value_;
+                        return { nval, nval * ntol, units_ / other.units() };
+                    }
+
+                    uncertain_measurement operator/(const measurement& other) const {
+                        return { static_cast<double>(value() / other.value()),
+                            static_cast<double>(uncertainty() / other.value()), units_ / other.units() };
+                    }
+
+                    uncertain_measurement operator/(const units::unit& other) const {
+                        return { value_, uncertainty_, units_ / other};
+                    }
+
+                    uncertain_measurement operator/(double val) const {
+                        return { value_ / val, uncertainty_ / val, units_ };
+                    }
+
+                    // compute a unit addition and calculate the new uncertainties using the root sum of squares(rss) method
+                    uncertain_measurement operator+(const uncertain_measurement& other) const {
+                        auto cval = static_cast<double>(math::op::convert(other.units_, units_));
+                        double ntol = std::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
+                        return { value_ + cval * other.value_, ntol, units_ };
+                    }
+
+                    uncertain_measurement simple_add(const uncertain_measurement& other) const {
+                        auto cval = static_cast<double>(math::op::convert(other.units_, units_));
+                        double ntol = uncertainty_ + other.uncertainty_ * cval;
+                        return { value_ + cval * other.value_, ntol, units_ };
+                    }
+
+                    // compute a unit subtraction and calculate the new uncertainties using the root sum of squares(rss) method
+                    uncertain_measurement operator-(const uncertain_measurement& other) const {
+                        auto cval = static_cast<double>(math::op::convert(other.units_, units_));
+                        double ntol = std::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
+                        return { value_ - cval * other.value_, ntol, units_ };
+                    }
+
+                    // compute a unit subtraction and calculate the new uncertainties using the simple uncertainty summation method
+                    uncertain_measurement simple_subtract(const uncertain_measurement& other) const {
+                        auto cval = math::op::convert(other.units_, units_);
+                        double ntol = uncertainty_ + other.uncertainty_ * cval;
+                        return { value_ - cval * other.value_, ntol, units_ };
+                    }
+
+                    uncertain_measurement operator+(const measurement& other) const {
+                        auto cval = other.value_as(units_);
+                        return { value_ + cval, uncertainty_, units_ };
+                    }
+
+                    uncertain_measurement operator-(const measurement& other) const {
+                        auto cval = other.value_as(units_);
+                        return { value_ - cval, uncertainty_, units_ };
+                    }
+
+                    // comparison operators 
+                    bool operator==(const measurement& other) const {
+                        auto val = other.value_as(units_);
+                        if (uncertainty_ == 0.0F) { return (value_ == val) ? true : math::op::compare_round_equals(value_, val); }
+                        return (val >= (value_ - uncertainty_) && val <= (value_ + uncertainty_));
+                    }
+
+                    bool operator>(const measurement& other) const {
+                        return value_ > other.value_as(units_);
+                    }
+
+                    bool operator<(const measurement& other) const {
+                        return value_ < other.value_as(units_);
+                    }
+
+                    bool operator>=(const measurement& other) const {
+                        auto val = other.value_as(units_);
+                        return (value() >= val) ? true : operator==(measurement(val, units_));
+                    }
+
+                    bool operator<=(const measurement& other) const {
+                        auto val = other.value_as(units_);
+                        return (value() <= val) ? true : operator==(measurement(val, units_));
+                    }
+
+                    bool operator!=(const measurement& other) const {
+                        return !operator==(other);
+                    }
+
+                    bool operator==(const uncertain_measurement& other) const {
+                        auto zval = simple_subtract(other);
+                        return (zval == measurement(0.0, units_));
+                    }
+
+                    bool operator>(const uncertain_measurement& other) const {
+                        return value_ > other.value_as(units_);
+                    }
+
+                    bool operator<(const uncertain_measurement& other) const {
+                        return value_ < other.value_as(units_);
+                    }
+
+                    bool operator>=(const uncertain_measurement& other) const {
+                        auto zval = simple_subtract(other);
+                        return (zval.value_ >= 0.0F) ? true :
+                                                    (zval == measurement(0.0, units_));
+                    }
+
+                    bool operator<=(const uncertain_measurement& other) const {
+                        auto zval = simple_subtract(other);
+                        return (zval.value_ <= 0.0F) ? true : (zval == measurement(0.0, units_));
+                    }
+
+                    bool operator!=(const uncertain_measurement& other) const {
+                        return !operator==(other);
+                    }
+
+
+                    // =============================================                                                                                         
+                    // get and set methods
+                    // =============================================  
+                    
+                    // set the uncertainty
+                    constexpr inline void uncertainty(const double& uncert) { uncertainty_ = uncert; }
+
+                    // set the uncertainty
+                    uncertain_measurement& uncertainty(double newUncertainty) {
+                        uncertainty_ = newUncertainty;
+                        return *this;
+                    }
+
+                    // set the uncertainty
+                    uncertain_measurement& uncertainty(const measurement& newUncertainty) {
+                        uncertainty_ = newUncertainty.value_as(units_);
+                        return *this;
+                    }
+
+                    // get the uncertainty as a separate measurement
+                    measurement uncertainty_measurement() const { return { uncertainty(), units_ }; }
+
+                    // // cast operator to a measurement
+                    operator measurement() const { return { value(), units_ }; }
+
+                    // get the numerical value 
+                    constexpr double value() const { return value_; }
+
+                    // get the numerical value of the uncertainty
+                    constexpr double uncertainty() const { return uncertainty_; }
+
+                    // get the underlying units value
+                    units::unit units() const { return units_; }
+
+                    // get the numerical value as a particular unit type
+                    double value_as(const units::unit& desired_units) const {
+                        return (units_ == desired_units) ? value_ : math::op::convert(value_, units_, desired_units);
+                    }
+
+                    // get the numerical value of the uncertainty as a particular unit
+                    double uncertainty_as(const units::unit& desired_units) const {
+                        return (units_ == desired_units) ? uncertainty_ : math::op::convert(uncertainty_, units_, desired_units);
+                    }
+
+                    // convert a unit to have a new base
+                    uncertain_measurement convert_to(const units::unit& newUnits) const {
+                        auto cval = math::op::convert(units_, newUnits);
+                        return { cval * value_, uncertainty_ * cval, newUnits };
+                    }
+
+                    // print the uncertain measurement
+                    inline void print() const { 
+                        std::cout << value() << " ± " << uncertainty() << " "; 
+                        units_.print(); 
+                    }
+
+
+            }; // class uncertain_measurement
+
+*/ 
+
+        } // namespace measurements
 
 
     } // namespace physics
