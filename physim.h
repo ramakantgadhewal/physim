@@ -1818,142 +1818,135 @@ namespace physim {
             }; // class unit     
 
 
-            // namespace with some SI units 
-            namespace SI {
-                
-                // base
-                namespace base {
+            // base
+            namespace base {
 
-                    constexpr unit_data metre(1, 0, 0, 0, 0, 0, 0);
-                    constexpr unit_data second(0, 1, 0, 0, 0, 0, 0);
-                    constexpr unit_data kilogram(0, 0, 1, 0, 0, 0, 0);
-                    constexpr unit_data Ampere(0, 0, 0, 1, 0, 0, 0);
-                    constexpr unit_data Kelvin(0, 0, 0, 0, 1, 0, 0);
-                    constexpr unit_data mol(0, 0, 0, 0, 0, 1, 0);
-                    constexpr unit_data candela(0, 0, 0, 0, 0, 0, 1);
+                constexpr unit_data metre(1, 0, 0, 0, 0, 0, 0);
+                constexpr unit_data second(0, 1, 0, 0, 0, 0, 0);
+                constexpr unit_data kilogram(0, 0, 1, 0, 0, 0, 0);
+                constexpr unit_data Ampere(0, 0, 0, 1, 0, 0, 0);
+                constexpr unit_data Kelvin(0, 0, 0, 0, 1, 0, 0);
+                constexpr unit_data mol(0, 0, 0, 0, 0, 1, 0);
+                constexpr unit_data candela(0, 0, 0, 0, 0, 0, 1);
 
-                } // namespace SI
-
-
-                // prefix
-                namespace prefix {
-
-                    constexpr unit_prefix deci(1e-1); 
-                    constexpr unit_prefix centi(1e-2); 
-                    constexpr unit_prefix milli(1e-3); 
-                    constexpr unit_prefix micro(1e-6); 
-                    constexpr unit_prefix nano(1e-9); 
-                    constexpr unit_prefix pico(1e-12); 
-                    constexpr unit_prefix femto(1e-15); 
-                    constexpr unit_prefix atto(1e-18); 
-                    constexpr unit_prefix zepto(1e-21); 
-                    constexpr unit_prefix yocto(1e-24); 
-                    constexpr unit_prefix hecto(1e2); 
-                    constexpr unit_prefix kilo(1e3); 
-                    constexpr unit_prefix mega(1e6); 
-                    constexpr unit_prefix giga(1e9); 
-                    constexpr unit_prefix tera(1e12); 
-                    constexpr unit_prefix peta(1e15); 
-                    constexpr unit_prefix exa(1e18); 
-                    constexpr unit_prefix zetta(1e21); 
-                    constexpr unit_prefix yotta(1e24); 
-
-                } // namespace prefix
-    
-
-                // SI units
-                unit m = unit(base::metre);
-                unit s = unit(base::second);
-                unit kg = unit(base::kilogram);
-                unit A = unit(base::Ampere);
-                unit K = unit(base::Kelvin);
-                unit mol = unit(base::mol); 
-                unit cd = unit(base::candela);
-
-
-                // special units 
-                namespace special {
-
-                    // some unitless numbers
-                    unit one;
-                    unit hundred = unit(100.0, one);
-                    unit ten = unit(10.0, one);
-                    unit percent(one, 0.01);
-                    unit infinite(unit_data(0, 0, 0, 0, 0, 0, 0), math::constants::infinity);
-                    unit neginfinite(unit_data(0, 0, 0, 0, 0, 0, 0), -math::constants::infinity);
-                    unit nan(unit_data(0, 0, 0, 0, 0, 0, 0), math::constants::invalid_conversion);
-
-                    // some specialized units
-                    unit defunit(unit_data(0, 0, 0, 0, 0, 0, 0));
-                    unit invalid(unit_data(nullptr), math::constants::invalid_conversion);
-                    unit error(unit_data(nullptr));                
-                
-                } // namespace special
-                
-/*
-                // derived_units
-                namespace derived_units {
-
-                    unit hertz(unit_data(0, 0, -1, 0, 0, 0, 0), "Hz");
-                    unit Hz = hertz;
-                    unit volt(unit_data(2, 1, -3, -1, 0, 0, 0), "V");
-                    unit V = volt;
-                    unit newton(unit_data(1, 1, -2, 0, 0, 0, 0), "N");
-                    unit N = newton;
-                    unit Pa(unit_data(-1, 1, -2, 0, 0, 0, 0), "Pa");
-                    unit pascal = Pa;
-                    unit joule(unit_data(2, 1, -2, 0, 0, 0, 0), "J");
-                    unit J = joule;
-                    unit watt(unit_data(2, 1, -3, 0, 0, 0, 0), "W");
-                    unit W = watt;
-                    unit coulomb(unit_data(0, 0, 1, 1, 0, 0, 0), "C");
-                    unit C = coulomb;
-                    unit farad(unit_data(-2, -1, 4, 2, 0, 0, 0), "F");
-                    unit F = farad;
-                    unit weber(unit_data(2, 1, -2, -1, 0, 0, 0), "Wb");
-                    unit Wb = weber;
-                    unit tesla(unit_data(0, 1, -2, -1, 0, 0, 0), "T");
-                    unit T = tesla;
-                    unit henry(unit_data(2, 1, -2, -2, 0, 0, 0), "H");                    
-                    unit H = henry;
-                    unit mps(m / s);
-                    unit mpss(m / s.pow(2)); 
-
-                } // namespace derived_units
-                
-
-
-                // // distance units
-                // unit km(SI_prefix::kilo, m);
-                // unit dm(SI_prefix::deci, m);
-                // unit cm(SI_prefix::centi, m);
-                // unit mm(SI_prefix::milli, m);
-                // unit um(SI_prefix::micro, m);
-                // unit nm(SI_prefix::nano, m);
-
-                // // time units
-                // unit ms(SI_prefix::milli, s);
-                // unit us(SI_prefix::micro, s);
-                // unit ns(SI_prefix::nano, s);
-                // unit min(60.0, s);
-                // unit hr(60.0, min, "hr");
-                // unit day(24.0, hr, "day");
-                // unit yr(8760.0, hr, "yr");  // median calendar year;
-                // unit sday(365.24 / 366.24, day, "sday");  // sidereal day
-                // unit syr(365.256363004, day, "syr");  // sidereal year
-
-                // // mass units
-                // unit g(SI_prefix::milli, kg, "g");
-                // unit mg(SI_prefix::micro, kg, "mg");
-
-                // // volume units
-                // unit L{1, dm.pow(3), "L"};
-                // unit dL{0.1, L, "dL"};
-                // unit cL{0.01, L, "cL"};
-                // unit mL{0.001, L, "mL"};                    
-
-*/
             } // namespace SI
+
+
+            // prefix
+            namespace prefix {
+
+                constexpr unit_prefix deci(1e-1); 
+                constexpr unit_prefix centi(1e-2); 
+                constexpr unit_prefix milli(1e-3); 
+                constexpr unit_prefix micro(1e-6); 
+                constexpr unit_prefix nano(1e-9); 
+                constexpr unit_prefix pico(1e-12); 
+                constexpr unit_prefix femto(1e-15); 
+                constexpr unit_prefix atto(1e-18); 
+                constexpr unit_prefix zepto(1e-21); 
+                constexpr unit_prefix yocto(1e-24); 
+                constexpr unit_prefix hecto(1e2); 
+                constexpr unit_prefix kilo(1e3); 
+                constexpr unit_prefix mega(1e6); 
+                constexpr unit_prefix giga(1e9); 
+                constexpr unit_prefix tera(1e12); 
+                constexpr unit_prefix peta(1e15); 
+                constexpr unit_prefix exa(1e18); 
+                constexpr unit_prefix zetta(1e21); 
+                constexpr unit_prefix yotta(1e24); 
+
+            } // namespace prefix
+
+
+            // SI units
+            unit m = unit(base::metre);
+            unit s = unit(base::second);
+            unit kg = unit(base::kilogram);
+            unit A = unit(base::Ampere);
+            unit K = unit(base::Kelvin);
+            unit mol = unit(base::mol); 
+            unit cd = unit(base::candela);
+
+
+            // special units 
+            namespace special {
+
+                // some unitless numbers
+                unit one;
+                unit hundred = unit(100.0, one);
+                unit ten = unit(10.0, one);
+                unit percent(one, 0.01);
+                unit infinite(unit_data(0, 0, 0, 0, 0, 0, 0), math::constants::infinity);
+                unit neginfinite(unit_data(0, 0, 0, 0, 0, 0, 0), -math::constants::infinity);
+                unit nan(unit_data(0, 0, 0, 0, 0, 0, 0), math::constants::invalid_conversion);
+
+                // some specialized units
+                unit defunit(unit_data(0, 0, 0, 0, 0, 0, 0));
+                unit invalid(unit_data(nullptr), math::constants::invalid_conversion);
+                unit error(unit_data(nullptr));                
+            
+            } // namespace special
+            
+
+            // derived_units
+            namespace derived_units {
+
+                // unit hertz(unit_data(0, 0, -1, 0, 0, 0, 0), "Hz");
+                // unit Hz = hertz;
+                // unit volt(unit_data(2, 1, -3, -1, 0, 0, 0), "V");
+                // unit V = volt;
+                // unit newton(unit_data(1, 1, -2, 0, 0, 0, 0), "N");
+                // unit N = newton;
+                // unit Pa(unit_data(-1, 1, -2, 0, 0, 0, 0), "Pa");
+                // unit pascal = Pa;
+                // unit joule(unit_data(2, 1, -2, 0, 0, 0, 0), "J");
+                // unit J = joule;
+                // unit watt(unit_data(2, 1, -3, 0, 0, 0, 0), "W");
+                // unit W = watt;
+                // unit coulomb(unit_data(0, 0, 1, 1, 0, 0, 0), "C");
+                // unit C = coulomb;
+                // unit farad(unit_data(-2, -1, 4, 2, 0, 0, 0), "F");
+                // unit F = farad;
+                // unit weber(unit_data(2, 1, -2, -1, 0, 0, 0), "Wb");
+                // unit Wb = weber;
+                // unit tesla(unit_data(0, 1, -2, -1, 0, 0, 0), "T");
+                // unit T = tesla;
+                // unit henry(unit_data(2, 1, -2, -2, 0, 0, 0), "H");                    
+                // unit H = henry;
+                unit mps(m / s);
+                unit mpss(m / s.pow(2)); 
+
+            } // namespace derived_units
+            
+
+            // distance units
+            unit km(prefix::kilo, m);
+            unit dm(prefix::deci, m);
+            unit cm(prefix::centi, m);
+            unit mm(prefix::milli, m);
+            unit um(prefix::micro, m);
+            unit nm(prefix::nano, m);
+
+            // time units
+            unit ms(prefix::milli, s);
+            unit us(prefix::micro, s);
+            unit ns(prefix::nano, s);
+            unit min(60.0, s);
+            // unit hr(60.0, min, "hr");
+            // unit day(24.0, hr, "day");
+            // unit yr(8760.0, hr, "yr");  // median calendar year;
+            // unit sday(365.24 / 366.24, day, "sday");  // sidereal day
+            // unit syr(365.256363004, day, "syr");  // sidereal year
+
+            // // mass units
+            // unit g(prefix::milli, kg, "g");
+            // unit mg(prefix::micro, kg, "mg");
+
+            // // volume units
+            // unit L{1, dm.pow(3), "L"};
+            // unit dL{0.1, L, "dL"};
+            // unit cL{0.01, L, "cL"};
+            // unit mL{0.001, L, "mL"};                    
 
 
         } // namespace units
@@ -2039,7 +2032,7 @@ namespace physim {
                     measurement() noexcept {};
 
                     // constructor from a value and a unit 
-                    explicit constexpr measurement(double val, const units::unit& unit) noexcept :
+                    explicit constexpr measurement(const double& val, const units::unit& unit) noexcept :
                         value_(val), unit_(unit) {}
 
                     // constructor from a measurement
@@ -2059,7 +2052,7 @@ namespace physim {
                         return *this;
                     }
 
-                    measurement& operator=(double val) noexcept {
+                    measurement& operator=(const double& val) noexcept {
                         value_ = val;
                         return *this;
                     }     
@@ -2068,7 +2061,7 @@ namespace physim {
                         return measurement(value_ * other.value_, unit_ * other.unit_);
                     }
                 
-                    constexpr measurement operator*(double val) const {
+                    constexpr measurement operator*(const double& val) const {
                         return measurement(value_ * val, unit_);
                     }
                     
@@ -2076,25 +2069,25 @@ namespace physim {
                         return measurement(value_ / other.value_, unit_ / other.unit_);
                     }
 
-                    constexpr measurement operator/(double val) const {
+                    constexpr measurement operator/(const double& val) const {
                         return measurement(value_ / val, unit_);
                     } 
 
-                    constexpr bool operator==(double val) const {
+                    constexpr bool operator==(const double& val) const {
                         return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
                     }
 
-                    constexpr bool operator!=(double val) const { return !operator==(val); }
+                    constexpr bool operator!=(const double& val) const { return !operator==(val); }
 
-                    constexpr bool operator>(double val) const { return value_ > val; }
+                    constexpr bool operator>(const double& val) const { return value_ > val; }
 
-                    constexpr bool operator<(double val) const { return value_ < val; }
+                    constexpr bool operator<(const double& val) const { return value_ < val; }
 
-                    constexpr bool operator>=(double val) const {
+                    constexpr bool operator>=(const double& val) const {
                         return (value_ >= val) ? true : operator==(val);
                     }
 
-                    constexpr bool operator<=(double val) const {
+                    constexpr bool operator<=(const double& val) const {
                         return value_ <= val ? true : operator==(val);
                     }
 
@@ -2161,7 +2154,8 @@ namespace physim {
 
                     // print the measurement
                     void print() const { 
-                        std::cout << value_ << " "; 
+                        if (unit_.multiplier() != 1) std::cout << std::setprecision((int)-log10(unit_.multiplier())) << value_ << " "; 
+                        else std::cout << value_ << " ";
                         unit_.print(); 
                         std::cout << "\n"; 
                     }
@@ -2231,36 +2225,36 @@ namespace physim {
                         return *this;
                     }
 
-                    fixed_measurement& operator=(double val) noexcept {
+                    fixed_measurement& operator=(const double& val) noexcept {
                         value_ = val;
                         return *this;
                     }     
 
-                    fixed_measurement& operator+=(double val) {
+                    fixed_measurement& operator+=(const double& val) {
                         value_ += val;
                         return *this;
                     }
 
-                    fixed_measurement& operator-=(double val) {
+                    fixed_measurement& operator-=(const double& val) {
                         value_ -= val;
                         return *this;
                     }
 
-                    fixed_measurement& operator*=(double val) {
+                    fixed_measurement& operator*=(const double& val) {
                         value_ *= val;
                         return *this;
                     }
 
-                    fixed_measurement& operator/=(double val) {
+                    fixed_measurement& operator/=(const double& val) {
                         value_ /= val;
                         return *this;
                     }
 
-                    constexpr fixed_measurement operator*(double val) const {
+                    constexpr fixed_measurement operator*(const double& val) const {
                         return fixed_measurement(value_ * val, unit_);
                     }
 
-                    constexpr fixed_measurement operator/(double val) const {
+                    constexpr fixed_measurement operator/(const double& val) const {
                         return fixed_measurement(value_ / val, unit_);
                     }
 
@@ -2268,7 +2262,7 @@ namespace physim {
                         return fixed_measurement(value_ + other.value_as(unit_), unit_);
                     }
 
-                    constexpr fixed_measurement operator+(double val) const {
+                    constexpr fixed_measurement operator+(const double& val) const {
                         return fixed_measurement(value_ + val, unit_);
                     }
 
@@ -2276,25 +2270,25 @@ namespace physim {
                         return fixed_measurement(value_ - other.value_as(unit_), unit_);
                     }
 
-                    constexpr fixed_measurement operator-(double val) const {
+                    constexpr fixed_measurement operator-(const double& val) const {
                         return fixed_measurement(value_ - val, unit_);
                     }
 
-                    constexpr bool operator==(double val) const {
+                    constexpr bool operator==(const double& val) const {
                         return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
                     }
 
-                    constexpr bool operator!=(double val) const { return !operator==(val); }
+                    constexpr bool operator!=(const double& val) const { return !operator==(val); }
 
-                    constexpr bool operator>(double val) const { return value_ > val; }
+                    constexpr bool operator>(const double& val) const { return value_ > val; }
 
-                    constexpr bool operator<(double val) const { return value_ < val; }
+                    constexpr bool operator<(const double& val) const { return value_ < val; }
 
-                    constexpr bool operator>=(double val) const {
+                    constexpr bool operator>=(const double& val) const {
                         return (value_ >= val) ? true : operator==(val);
                     }
 
-                    constexpr bool operator<=(double val) const {
+                    constexpr bool operator<=(const double& val) const {
                         return value_ <= val ? true : operator==(val);
                     }
 
@@ -2372,7 +2366,8 @@ namespace physim {
 
                     // print the measurement
                     void print() const { 
-                        std::cout << value_ << " "; 
+                        if (unit_.multiplier() != 1) std::cout << std::setprecision((int)-log10(unit_.multiplier())) << value_ << " "; 
+                        else std::cout << value_ << " ";
                         unit_.print(); 
                         std::cout << "\n"; 
                     }
@@ -2436,7 +2431,7 @@ namespace physim {
                     uncertain_measurement operator*(const uncertain_measurement& other) const {
                         double tval1 = uncertainty_ / value_;
                         double tval2 = other.uncertainty_ / other.value_;
-                        double ntol = std::sqrt(tval1 * tval1 + tval2 * tval2);
+                        double ntol = math::algebra::sqrt(tval1 * tval1 + tval2 * tval2);
                         double nval = value_ * other.value_;
                         return uncertain_measurement(nval, nval * ntol, unit_ * other.units());
                     }
@@ -2457,7 +2452,7 @@ namespace physim {
                         return uncertain_measurement(value_, uncertainty_, unit_ * other);
                     }
 
-                    uncertain_measurement operator*(double val) const {
+                    uncertain_measurement operator*(const double& val) const {
                         return uncertain_measurement(value_ * val, uncertainty_ * val, unit_);
                     }
 
@@ -2465,7 +2460,7 @@ namespace physim {
                     uncertain_measurement operator/(const uncertain_measurement& other) const {
                         double tval1 = uncertainty_ / value_;
                         double tval2 = other.uncertainty_ / other.value_;
-                        double ntol = std::sqrt(tval1 * tval1 + tval2 * tval2);
+                        double ntol = math::algebra::sqrt(tval1 * tval1 + tval2 * tval2);
                         double nval = value_ / other.value_;
                         return uncertain_measurement(nval, nval * ntol, unit_ / other.units());
                     }
@@ -2486,14 +2481,14 @@ namespace physim {
                         return uncertain_measurement(value_, uncertainty_, unit_ / other);
                     }
 
-                    uncertain_measurement operator/(double val) const {
+                    uncertain_measurement operator/(const double& val) const {
                         return uncertain_measurement(value_ / val, uncertainty_ / val, unit_);
                     }
 
                     // compute a unit addition and calculate the new uncertainties using the root sum of squares(rss) method
                     uncertain_measurement operator+(const uncertain_measurement& other) const {
                         auto cval = static_cast<double>(math::tools::convert(other.unit_, unit_));
-                        double ntol = std::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
+                        double ntol = math::algebra::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
                         return uncertain_measurement(value_ + cval * other.value_, ntol, unit_);
                     }
 
@@ -2506,7 +2501,7 @@ namespace physim {
                     // compute a unit subtraction and calculate the new uncertainties using the root sum of squares(rss) method
                     uncertain_measurement operator-(const uncertain_measurement& other) const {
                         auto cval = static_cast<double>(math::tools::convert(other.unit_, unit_));
-                        double ntol = std::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
+                        double ntol = math::algebra::sqrt(uncertainty_ * uncertainty_ + cval * cval * other.uncertainty_ * other.uncertainty_);
                         return uncertain_measurement(value_ - cval * other.value_, ntol, unit_);
                     }
 
@@ -2593,7 +2588,7 @@ namespace physim {
                     constexpr inline void uncertainty(const double& uncert) { uncertainty_ = uncert; }
 
                     // set the uncertainty
-                    uncertain_measurement& uncertainty(double newUncertainty) {
+                    constexpr uncertain_measurement& uncertainty(double newUncertainty) {
                         uncertainty_ = newUncertainty;
                         return *this;
                     }
@@ -2637,7 +2632,8 @@ namespace physim {
 
                     // print the uncertain measurement
                     void print() const { 
-                        std::cout << value() << " ± " << uncertainty() << " "; 
+                        if (unit_.multiplier() != 1) std::cout << std::setprecision((int)-log10(unit_.multiplier())) << value() << " ± " << uncertainty() << " "; 
+                        else std::cout << value() << " ± " << uncertainty() << " "; 
                         unit_.print(); 
                         std::cout << "\n";
                     }
@@ -2650,6 +2646,223 @@ namespace physim {
 
 
     } // namespace physics
+
+
+    namespace math {
+
+        // namespace defining some usefull operation
+        namespace algebra {
+
+            // generate a unit which is an integer power of another
+            constexpr physics::units::unit pow(const physics::units::unit& u, const int& power) { return u.pow(power); }
+
+            // generate the square of an physics::units::unit
+            constexpr physics::units::unit square(const physics::units::unit& u) { return u.pow(2); }
+
+            // generate the cube of an physics::units::unit
+            constexpr physics::units::unit cube(const physics::units::unit& u) { return u.pow(3); }
+
+            // generate the root of an physics::units::unit
+            physics::units::unit root(const physics::units::unit& un, const int& power) {
+                if (power == 0) { return physics::units::special::one; }
+                if (un.multiplier() < 0.0 && power % 2 == 0) { return physics::units::special::invalid; }
+                return physics::units::unit(un.base_units().root(power), root(un.multiplier(), power));
+            }
+
+            // generate the square root of an physics::units::unit
+            inline physics::units::unit sqrt(const physics::units::unit& u) { return sqrt(u); }
+
+            // generate the cubic root of an physics::units::unit
+            inline physics::units::unit cbrt(const physics::units::unit& u) { return cbrt(u); }
+
+            constexpr physics::measurements::measurement operator*(const double& val, const physics::measurements::measurement& meas) { return meas * val; }
+
+            constexpr physics::measurements::measurement operator*(const double& val, const physics::units::unit& unit_base) { return physics::measurements::measurement(val, unit_base); }
+
+            constexpr physics::measurements::measurement operator*(const physics::units::unit& unit_base, const double& val) { return physics::measurements::measurement(val, unit_base); }
+
+            constexpr physics::measurements::fixed_measurement operator*(const double& v1, const physics::measurements::fixed_measurement& v2) { return physics::measurements::fixed_measurement(v1 * v2.value(), v2.units()); }
+
+            constexpr physics::measurements::fixed_measurement operator*(const physics::measurements::fixed_measurement& v2, const double& v1) { return physics::measurements::fixed_measurement(v1 * v2.value(), v2.units()); }
+
+            inline physics::measurements::uncertain_measurement operator*(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) { return v2.operator*(v1); }
+
+            inline physics::measurements::uncertain_measurement operator*(const double& v1, const physics::measurements::uncertain_measurement& v2) { return v2.operator*(v1); }
+
+            inline physics::measurements::uncertain_measurement operator*(const physics::measurements::uncertain_measurement& v2, const double& v1) { return v2.operator*(v1); }
+
+
+            constexpr physics::measurements::measurement operator/(const double& val, const physics::measurements::measurement& meas) {
+                return physics::measurements::measurement(val / meas.value(), meas.units().inv());
+            }
+
+            constexpr physics::measurements::measurement operator/(const physics::measurements::measurement& meas, const double& val) {
+                return physics::measurements::measurement(val / meas.value(), meas.units().inv());
+            }
+            
+            constexpr physics::measurements::measurement operator/(const double& val, const physics::units::unit& unit_base) {
+                return physics::measurements::measurement(val, unit_base.inv());
+            }
+            
+            constexpr physics::measurements::measurement operator/(const physics::units::unit& unit_base, const double& val) {
+                return physics::measurements::measurement(1.0 / val, unit_base);
+            }
+
+            constexpr physics::measurements::fixed_measurement operator/(const double& v1, const physics::measurements::fixed_measurement& v2) {
+                return physics::measurements::fixed_measurement(v1 / v2.value(), v2.units().inv());
+            }                
+            
+            constexpr physics::measurements::fixed_measurement operator/(const physics::measurements::fixed_measurement& v2, const double& v1) {
+                return physics::measurements::fixed_measurement(v1 / v2.value(), v2.units().inv());
+            }
+
+            physics::measurements::uncertain_measurement operator/(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+                double ntol = v2.uncertainty() / v2.value();
+                double nval = v1.value() / v2.value();
+                return physics::measurements::uncertain_measurement(nval, nval * ntol, v1.units() / v2.units());
+            }
+
+            physics::measurements::uncertain_measurement operator/(const double& v1, const physics::measurements::uncertain_measurement& v2) {
+                double ntol = v2.uncertainty() / v2.value();
+                double nval = v1 / v2.value();
+                return physics::measurements::uncertain_measurement(nval, nval * ntol, v2.units().inv());
+            }
+
+            physics::measurements::uncertain_measurement operator/(const int& v1, const physics::measurements::uncertain_measurement& v2) {
+                double ntol = v2.uncertainty() / v2.value();
+                double nval = static_cast<double>(v1) / v2.value();
+                return physics::measurements::uncertain_measurement(nval, nval * ntol, v2.units().inv());
+            }
+
+
+            constexpr physics::measurements::fixed_measurement operator+(const double& v1, const physics::measurements::fixed_measurement& v2) {
+                return physics::measurements::fixed_measurement(v1 + v2.value(), v2.units());
+            }
+
+            constexpr physics::measurements::fixed_measurement operator-(const double& v1, const physics::measurements::fixed_measurement& v2) {
+                return physics::measurements::fixed_measurement(v1 - v2.value(), v2.units());
+            }
+            
+            physics::measurements::uncertain_measurement operator+(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+                double cval = math::tools::convert(v2.units(), v1.units());
+                double ntol = v2.uncertainty() * cval;
+                return physics::measurements::uncertain_measurement(v1.value() + cval * v2.value(), ntol, v1.units());
+            }
+
+            physics::measurements::uncertain_measurement operator-(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+                double cval = math::tools::convert(v2.units(), v1.units());
+                double ntol = v2.uncertainty() * cval;
+                return physics::measurements::uncertain_measurement(v1.value() - cval * v2.value(), ntol, v1.units());
+            }
+
+
+            constexpr physics::measurements::measurement pow(const physics::measurements::measurement& meas, const int& power) {
+                return physics::measurements::measurement{ std::pow(meas.value(), power), meas.units().pow(power) };
+            }
+
+            constexpr physics::measurements::fixed_measurement pow(const physics::measurements::fixed_measurement& meas, const int& power) {
+                return physics::measurements::fixed_measurement{std::pow(meas.value(), power), meas.units().pow(power)};
+            }
+
+            physics::measurements::uncertain_measurement pow(const physics::measurements::uncertain_measurement& meas, const int& power) {
+                auto new_value = std::pow(meas.value(), power);
+                auto new_tol = ((power >= 0) ? power : -power) * new_value * meas.uncertainty() / meas.value();
+                return physics::measurements::uncertain_measurement(new_value, new_tol, meas.units().pow(power));                    
+            }
+
+            constexpr physics::measurements::measurement square(const physics::measurements::measurement& meas) { return square(meas); }
+            
+            constexpr physics::measurements::fixed_measurement square(const physics::measurements::fixed_measurement& meas) { return square(meas); }
+
+            constexpr physics::measurements::uncertain_measurement square(const physics::measurements::uncertain_measurement& meas) { return square(meas); }
+
+            constexpr physics::measurements::measurement cube(const physics::measurements::measurement& meas) { return cube(meas); }
+            
+            constexpr physics::measurements::fixed_measurement cube(const physics::measurements::fixed_measurement& meas) { return cube(meas); }
+            
+            constexpr physics::measurements::uncertain_measurement cube(const physics::measurements::uncertain_measurement& meas) { return cube(meas); }
+
+
+            physics::measurements::measurement root(const physics::measurements::measurement& meas, const int& power) {
+                return physics::measurements::measurement(root(meas.value(), power), root(meas.units(), power));
+            }
+
+            physics::measurements::fixed_measurement root(const physics::measurements::fixed_measurement& meas, const int& power) {
+                return physics::measurements::fixed_measurement(root(meas.value(), power), root(meas.units(), power));
+            }
+
+            physics::measurements::uncertain_measurement root(const physics::measurements::uncertain_measurement& um, const int& power) {
+                auto new_value = root(um.value(), power);
+                auto new_tol = new_value * um.uncertainty() / (static_cast<double>((power >= 0) ? power : -power) * um.value());
+                return physics::measurements::uncertain_measurement(new_value, new_tol, root(um.units(), power));
+            }
+
+            inline physics::measurements::measurement sqrt(const physics::measurements::measurement& meas) { return sqrt(meas); }
+            
+            inline physics::measurements::fixed_measurement sqrt(const physics::measurements::fixed_measurement& meas) { return sqrt(meas); }
+
+            inline physics::measurements::uncertain_measurement sqrt(const physics::measurements::uncertain_measurement& meas) { return sqrt(meas); }            
+
+            inline physics::measurements::measurement cbrt(const physics::measurements::measurement& meas) { return cbrt(meas); }
+
+            inline physics::measurements::fixed_measurement cbrt(const physics::measurements::fixed_measurement& meas) { return cbrt(meas); }
+
+            inline physics::measurements::uncertain_measurement cbrt(const physics::measurements::uncertain_measurement& meas) { return cbrt(meas); }
+
+
+            constexpr bool operator==(const double& val, const physics::measurements::fixed_measurement& v2) {
+                return v2 == val;
+            }
+
+            constexpr bool operator!=(const double& val, const physics::measurements::fixed_measurement& v2) {
+                return v2 != val;
+            }
+
+            constexpr bool operator>(const double& val, const physics::measurements::fixed_measurement& v2) {
+                return val > v2.value();
+            }
+
+            constexpr bool operator<(const double& val, const physics::measurements::fixed_measurement& v2) {
+                return val < v2.value();
+            }
+
+            constexpr bool operator>=(const double& val, const physics::measurements::fixed_measurement& v2) {
+                return (val >= v2.value()) ? true : (v2 == val);
+            }
+
+            constexpr bool operator<=(const double& val, const physics::measurements::fixed_measurement& v2) {
+                return (val <= v2.value()) ? true : (v2 == val);
+            }
+
+            inline bool operator==(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
+                return v2 == other;
+            }
+
+            inline bool operator!=(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
+                return v2 != other;
+            }
+
+            constexpr bool operator>(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
+                return other.value() > v2.value();
+            }
+
+            constexpr bool operator<(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
+                return other.value() < v2.value();
+            }
+
+            constexpr bool operator>=(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
+                return (other > v2) ? true : (v2 == other);
+            }
+
+            constexpr bool operator<=(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
+                return (other < v2) ? true : (v2 == other);
+            }
+
+
+        } // namespace algebra
+
+
+    } // namespace math
 
 
 } // namespace physim
