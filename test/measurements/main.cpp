@@ -18,7 +18,7 @@ int main() {
 
     std::cout << "\nmeasurements\n";
     measurement meas1(336, units::m); 
-    measurement meas2(3, units::ms); 
+    measurement meas2(3, units::SI_derived::mps); 
     measurement meas3 = meas1 / meas2; 
 
     meas1.print(); 

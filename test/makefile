@@ -1,10 +1,10 @@
 CXXFLAGS = -g -Wall --pedantic -std=c++17
+DIR = -I ../  
 
 compile: compile.cpp
-	g++ $(CXXFLAGS) $< -o compile
-	rm compile
+	g++ $< -o compile $(CXXFLAGS) $(DIR)
 
-execute: main.cpp	
-	g++ $(CXXFLAGS) $< -o main
-	./main
-	rm main
+execute: compile.cpp	
+	g++ $(CXXFLAGS) $< -o compile
+	./compile
+	rm compile

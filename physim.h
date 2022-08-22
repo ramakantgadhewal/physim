@@ -136,23 +136,23 @@ namespace physim {
                     case -1: 
                         return T{1.0} / value;
                     case 2: 
-                        if (value < T{0.0}) { return constants::invalid_conversion; }
+                        if (value < T{}) { return constants::invalid_conversion; }
                         else return std::sqrt(value);
                     case -2:
-                        if (value < T{0.0}) { return constants::invalid_conversion; }
+                        if (value < T{}) { return constants::invalid_conversion; }
                         else return std::sqrt(T{1.0} / value);
                     case 3: 
                         return std::cbrt(value);
                     case -3: 
                         return std::cbrt(T{1.0} / value);
                     case 4: 
-                        if (value < T{0.0}) { return constants::invalid_conversion; }
+                        if (value < T{}) { return constants::invalid_conversion; }
                         else return std::sqrt(std::sqrt(value));
                     case -4: 
-                        if (value < T{0.0}) { return constants::invalid_conversion; }
+                        if (value < T{}) { return constants::invalid_conversion; }
                         else return std::sqrt(std::sqrt(T{1.0} / value));
                     default:
-                        if (value < T{0.0} && power % 2 == 0) { return constants::invalid_conversion; }
+                        if (value < T{} && power % 2 == 0) { return constants::invalid_conversion; }
                         else return std::pow(value, T{1.0} / static_cast<T>(power));
                 }
             }
@@ -267,7 +267,7 @@ namespace physim {
                     // =============================================
                 
                     void print_eval(const double& x, const double& precision = 1.e-6) const {
-                        std::cout << "f (" << x << ") = " << std::setprecision((int)-log10(precision)) << eval(x) << "\n"; 
+                        std::cout << "f (" << x << ") = " << std::setprecision(precision) << eval(x) << "\n"; 
                     }
                 
                     virtual void print_equation() const = 0;
@@ -1212,11 +1212,11 @@ namespace physim {
                     constexpr void error_integral(const double& delta) { m_error = 4 * delta / 3.; } 
 
                     void print_value(const double& precision = 1.e-6) {
-                        std::cout << "\nIntegral of f(x) in [" << m_a << ", " << m_b << "] = " << std::setprecision((int)-log10(precision)) << m_integral << "\n";
+                        std::cout << "\nIntegral of f(x) in [" << m_a << ", " << m_b << "] = " << std::setprecision(precision) << m_integral << "\n";
                     }
 
                     void print_error(const double& precision = 1.e-6) {
-                        std::cout << "error = " << std::setprecision((int)-log10(precision)) << m_error << "\n";
+                        std::cout << "error = " << std::setprecision(precision) << m_error << "\n";
                     }        
 
                     void print(const double& precision = 1.e-6) {
@@ -1359,8 +1359,13 @@ namespace physim {
                     signed int mole_ : bitwidth::mole;
                     signed int candela_ : bitwidth::candela;  
       
-                    const char* name_ = "-";  
-
+                    static constexpr uint32_t bits[7] = { 
+                        bitwidth::metre, bitwidth::second, 
+                        bitwidth::kilogram, bitwidth::ampere, 
+                        bitwidth::kelvin, bitwidth::mole, 
+                        bitwidth::candela
+                    };  
+    
 
                 public:
 
@@ -1375,27 +1380,17 @@ namespace physim {
                         Candela = 6
                     };
 
-                    static constexpr uint32_t bits[7] = { 
-                        bitwidth::metre, bitwidth::second, 
-                        bitwidth::kilogram, bitwidth::ampere, 
-                        bitwidth::kelvin, bitwidth::mole, 
-                        bitwidth::candela
-                    };  
-
 
                     // =============================================
                     // constructors
                     // ============================================= 
+
+                    constexpr unit_data() : metre_(0), second_(0), kilogram_(0), ampere_(0), kelvin_(0), mole_(0), candela_(0) {};
                     
                     // constructor from powers
                     constexpr unit_data(const int& metres, const int& seconds, const int& kilograms, const int& amperes, const int& kelvins,  const int& moles, const int& candelas) :
                         metre_(metres), second_(seconds), kilogram_(kilograms),
                         ampere_(amperes), kelvin_(kelvins), mole_(moles), candela_(candelas) {};
-
-                    // constructor from powers and name
-                    constexpr unit_data(const int& metres, const int& seconds, const int& kilograms, const int& amperes, const int& kelvins,  const int& moles, const int& candelas, const char* name_) :
-                        metre_(metres), second_(seconds), kilogram_(kilograms), ampere_(amperes), 
-                        kelvin_(kelvins), mole_(moles), candela_(candelas), name_(name_) {};
 
                     explicit constexpr unit_data(std::nullptr_t) :
                         metre_(math::constants::max_neg(bitwidth::metre)), 
@@ -1437,6 +1432,24 @@ namespace physim {
                         };
                     }
 
+                    // comparison operators
+                    constexpr bool operator==(const unit_data& other) const {
+                        return metre_ == other.metre_ && second_ == other.second_ &&
+                            kilogram_ == other.kilogram_ && ampere_ == other.ampere_ &&
+                            candela_ == other.candela_ && kelvin_ == other.kelvin_ && mole_ == other.mole_;         
+                    }
+
+                    // definitely not a comparison operators
+                    constexpr bool operator!=(const unit_data& other) const { return !(*this == other); }
+
+                    // check if the units have the same base unit 
+                    constexpr bool has_same_base(const unit_data& other) const { return *this == other; }
+
+
+                    // =============================================
+                    // operations
+                    // ============================================= 
+
                     // invert the unit
                     constexpr unit_data inv() const {
                         return { 
@@ -1474,30 +1487,7 @@ namespace physim {
                                                                     candela_ / power);
                         else exit(-11);
                     }
-                    
-                    // comparison operators
-                    constexpr bool operator==(const unit_data& other) const {
-                        return metre_ == other.metre_ && second_ == other.second_ &&
-                            kilogram_ == other.kilogram_ && ampere_ == other.ampere_ &&
-                            candela_ == other.candela_ && kelvin_ == other.kelvin_ && mole_ == other.mole_;         
-                    }
-
-                    // definitely not a comparison operators
-                    constexpr bool operator!=(const unit_data& other) const {
-                        return !(*this == other);
-                    }
-
-                    // check if the units have the same base unit 
-                    constexpr bool has_same_base(const unit_data& other) const {
-                        return *this == other;
-                    }
-
-                    // check if the unit is empty
-                    constexpr bool empty() const {
-                        return metre_ == 0 && second_ == 0 && kilogram_ == 0 &&
-                            ampere_ == 0 && candela_ == 0 && kelvin_ == 0 && mole_ == 0;
-                    }
-                    
+                                        
 
                     // =============================================
                     // get methods
@@ -1517,32 +1507,23 @@ namespace physim {
                     
                     constexpr int candela() const { return candela_; }
 
-                    constexpr const char* name() const { return name_; }
-
-                    constexpr int unit_type_count() const {
-                        return ((metre_ != 0) ? 1 : 0) + ((second_ != 0) ? 1 : 0) +
-                            ((kilogram_ != 0) ? 1 : 0) + ((ampere_ != 0) ? 1 : 0) +
-                            ((kelvin_ != 0) ? 1 : 0) + ((mole_ != 0) ? 1 : 0) + ((candela_ != 0) ? 1 : 0);
-                    }
+                    constexpr unit_data data() const { return *this; }
 
                     constexpr void print() const {
-                        if (name_[0] == '-') {
-                            if (metre_ != 0 && metre_ != 1) std::cout << "m^" << metre_; 
-                            if (metre_ == 1) std::cout << "m";
-                            if (second_ != 0 && second_ != 1) std::cout << "s^" << second_; 
-                            if (second_ == 1) std::cout << "s"; 
-                            if (kilogram_ != 0 && kilogram_ != 1) std::cout << "kg^" << kilogram_; 
-                            if (kilogram_ == 1) std::cout << "kg"; 
-                            if (ampere_ != 0 && ampere_ != 1) std::cout << "A^" << ampere_; 
-                            if (ampere_ == 1) std::cout << "A"; 
-                            if (kelvin_ != 0 && kelvin_ != 1) std::cout << "K^" << kelvin_; 
-                            if (kelvin_ == 1) std::cout << "K";
-                            if (mole_ != 0 && mole_ != 1) std::cout << "mol^" << mole_; 
-                            if (mole_ == 1) std::cout << "mol"; 
-                            if (candela_ != 0 && candela_ != 1) std::cout << "cd^" << candela_; 
-                            if (candela_ == 1) std::cout << "cd"; 
-                        }
-                        else std::cout << name_ << "\n"; 
+                        if (metre_ != 0 && metre_ != 1) std::cout << "m^" << metre_; 
+                        else if (metre_ == 1) std::cout << "m";
+                        if (second_ != 0 && second_ != 1) std::cout << "s^" << second_; 
+                        else if (second_ == 1) std::cout << "s"; 
+                        if (kilogram_ != 0 && kilogram_ != 1) std::cout << "kg^" << kilogram_; 
+                        else if (kilogram_ == 1) std::cout << "kg"; 
+                        if (ampere_ != 0 && ampere_ != 1) std::cout << "A^" << ampere_; 
+                        else if (ampere_ == 1) std::cout << "A"; 
+                        if (kelvin_ != 0 && kelvin_ != 1) std::cout << "K^" << kelvin_; 
+                        else if (kelvin_ == 1) std::cout << "K";
+                        if (mole_ != 0 && mole_ != 1) std::cout << "mol^" << mole_; 
+                        else if (mole_ == 1) std::cout << "mol"; 
+                        if (candela_ != 0 && candela_ != 1) std::cout << "cd^" << candela_; 
+                        else if (candela_ == 1) std::cout << "cd"; 
                     }
 
 
@@ -1552,8 +1533,7 @@ namespace physim {
                     constexpr bool has_valid_root(const int& power) const {
                         return metre_ % power == 0 && second_ % power == 0 &&
                             kilogram_ % power == 0 && ampere_ % power == 0 &&
-                            candela_ % power == 0 && kelvin_ % power == 0 &&
-                            mole_ % power == 0;
+                            candela_ % power == 0 && kelvin_ % power == 0 && mole_ % power == 0;
                     }      
                     
                     // to handle a few weird operations that operate on square_root Hz
@@ -1568,22 +1548,24 @@ namespace physim {
             // class defining a basic unit module 
             class unit_prefix {
 
-                public:  
+                protected:  
 
                     // =============================================
                     // class members
                     // ============================================= 
                     
-                    double multiplier_{1.0};  
+                    double multiplier_{};  
 
+
+                public:  
 
                     // =============================================
                     // constructors
                     // ============================================= 
                     
-                    unit_prefix() noexcept {}
+                    constexpr unit_prefix() noexcept : multiplier_{1.0} {}
                     
-                    explicit constexpr unit_prefix(const double& mult) noexcept : multiplier_{mult} {} 
+                    constexpr unit_prefix(const double& mult) noexcept : multiplier_{mult} {} 
 
 
                     // =============================================
@@ -1591,34 +1573,10 @@ namespace physim {
                     // ============================================= 
 
                     // perform a multiply operation by adding the powers together
-                    constexpr unit_prefix operator*(const unit_prefix& other) const {
-                        return unit_prefix(multiplier_ * other.multiplier_);
-                    }
+                    constexpr unit_prefix operator*(const unit_prefix& other) const { return { multiplier_ * other.multiplier_ }; }
 
                     // perform a division operation by subtract the powers together
-                    constexpr unit_prefix operator/(const unit_prefix& other) const {
-                        return unit_prefix(multiplier_ / other.multiplier_);
-                    }
-
-                    // invert the unit
-                    constexpr unit_prefix inv() const {
-                        return unit_prefix(1 / multiplier_);
-                    }
-
-                    // take a unit_prefix to some power
-                    constexpr unit_prefix pow(const int& power) const { 
-                        return unit_prefix(std::pow(multiplier_, power));
-                    }
-                    
-                    // take some root of a unit_prefix
-                    unit_prefix root(const int& power) const {
-                        return unit_prefix(math::algebra::root(multiplier_, power)); 
-                    }
-                    
-                    
-                    // =============================================
-                    // check methods
-                    // ============================================= 
+                    constexpr unit_prefix operator/(const unit_prefix& other) const { return { multiplier_ / other.multiplier_ }; }
 
                     // comparison operators
                     constexpr bool operator==(const unit_prefix& other) const {
@@ -1627,34 +1585,46 @@ namespace physim {
                     }
 
                     // definitely not a comparison operators
-                    constexpr bool operator!=(const unit_prefix& other) const {
-                        return !(*this == other);
-                    }
-
-                    // check if the units have the same prefix unit 
-                    constexpr bool has_same_prefix(const unit_prefix& other) const {
-                        return *this == other;
-                    }
-
-                    // check if the multiplier is nan
-                    constexpr bool is_nan(const unit_prefix& pref) {
-                        return std::isnan(pref.multiplier_);
-                    }
-
-                    // checks that the multiplier is finite
-                    constexpr bool is_finite(const unit_prefix& pref) {
-                        return std::isfinite(pref.multiplier_);
-                    }
-
-                    // check if the multiplier is infinite
-                    constexpr bool is_inf(const unit_prefix& pref) {
-                        return std::isinf(pref.multiplier_);
-                    }
+                    constexpr bool operator!=(const unit_prefix& other) const { return !(*this == other); }
 
 
                     // =============================================
-                    // get & print methods
+                    // operations
                     // ============================================= 
+
+                    // invert the unit_prefix
+                    constexpr unit_prefix inv() const { return { 1 / multiplier_ }; }
+
+                    // take a unit_prefix to some power
+                    constexpr unit_prefix pow(const int& power) const { return { std::pow(multiplier_, power) }; }
+                    
+                    // take some root of a unit_prefix
+                    inline unit_prefix root(const int& power) const { return { math::algebra::root(multiplier_, power) }; }
+                    
+                    
+                    // =============================================
+                    // check methods
+                    // ============================================= 
+
+                    // check if the units have the same prefix unit 
+                    constexpr bool has_same_prefix(const unit_prefix& other) const { return *this == other; }
+
+                    // check if the multiplier is nan
+                    constexpr bool is_nan(const unit_prefix& pref) { return std::isnan(pref.multiplier_); }
+
+                    // checks that the multiplier is finite
+                    constexpr bool is_finite(const unit_prefix& pref) { return std::isfinite(pref.multiplier_); }
+
+                    // check if the multiplier is infinite
+                    constexpr bool is_inf(const unit_prefix& pref) { return std::isinf(pref.multiplier_); }
+
+
+                    // =============================================
+                    // get methods
+                    // ============================================= 
+
+                    // get the multiplier
+                    constexpr double multiplier() const { return multiplier_; }
 
                     // get the prefix
                     constexpr unit_prefix prefix() const { return *this; }
@@ -1687,64 +1657,71 @@ namespace physim {
 
 
             // class defining a basic unit module 
-            class unit {
+            class unit : public unit_data, public unit_prefix {
 
                 public:
-
-                    // =============================================
-                    // class members
-                    // ============================================= 
-
-                    unit_data data_{0, 0, 0, 0, 0, 0, 0}; 
-
-                    unit_prefix prefix_{}; 
-
 
                     // =============================================
                     // constructors
                     // ============================================= 
                     
                     // default constructor
-                    unit() noexcept {}
+                    constexpr unit() noexcept : unit_data(), unit_prefix() {}
 
                     // constructor from unit_data 
-                    explicit unit(const unit_data& unit_base) noexcept : data_{unit_base} {}
+                    constexpr unit(const unit_data& data) noexcept : unit_data(data) {}
 
                     // constructor from unit_data and unit_prefix
-                    explicit constexpr unit(const unit_data& unit_base, const unit_prefix& unit_prefix) noexcept : 
-                        data_{unit_base}, prefix_{unit_prefix} {}
+                    constexpr unit(const unit_data& data, const unit_prefix& prefix) noexcept : unit_data(data), unit_prefix(prefix) {}
 
                     // constructor from unit_prefix and unit_data
-                    explicit constexpr unit(const unit_prefix& unit_prefix, const unit_data& unit_base) noexcept : 
-                        data_{unit_base}, prefix_{unit_prefix} {}
+                    constexpr unit(const unit_prefix& prefix, const unit_data& data) noexcept : unit_data(data), unit_prefix(prefix) {}
 
                     // constructor from unit_data and a double
-                    constexpr unit(const unit_data& unit_base, const double& mult) noexcept : 
-                        data_{unit_base}, prefix_{mult} {}
+                    constexpr unit(const unit_data& data, const double& mult) noexcept : unit_data(data), unit_prefix(mult) {}
 
                     // constructor from double with a unit_data
-                    constexpr unit(const double& mult, const unit_data& unit_base) noexcept :
-                        data_{unit_base}, prefix_{mult} {}
+                    constexpr unit(const double& mult, const unit_data& data) noexcept : unit_data(data), unit_prefix(mult) {}
 
                     // constructor from unit
-                    constexpr unit(const unit& other) noexcept : 
-                        data_{other.data_}, prefix_{other.prefix_} {} 
+                    constexpr unit(const unit& other) noexcept : unit_data(other.data()), unit_prefix(other.prefix()) {} 
 
                     // constructor from unit and unit_prefix
-                    constexpr unit(const unit& other, const unit_prefix& prefix) noexcept : 
-                        data_{other.data_}, prefix_{prefix_} {} 
+                    constexpr unit(const unit& other, const unit_prefix& prefix) noexcept : unit_data(other.data()), unit_prefix(prefix) {} 
 
                     // constructor from unit_prefix and unit
-                    constexpr unit(const unit_prefix& prefix, const unit& other) noexcept : 
-                        data_{other.data_}, prefix_{prefix} {} 
+                    constexpr unit(const unit_prefix& prefix, const unit& other) noexcept : unit_data(other.data()), unit_prefix(prefix) {} 
 
                     // constructor from unit and a double
-                    constexpr unit(const unit& other, const double& mult) noexcept : 
-                        data_{other.data_}, prefix_{mult} {} 
+                    constexpr unit(const unit& other, const double& multiplier) noexcept : unit_data(other.data()), unit_prefix(multiplier) {} 
 
                     // constructor from double with a unit
-                    constexpr unit(const double& mult, const unit& other) noexcept :
-                        data_{other.data_}, prefix_{mult} {} 
+                    constexpr unit(const double& multiplier, const unit& other) noexcept : unit_data(other.data()), unit_prefix(multiplier) {} 
+
+
+                    // =============================================
+                    // operators
+                    // ============================================= 
+
+                    // equality operator
+                    constexpr bool operator==(const unit& other) const {
+                        if (unit_data::operator!=(other.data())) { return false; }
+                        if (unit_prefix::operator==(other.prefix())) { return true; }
+                        return math::tools::compare_round_equals(multiplier(), other.multiplier());
+                    }
+
+                    // equality operator
+                    constexpr bool operator!=(const unit& other) const { return !operator==(other); }
+
+                    // multiply with another unit
+                    constexpr unit operator*(const unit& other) const { 
+                        return { unit_data::operator*(other.data()), unit_prefix::operator*(other.prefix()) }; 
+                    }
+
+                    // division operator
+                    constexpr unit operator/(const unit& other) const { 
+                        return { unit_data::operator/(other.data()), unit_prefix::operator/(other.prefix()) }; 
+                    }                    
 
 
                     // =============================================
@@ -1752,66 +1729,36 @@ namespace physim {
                     // ============================================= 
 
                     // take the reciprocal of a unit
-                    constexpr unit inv() const { return unit(data_.inv(), prefix_.inv()); }
-
-                    // multiply with another unit
-                    constexpr unit operator*(const unit& other) const {
-                        return unit(data_ * other.data_, prefix_ * other.prefix_);
-                    }
-
-                    // division operator
-                    constexpr unit operator/(const unit& other) const {
-                        return unit(data_ / other.data_, prefix_ / other.prefix_);
-                    }                    
+                    constexpr unit inv() const { return { unit_data::inv(), unit_prefix::inv() }; }
 
                     // take a unit to a power
-                    constexpr unit pow(const int& power) const {
-                        return unit(data_.pow(power), prefix_.pow(power));
-                    }
+                    constexpr unit pow(const int& power) const { return { unit_data::pow(power), unit_prefix::pow(power) }; }
 
                     // take a unit to a root power
-                    unit root(const int& power) const {
-                        return unit(data_.root(power), prefix_.root(power));                        
-                    }
+                    inline unit root(const int& power) const { return { unit_data::root(power), unit_prefix::root(power) }; }
 
 
                     // =============================================
                     // checks
                     // ============================================= 
 
-                    // equality operator
-                    constexpr bool operator==(const unit& other) const {
-                        if (data_ != other.data_) { return false; }
-                        if (prefix_ == other.prefix_) { return true; }
-                        return math::tools::compare_round_equals(multiplier(), other.multiplier());
-                    }
-
-                    // equality operator
-                    constexpr bool operator!=(const unit& other) const { return !operator==(other); }
-
                     // test for exact numerical equivalence
-                    constexpr bool is_exactly_the_same(const unit& other) const {
-                        return data_ == other.data_ && prefix_ == other.prefix_;
+                    constexpr bool is_exactly_the_same(const unit& other) const { 
+                        return unit_data::operator==(other.data()) && unit_prefix::operator==(other.prefix());
                     }
 
 
                     // =============================================
-                    // get & print methods
+                    // get methods
                     // ============================================= 
-
-                    // get the multiplier
-                    constexpr double multiplier() const { return prefix_.multiplier_; }
-                    
-                    // get the unit_data
-                    constexpr unit_data base_units() const { return data_; }
 
                     // get the unit
                     constexpr unit as_unit() const { return *this; }
 
                     // print the unit
                     constexpr void print() const {
-                        prefix_.print(); 
-                        data_.print();
+                        unit_prefix::print(); 
+                        unit_data::print();
                     }
 
 
@@ -1889,29 +1836,29 @@ namespace physim {
             
 
             // derived_units
-            namespace derived_units {
+            namespace SI_derived {
 
-                // unit hertz(unit_data(0, 0, -1, 0, 0, 0, 0), "Hz");
+                // unit hertz(unit_data(0, -1, 0, 0, 0, 0, 0));
                 // unit Hz = hertz;
-                // unit volt(unit_data(2, 1, -3, -1, 0, 0, 0), "V");
+                // unit volt(unit_data(2, -3, 1, -1, 0, 0, 0), "V");
                 // unit V = volt;
-                // unit newton(unit_data(1, 1, -2, 0, 0, 0, 0), "N");
+                // unit newton(unit_data(1, -2, 1, 0, 0, 0, 0), "N");
                 // unit N = newton;
-                // unit Pa(unit_data(-1, 1, -2, 0, 0, 0, 0), "Pa");
+                // unit Pa(unit_data(-1, -2, 1, 0, 0, 0, 0), "Pa");
                 // unit pascal = Pa;
-                // unit joule(unit_data(2, 1, -2, 0, 0, 0, 0), "J");
+                // unit joule(unit_data(2, -2, 1, 0, 0, 0, 0), "J");
                 // unit J = joule;
-                // unit watt(unit_data(2, 1, -3, 0, 0, 0, 0), "W");
+                // unit watt(unit_data(2, -3, 1, 0, 0, 0, 0), "W");
                 // unit W = watt;
-                // unit coulomb(unit_data(0, 0, 1, 1, 0, 0, 0), "C");
+                // unit coulomb(unit_data(0, 1, 0, 1, 0, 0, 0), "C");
                 // unit C = coulomb;
-                // unit farad(unit_data(-2, -1, 4, 2, 0, 0, 0), "F");
+                // unit farad(unit_data(-2, 4, -1 2, 0, 0, 0), "F");
                 // unit F = farad;
-                // unit weber(unit_data(2, 1, -2, -1, 0, 0, 0), "Wb");
+                // unit weber(unit_data(2, -2, 1, -1, 0, 0, 0), "Wb");
                 // unit Wb = weber;
-                // unit tesla(unit_data(0, 1, -2, -1, 0, 0, 0), "T");
+                // unit tesla(unit_data(0, -2, 1, -1, 0, 0, 0), "T");
                 // unit T = tesla;
-                // unit henry(unit_data(2, 1, -2, -2, 0, 0, 0), "H");                    
+                // unit henry(unit_data(2, -2, 1, -2, 0, 0, 0), "H");                    
                 // unit H = henry;
                 unit mps(m / s);
                 unit mpss(m / s.pow(2)); 
@@ -1960,33 +1907,35 @@ namespace physim {
         // namespace defining some usefull operations
         namespace tools {
 
-            // generate a conversion factor between two physics::units::units in a constexpr function, the
-            // physics::units::units will only convert if they have the same base physics::units::unit
+            using namespace physics::units; 
+
+            // generate a conversion factor between two units in a constexpr function, the
+            // units will only convert if they have the same base unit
             template<typename UX, typename UX2>
             constexpr double quick_convert(UX start, UX2 result) { return quick_convert(1.0, start, result); }
 
-            // generate a conversion factor between two physics::units::units in a constexpr function, the physics::units::units will only convert if they have the same base physics::units::unit
+            // generate a conversion factor between two units in a constexpr function, the units will only convert if they have the same base unit
             template<typename UX, typename UX2>
             constexpr double quick_convert(double val, const UX& start, const UX2& result) {
-                static_assert(std::is_same<UX, physics::units::unit>::value || std::is_same<UX, physics::units::unit>::value,
-                    "convert argument types must be physics::units::unit or physics::units::unit");
-                static_assert(std::is_same<UX2, physics::units::unit>::value || std::is_same<UX2, physics::units::unit>::value,
-                    "convert argument types must be physics::units::unit or physics::units::unit");
-                return (start.base_units() == result.base_units()) ?  val * start.multiplier() / result.multiplier() : 
+                static_assert(std::is_same<UX, unit>::value || std::is_same<UX, unit>::value,
+                    "convert argument types must be unit");
+                static_assert(std::is_same<UX2, unit>::value || std::is_same<UX2, unit>::value,
+                    "convert argument types must be unit");
+                return (start.data() == result.data()) ?  val * start.multiplier() / result.multiplier() : 
                     constants::invalid_conversion;
             }
 
-            // convert a value from one physics::units::unit base to another
+            // convert a value from one unit base to another
             template<typename UX, typename UX2>
             double convert(double val, const UX& start, const UX2& result) {
-                static_assert(std::is_same<UX, physics::units::unit>::value || std::is_same<UX, physics::units::unit>::value,
-                    "convert argument types must be physics::units::unit or physics::units::unit");
-                static_assert(std::is_same<UX2, physics::units::unit>::value || std::is_same<UX2, physics::units::unit>::value, 
-                    "convert argument types must be physics::units::unit or physics::units::unit");     
+                static_assert(std::is_same<UX, unit>::value || std::is_same<UX, unit>::value,
+                    "convert argument types must be unit");
+                static_assert(std::is_same<UX2, unit>::value || std::is_same<UX2, unit>::value, 
+                    "convert argument types must be unit");     
                 if (start == result) { return val; }
-                if (start.base_units() == result.base_units()) { return val * start.multiplier() / result.multiplier(); }
-                auto base_start = start.base_units();
-                auto base_result = result.base_units();
+                if (start.data() == result.data()) { return val * start.multiplier() / result.multiplier(); }
+                auto base_start = start.data();
+                auto base_result = result.data();
                 if (base_start.has_same_base(base_result)) { return val * start.multiplier() / result.multiplier(); }
                 if (base_start.has_same_base(base_result.inv())) { return 1.0 / (val * start.multiplier() * result.multiplier()); }
                 return constants::invalid_conversion;
@@ -2008,6 +1957,8 @@ namespace physim {
         // namespace defining some usefull measurement structures
         namespace measurements {
 
+            using namespace units; 
+
             // measurement class with a value and an unit
             class measurement {
 
@@ -2019,7 +1970,7 @@ namespace physim {
 
                     double value_{};
 
-                    units::unit unit_;
+                    unit unit_;
 
 
                 public:
@@ -2029,15 +1980,13 @@ namespace physim {
                     // =============================================  
 
                     // default constructor
-                    measurement() noexcept {};
+                    constexpr measurement() noexcept {};
 
                     // constructor from a value and a unit 
-                    explicit constexpr measurement(const double& val, const units::unit& unit) noexcept :
-                        value_(val), unit_(unit) {}
+                    explicit constexpr measurement(const double& value, const unit& unit) noexcept : value_(value), unit_(unit) {}
 
                     // constructor from a measurement
-                    constexpr measurement(const measurement& other) :
-                        value_(other.value_), unit_(other.unit_) {}
+                    constexpr measurement(const measurement& other) : value_(other.value_), unit_(other.unit_) {}
                         
                     // destructor
                     ~measurement() = default;
@@ -2047,73 +1996,47 @@ namespace physim {
                     // operators
                     // =============================================  
 
-                    measurement& operator=(const measurement& val) noexcept {
-                        value_ = (unit_ == val.units()) ? val.value() : val.value_as(unit_);
+                    constexpr measurement& operator=(const measurement& other) noexcept {
+                        value_ = (unit_ == other.unit_) ? other.value_ : other.value_as(unit_);
                         return *this;
                     }
 
-                    measurement& operator=(const double& val) noexcept {
+                    constexpr measurement& operator=(const double& val) noexcept {
                         value_ = val;
                         return *this;
                     }     
     
-                    constexpr measurement operator*(const measurement& other) const {
-                        return measurement(value_ * other.value_, unit_ * other.unit_);
-                    }
+                    constexpr measurement operator*(const measurement& other) const { return measurement(value_ * other.value_, unit_ * other.unit_); }
                 
-                    constexpr measurement operator*(const double& val) const {
-                        return measurement(value_ * val, unit_);
-                    }
+                    constexpr measurement operator*(const double& val) const { return measurement(value_ * val, unit_); }
                     
-                    constexpr measurement operator/(const measurement& other) const {
-                        return measurement(value_ / other.value_, unit_ / other.unit_);
-                    }
+                    constexpr measurement operator/(const measurement& other) const { return measurement(value_ / other.value_, unit_ / other.unit_); }
 
-                    constexpr measurement operator/(const double& val) const {
-                        return measurement(value_ / val, unit_);
-                    } 
+                    constexpr measurement operator/(const double& val) const { return measurement(value_ / val, unit_); } 
 
-                    constexpr bool operator==(const double& val) const {
-                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
-                    }
+                    constexpr bool operator==(const double& val) const { return (value_ == val) ? true : math::tools::compare_round_equals(value_, val); }
+
+                    inline bool operator==(const measurement& other) const { return value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_)); }
 
                     constexpr bool operator!=(const double& val) const { return !operator==(val); }
 
+                    inline bool operator!=(const measurement& other) const { return !value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_)); }
+
                     constexpr bool operator>(const double& val) const { return value_ > val; }
+
+                    inline bool operator>(const measurement& other) const { return value_ > other.value_as(unit_); }
 
                     constexpr bool operator<(const double& val) const { return value_ < val; }
 
-                    constexpr bool operator>=(const double& val) const {
-                        return (value_ >= val) ? true : operator==(val);
-                    }
+                    inline bool operator<(const measurement& other) const { return value_ < other.value_as(unit_); }
+    
+                    constexpr bool operator>=(const double& val) const { return (value_ >= val) ? true : operator==(val); }
 
-                    constexpr bool operator<=(const double& val) const {
-                        return value_ <= val ? true : operator==(val);
-                    }
+                    inline bool operator>=(const measurement& other) const { return (value_ > other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_)); }
 
-                    inline bool operator==(const measurement& other) const {
-                        return value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_));
-                    }
+                    constexpr bool operator<=(const double& val) const { return value_ <= val ? true : operator==(val); }
 
-                    inline bool operator!=(const measurement& other) const {
-                        return !value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_));
-                    }
-
-                    inline bool operator>(const measurement& other) const {
-                        return value_ > other.value_as(unit_);
-                    }
-
-                    inline bool operator<(const measurement& other) const {
-                        return value_ < other.value_as(unit_);
-                    }
-
-                    inline bool operator>=(const measurement& other) const {
-                        return (value_ > other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_));
-                    }
-
-                    inline bool operator<=(const measurement& other) const {
-                        return (value_ < other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_));
-                    }       
+                    inline bool operator<=(const measurement& other) const { return (value_ < other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_)); }       
 
 
                     // =============================================                                                                                         
@@ -2121,51 +2044,45 @@ namespace physim {
                     // =============================================  
 
                     // convert a unit to have a new base
-                    measurement convert_to(const units::unit& newUnits) const {
-                        return measurement(math::tools::convert(value_, unit_, newUnits), newUnits);
-                    }
+                    inline measurement convert_to(const unit& newUnits) const { return measurement(math::tools::convert(value_, unit_, newUnits), newUnits); }
 
                     // convert a unit into its base units
-                    constexpr measurement convert_to_base() const {
-                        return measurement(value_ * unit_.prefix_.multiplier_, unit_.as_unit());
-                    }
+                    constexpr measurement convert_to_base() const { return measurement(value_ * unit_.multiplier(), unit_.as_unit()); }
 
                     
                     // =============================================                                                                                         
-                    // get methods
+                    // set & get methods
                     // =============================================  
 
-                    // get the numerical component of the measurement
-                    constexpr double value() const { return value_; }                        
-                    
-                    // set the numerical component of the measurement
+                    // set the numerical value of the measurement
                     constexpr void value(const double& value) { value_ = value; }
 
+                    // get the numerical value of the measurement
+                    constexpr double value() const { return value_; }                        
+                    
                     // get the numerical value as a particular unit type
-                    double value_as(const units::unit& desired_units) const {
-                        return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
-                    }
+                    inline double value_as(const unit& desired_units) const { return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units); }
 
                     // get the unit component of a measurement
-                    constexpr units::unit units() const { return unit_; }
+                    constexpr unit units() const { return unit_; }
 
                     // convert the measurement to a single unit
-                    constexpr units::unit as_unit() const { return {value_, unit_ }; }
+                    constexpr unit as_unit() const { return unit(value_, unit_); }
 
                     // print the measurement
                     void print() const { 
-                        if (unit_.multiplier() != 1) std::cout << std::setprecision((int)-log10(unit_.multiplier())) << value_ << " "; 
-                        else std::cout << value_ << " ";
+                        // if (unit_.multiplier()!= 1) std::cout << std::setprecision(unit_.multiplier()) << value_ << " "; 
+                        std::cout << value_ << " ";
                         unit_.print(); 
                         std::cout << "\n"; 
                     }
-
+                     
 
                 private:
 
                     // does a numerical equality check on the value accounting for tolerances
-                    bool value_equality_check(const double& otherval) const {
-                        return (value_ == otherval) ? true : math::tools::compare_round_equals(value_, otherval);
+                    constexpr bool value_equality_check(const double& val) const {
+                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
                     } 
 
 
@@ -2183,7 +2100,7 @@ namespace physim {
 
                     double value_{};  
 
-                    const units::unit unit_;  
+                    const unit unit_;  
 
 
                 public:
@@ -2193,19 +2110,16 @@ namespace physim {
                     // =============================================  
 
                     // default constructor
-                    fixed_measurement() noexcept {};
+                    constexpr fixed_measurement() noexcept {};
 
                     // constructor from a value and a unit 
-                    explicit constexpr fixed_measurement(double val, const units::unit& unit) noexcept :
-                        value_(val), unit_(unit) {}
+                    explicit constexpr fixed_measurement(const double& val, const unit& unit) noexcept : value_(val), unit_(unit) {}
 
                     // constructor from a measurement
-                    constexpr fixed_measurement(const measurement& other) :
-                        value_(other.value()), unit_(other.units()) {}
+                    constexpr fixed_measurement(const measurement& other) : value_(other.value()), unit_(other.units()) {}
 
                     // constructor from a fixed measurement
-                    fixed_measurement(const fixed_measurement& other) :
-                        value_(other.value_), unit_(other.unit_) {}
+                    constexpr fixed_measurement(const fixed_measurement& other) : value_(other.value_), unit_(other.unit_) {}
 
                     // destructor
                     ~fixed_measurement() = default;
@@ -2215,37 +2129,37 @@ namespace physim {
                     // operators
                     // =============================================  
 
-                    fixed_measurement& operator=(const measurement& other) noexcept {
+                    constexpr fixed_measurement& operator=(const fixed_measurement& other) noexcept {
                         value_ = (unit_ == other.units()) ? other.value() : other.value_as(unit_);
                         return *this;
                     }
 
-                    fixed_measurement& operator=(const fixed_measurement& other) noexcept {
+                    constexpr fixed_measurement& operator=(const measurement& other) noexcept {
                         value_ = (unit_ == other.units()) ? other.value() : other.value_as(unit_);
                         return *this;
                     }
 
-                    fixed_measurement& operator=(const double& val) noexcept {
+                    constexpr fixed_measurement& operator=(const double& val) noexcept {
                         value_ = val;
                         return *this;
                     }     
 
-                    fixed_measurement& operator+=(const double& val) {
+                    constexpr fixed_measurement& operator+=(const double& val) {
                         value_ += val;
                         return *this;
                     }
 
-                    fixed_measurement& operator-=(const double& val) {
+                    constexpr fixed_measurement& operator-=(const double& val) {
                         value_ -= val;
                         return *this;
                     }
 
-                    fixed_measurement& operator*=(const double& val) {
+                    constexpr fixed_measurement& operator*=(const double& val) {
                         value_ *= val;
                         return *this;
                     }
 
-                    fixed_measurement& operator/=(const double& val) {
+                    constexpr fixed_measurement& operator/=(const double& val) {
                         value_ /= val;
                         return *this;
                     }
@@ -2274,55 +2188,67 @@ namespace physim {
                         return fixed_measurement(value_ - val, unit_);
                     }
 
-                    constexpr bool operator==(const double& val) const {
-                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
-                    }
-
-                    constexpr bool operator!=(const double& val) const { return !operator==(val); }
-
-                    constexpr bool operator>(const double& val) const { return value_ > val; }
-
-                    constexpr bool operator<(const double& val) const { return value_ < val; }
-
-                    constexpr bool operator>=(const double& val) const {
-                        return (value_ >= val) ? true : operator==(val);
-                    }
-
-                    constexpr bool operator<=(const double& val) const {
-                        return value_ <= val ? true : operator==(val);
-                    }
-
                     inline bool operator==(const fixed_measurement& val) const {
                         return operator==((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
-                    inline bool operator!=(const fixed_measurement& val) const {
-                        return operator!=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
-                    }
-
                     inline bool operator==(const measurement& val) const {
                         return operator==((unit_ == val.units()) ? val.value() : val.value_as(unit_));
+                    }
+                    
+                    constexpr bool operator==(const double& val) const {
+                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
+                    }
+                    
+                    inline bool operator!=(const fixed_measurement& val) const {
+                        return operator!=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
                     inline bool operator!=(const measurement& val) const {
                         return operator!=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
+                    constexpr bool operator!=(const double& val) const { return !operator==(val); }
+
+                    inline bool operator>(const fixed_measurement& val) const {
+                        return operator>((unit_ == val.units()) ? val.value() : val.value_as(unit_));
+                    }
+
                     inline bool operator>(const measurement& val) const {
                         return operator>((unit_ == val.units()) ? val.value() : val.value_as(unit_));
+                    }
+
+                    constexpr bool operator>(const double& val) const { return value_ > val; }
+
+                    inline bool operator<(const fixed_measurement& val) const {
+                        return operator<((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
                     inline bool operator<(const measurement& val) const {
                         return operator<((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
+                    constexpr bool operator<(const double& val) const { return value_ > val; }
+
+                    inline bool operator>=(const fixed_measurement& val) const {
+                        return operator>=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
+                    }
+
                     inline bool operator>=(const measurement& val) const {
                         return operator>=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
+                    }
+
+                    constexpr bool operator>=(const double& val) const { return (value_ >= val) ? true : operator==(val); }
+
+                    inline bool operator<=(const fixed_measurement& val) const {
+                        return operator<=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
 
                     inline bool operator<=(const measurement& val) const {
                         return operator<=((unit_ == val.units()) ? val.value() : val.value_as(unit_));
                     }
+
+                    constexpr bool operator<=(const double& val) const { return (value_ <= val) ? true : operator==(val); }
 
 
                     // =============================================                                                                                         
@@ -2330,16 +2256,16 @@ namespace physim {
                     // =============================================  
 
                     // direct conversion operator
-                    operator measurement() { return measurement(value_, unit_); }
+                    constexpr operator measurement() { return measurement(value_, unit_); }
 
                     // convert a unit to have a new base
-                    measurement convert_to(const units::unit& newUnits) const {
+                    inline measurement convert_to(const unit& newUnits) const {
                         return measurement(math::tools::convert(value_, unit_, newUnits), newUnits);
                     }
 
                     // convert a unit into its base units
-                    measurement convert_to_base() const {
-                        return measurement(value_ * unit_.multiplier(), units::unit(unit_.base_units()));
+                    inline measurement convert_to_base() const {
+                        return measurement(value_ * unit_.multiplier(), unit(unit_.data()));
                     }
 
 
@@ -2347,34 +2273,34 @@ namespace physim {
                     // get methods
                     // =============================================  
 
-                    // get the numerical component of the measurement
-                    constexpr double value() const { return value_; }                        
-                    
                     // set the numerical component of the measurement
                     constexpr void value(const double& value) { value_ = value; }
 
+                    // get the numerical component of the measurement
+                    constexpr double value() const { return value_; }                        
+                    
                     // get the numerical value as a particular unit type
-                    double value_as(const units::unit& desired_units) const {
+                    double value_as(const unit& desired_units) const {
                         return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
                     }
 
                     // get the unit component of a measurement
-                    constexpr units::unit units() const { return unit_; }
+                    constexpr unit units() const { return unit_; }
 
                     // convert the measurement to a single unit
-                    constexpr units::unit as_unit() const { return {value_, unit_ }; }
+                    constexpr unit as_unit() const { return {value_, unit_ }; }
 
                     // print the measurement
                     void print() const { 
-                        if (unit_.multiplier() != 1) std::cout << std::setprecision((int)-log10(unit_.multiplier())) << value_ << " "; 
-                        else std::cout << value_ << " ";
+                        // if (unit_.multiplier() != 1) std::cout << std::setprecision(unit_.multiplier()) << value_ << " "; 
+                        std::cout << value_ << " ";
                         unit_.print(); 
                         std::cout << "\n"; 
                     }
 
 
             }; // class fixed_measurement
-    
+
 
             // measurement class with an uncertain value and an unit
             class uncertain_measurement {
@@ -2387,7 +2313,7 @@ namespace physim {
 
                     double value_{}, uncertainty_{};
 
-                    units::unit unit_;       
+                    unit unit_;       
                 
 
                 public: 
@@ -2397,14 +2323,14 @@ namespace physim {
                     // =============================================  
 
                     // default constructor
-                    uncertain_measurement() noexcept {};
+                    constexpr uncertain_measurement() noexcept {};
 
                     // constructor from a value, uncertainty, and unit
-                    explicit constexpr uncertain_measurement(const double& val, const double& uncertainty_val, const units::unit& unit) noexcept :
+                    explicit constexpr uncertain_measurement(const double& val, const double& uncertainty_val, const unit& unit) noexcept :
                         value_(val), uncertainty_(uncertainty_val), unit_(unit) {}
 
                     // constructpr from a value and an unit, assuming the uncertainty is 0
-                    explicit constexpr uncertain_measurement(const double& val, const units::unit& unit) noexcept :
+                    explicit constexpr uncertain_measurement(const double& val, const unit& unit) noexcept :
                         value_(val), unit_(unit) {}
 
                     // constructor from a measurement and uncertainty value
@@ -2437,22 +2363,22 @@ namespace physim {
                     }
 
                     // perform a multiplication with uncertain measurements using the simple method for uncertainty propagation
-                    uncertain_measurement simple_product(const uncertain_measurement& other) const {
+                    constexpr uncertain_measurement simple_product(const uncertain_measurement& other) const {
                         double ntol = uncertainty_ / value_ + other.uncertainty_ / other.value_;
                         double nval = value_ * other.value_;
                         return uncertain_measurement(nval, nval * ntol, unit_ * other.units());
                     }
 
                     // multiply with another measurement equivalent to uncertain_measurement multiplication with 0 uncertainty
-                    uncertain_measurement operator*(const measurement& other) const {
+                    constexpr uncertain_measurement operator*(const measurement& other) const {
                         return uncertain_measurement(value() * other.value(), other.value() * uncertainty(), unit_ * other.units());
                     }
 
-                    uncertain_measurement operator*(const units::unit& other) const {
+                    constexpr uncertain_measurement operator*(const unit& other) const {
                         return uncertain_measurement(value_, uncertainty_, unit_ * other);
                     }
 
-                    uncertain_measurement operator*(const double& val) const {
+                    constexpr uncertain_measurement operator*(const double& val) const {
                         return uncertain_measurement(value_ * val, uncertainty_ * val, unit_);
                     }
 
@@ -2466,22 +2392,21 @@ namespace physim {
                     }
 
                     // division operator propagate uncertainty using simple method
-                    uncertain_measurement simple_divide(const uncertain_measurement& other) const {
+                    constexpr uncertain_measurement simple_divide(const uncertain_measurement& other) const {
                         double ntol = uncertainty_ / value_ + other.uncertainty_ / other.value_;
                         double nval = value_ / other.value_;
                         return uncertain_measurement(nval, nval * ntol, unit_ / other.units());
                     }
 
-                    uncertain_measurement operator/(const measurement& other) const {
-                        return uncertain_measurement(static_cast<double>(value() / other.value()),
-                            static_cast<double>(uncertainty() / other.value()), unit_ / other.units());
+                    constexpr uncertain_measurement operator/(const measurement& other) const {
+                        return uncertain_measurement(static_cast<double>(value() / other.value()), static_cast<double>(uncertainty() / other.value()), unit_ / other.units());
                     }
 
-                    uncertain_measurement operator/(const units::unit& other) const {
+                    constexpr uncertain_measurement operator/(const unit& other) const {
                         return uncertain_measurement(value_, uncertainty_, unit_ / other);
                     }
 
-                    uncertain_measurement operator/(const double& val) const {
+                    constexpr uncertain_measurement operator/(const double& val) const {
                         return uncertain_measurement(value_ / val, uncertainty_ / val, unit_);
                     }
 
@@ -2512,72 +2437,49 @@ namespace physim {
                         return uncertain_measurement(value_ - cval * other.value_, ntol, unit_);
                     }
 
-                    uncertain_measurement operator+(const measurement& other) const {
-                        auto cval = other.value_as(unit_);
-                        return uncertain_measurement(value_ + cval, uncertainty_, unit_);
+                    inline uncertain_measurement operator+(const measurement& other) const {
+                        return uncertain_measurement(value_ + other.value_as(unit_), uncertainty_, unit_);
                     }
 
-                    uncertain_measurement operator-(const measurement& other) const {
-                        auto cval = other.value_as(unit_);
-                        return uncertain_measurement(value_ - cval, uncertainty_, unit_);
+                    inline uncertain_measurement operator-(const measurement& other) const {
+                        return uncertain_measurement(value_ - other.value_as(unit_), uncertainty_, unit_);
                     }
 
                     // comparison operators 
                     bool operator==(const measurement& other) const {
-                        auto val = other.value_as(unit_);
-                        if (uncertainty_ == 0.0F) { return (value_ == val) ? true : math::tools::compare_round_equals(value_, val); }
-                        return (val >= (value_ - uncertainty_) && val <= (value_ + uncertainty_));
+                        if (uncertainty_ == 0.0F) { return (value_ == other.value_as(unit_)) ? true : math::tools::compare_round_equals(value_, other.value_as(unit_)); }
+                        return (other.value_as(unit_) >= (value_ - uncertainty_) && other.value_as(unit_) <= (value_ + uncertainty_));
                     }
 
-                    inline bool operator>(const measurement& other) const {
-                        return value_ > other.value_as(unit_);
+                    inline bool operator>(const measurement& other) const { return value_ > other.value_as(unit_); }
+
+                    inline bool operator<(const measurement& other) const { return value_ < other.value_as(unit_); }
+
+                    inline bool operator>=(const measurement& other) const {
+                        return (value() >= other.value_as(unit_)) ? true : operator==(measurement(other.value_as(unit_), unit_));
                     }
 
-                    inline bool operator<(const measurement& other) const {
-                        return value_ < other.value_as(unit_);
+                    inline bool operator<=(const measurement& other) const {
+                        return (value() <= other.value_as(unit_)) ? true : operator==(measurement(other.value_as(unit_), unit_));
                     }
 
-                    bool operator>=(const measurement& other) const {
-                        auto val = other.value_as(unit_);
-                        return (value() >= val) ? true : operator==(measurement(val, unit_));
+                    inline bool operator!=(const measurement& other) const { return !operator==(other); }
+
+                    inline bool operator==(const uncertain_measurement& other) const { return (simple_subtract(other) == measurement(0.0, unit_)); }
+
+                    inline bool operator>(const uncertain_measurement& other) const { return value_ > other.value_as(unit_); }
+
+                    inline bool operator<(const uncertain_measurement& other) const { return value_ < other.value_as(unit_); }
+
+                    inline bool operator>=(const uncertain_measurement& other) const {
+                        return (simple_subtract(other).value_ >= 0.0F) ? true : (simple_subtract(other) == measurement(0.0, unit_));
                     }
 
-                    bool operator<=(const measurement& other) const {
-                        auto val = other.value_as(unit_);
-                        return (value() <= val) ? true : operator==(measurement(val, unit_));
+                    inline bool operator<=(const uncertain_measurement& other) const {
+                        return (simple_subtract(other).value_ <= 0.0F) ? true : (simple_subtract(other) == measurement(0.0, unit_));
                     }
 
-                    inline bool operator!=(const measurement& other) const {
-                        return !operator==(other);
-                    }
-
-                    bool operator==(const uncertain_measurement& other) const {
-                        auto zval = simple_subtract(other);
-                        return (zval == measurement(0.0, unit_));
-                    }
-
-                    inline bool operator>(const uncertain_measurement& other) const {
-                        return value_ > other.value_as(unit_);
-                    }
-
-                    inline bool operator<(const uncertain_measurement& other) const {
-                        return value_ < other.value_as(unit_);
-                    }
-
-                    bool operator>=(const uncertain_measurement& other) const {
-                        auto zval = simple_subtract(other);
-                        return (zval.value_ >= 0.0F) ? true :
-                                                    (zval == measurement(0.0, unit_));
-                    }
-
-                    bool operator<=(const uncertain_measurement& other) const {
-                        auto zval = simple_subtract(other);
-                        return (zval.value_ <= 0.0F) ? true : (zval == measurement(0.0, unit_));
-                    }
-
-                    inline bool operator!=(const uncertain_measurement& other) const {
-                        return !operator==(other);
-                    }
+                    inline bool operator!=(const uncertain_measurement& other) const { return !operator==(other); }
 
 
                     // =============================================                                                                                         
@@ -2612,28 +2514,28 @@ namespace physim {
                     constexpr double uncertainty() const { return uncertainty_; }
 
                     // get the underlying units value
-                    constexpr units::unit units() const { return unit_; }
+                    constexpr unit units() const { return unit_; }
 
                     // get the numerical value as a particular unit type
-                    inline double value_as(const units::unit& desired_units) const {
+                    inline double value_as(const unit& desired_units) const {
                         return (unit_ == desired_units) ? value_ : math::tools::convert(value_, unit_, desired_units);
                     }
 
                     // get the numerical value of the uncertainty as a particular unit
-                    inline double uncertainty_as(const units::unit& desired_units) const {
+                    inline double uncertainty_as(const unit& desired_units) const {
                         return (unit_ == desired_units) ? uncertainty_ : math::tools::convert(uncertainty_, unit_, desired_units);
                     }
 
                     // convert a unit to have a new base
-                    uncertain_measurement convert_to(const units::unit& newUnits) const {
+                    uncertain_measurement convert_to(const unit& newUnits) const {
                         auto cval = math::tools::convert(unit_, newUnits);
                         return uncertain_measurement(cval * value_, uncertainty_ * cval, newUnits);
                     }
 
                     // print the uncertain measurement
                     void print() const { 
-                        if (unit_.multiplier() != 1) std::cout << std::setprecision((int)-log10(unit_.multiplier())) << value() << " ± " << uncertainty() << " "; 
-                        else std::cout << value() << " ± " << uncertainty() << " "; 
+                        // if (unit_.multiplier() != 1) std::cout << std::setprecision(unit_.multiplier()) << value() << " ± " << uncertainty() << " "; 
+                        std::cout << value() << " ± " << uncertainty() << " "; 
                         unit_.print(); 
                         std::cout << "\n";
                     }
@@ -2653,210 +2555,173 @@ namespace physim {
         // namespace defining some usefull operation
         namespace algebra {
 
+            using namespace physics::units; 
+            using namespace physics::measurements;
+
             // generate a unit which is an integer power of another
-            constexpr physics::units::unit pow(const physics::units::unit& u, const int& power) { return u.pow(power); }
+            constexpr unit pow(const unit& u, const int& power) { return u.pow(power); }
 
-            // generate the square of an physics::units::unit
-            constexpr physics::units::unit square(const physics::units::unit& u) { return u.pow(2); }
+            // generate the square of an unit
+            constexpr unit square(const unit& u) { return u.pow(2); }
 
-            // generate the cube of an physics::units::unit
-            constexpr physics::units::unit cube(const physics::units::unit& u) { return u.pow(3); }
+            // generate the cube of an unit
+            constexpr unit cube(const unit& u) { return u.pow(3); }
 
-            // generate the root of an physics::units::unit
-            physics::units::unit root(const physics::units::unit& un, const int& power) {
-                if (power == 0) { return physics::units::special::one; }
-                if (un.multiplier() < 0.0 && power % 2 == 0) { return physics::units::special::invalid; }
-                return physics::units::unit(un.base_units().root(power), root(un.multiplier(), power));
+            // generate the root of an unit
+            unit root(const unit& un, const int& power) {
+                if (power == 0) { return special::one; }
+                if (un.multiplier() < 0.0 && power % 2 == 0) { return special::invalid; }
+                return unit(un.data().root(power), root(un.multiplier(), power));
             }
 
-            // generate the square root of an physics::units::unit
-            inline physics::units::unit sqrt(const physics::units::unit& u) { return sqrt(u); }
+            // generate the square root of an unit
+            inline unit sqrt(const unit& u) { return sqrt(u); }
 
-            // generate the cubic root of an physics::units::unit
-            inline physics::units::unit cbrt(const physics::units::unit& u) { return cbrt(u); }
+            // generate the cubic root of an unit
+            inline unit cbrt(const unit& u) { return cbrt(u); }
 
-            constexpr physics::measurements::measurement operator*(const double& val, const physics::measurements::measurement& meas) { return meas * val; }
+            constexpr measurement operator*(const double& val, const measurement& meas) { return meas * val; }
 
-            constexpr physics::measurements::measurement operator*(const double& val, const physics::units::unit& unit_base) { return physics::measurements::measurement(val, unit_base); }
+            constexpr measurement operator*(const double& val, const unit& unit_base) { return measurement(val, unit_base); }
 
-            constexpr physics::measurements::measurement operator*(const physics::units::unit& unit_base, const double& val) { return physics::measurements::measurement(val, unit_base); }
+            constexpr measurement operator*(const unit& unit_base, const double& val) { return measurement(val, unit_base); }
 
-            constexpr physics::measurements::fixed_measurement operator*(const double& v1, const physics::measurements::fixed_measurement& v2) { return physics::measurements::fixed_measurement(v1 * v2.value(), v2.units()); }
+            constexpr fixed_measurement operator*(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 * v2.value(), v2.units()); }
 
-            constexpr physics::measurements::fixed_measurement operator*(const physics::measurements::fixed_measurement& v2, const double& v1) { return physics::measurements::fixed_measurement(v1 * v2.value(), v2.units()); }
+            constexpr fixed_measurement operator*(const fixed_measurement& v2, const double& v1) { return fixed_measurement(v1 * v2.value(), v2.units()); }
 
-            inline physics::measurements::uncertain_measurement operator*(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) { return v2.operator*(v1); }
+            inline uncertain_measurement operator*(const measurement& v1, const uncertain_measurement& v2) { return v2.operator*(v1); }
 
-            inline physics::measurements::uncertain_measurement operator*(const double& v1, const physics::measurements::uncertain_measurement& v2) { return v2.operator*(v1); }
+            inline uncertain_measurement operator*(const double& v1, const uncertain_measurement& v2) { return v2.operator*(v1); }
 
-            inline physics::measurements::uncertain_measurement operator*(const physics::measurements::uncertain_measurement& v2, const double& v1) { return v2.operator*(v1); }
+            inline uncertain_measurement operator*(const uncertain_measurement& v2, const double& v1) { return v2.operator*(v1); }
 
 
-            constexpr physics::measurements::measurement operator/(const double& val, const physics::measurements::measurement& meas) {
-                return physics::measurements::measurement(val / meas.value(), meas.units().inv());
-            }
+            constexpr measurement operator/(const double& val, const measurement& meas) { return measurement(val / meas.value(), meas.units().inv()); }
 
-            constexpr physics::measurements::measurement operator/(const physics::measurements::measurement& meas, const double& val) {
-                return physics::measurements::measurement(val / meas.value(), meas.units().inv());
-            }
+            constexpr measurement operator/(const measurement& meas, const double& val) { return measurement(val / meas.value(), meas.units().inv()); }
             
-            constexpr physics::measurements::measurement operator/(const double& val, const physics::units::unit& unit_base) {
-                return physics::measurements::measurement(val, unit_base.inv());
-            }
+            constexpr measurement operator/(const double& val, const unit& unit_base) { return measurement(val, unit_base.inv()); }
             
-            constexpr physics::measurements::measurement operator/(const physics::units::unit& unit_base, const double& val) {
-                return physics::measurements::measurement(1.0 / val, unit_base);
-            }
+            constexpr measurement operator/(const unit& unit_base, const double& val) { return measurement(1.0 / val, unit_base); }
 
-            constexpr physics::measurements::fixed_measurement operator/(const double& v1, const physics::measurements::fixed_measurement& v2) {
-                return physics::measurements::fixed_measurement(v1 / v2.value(), v2.units().inv());
-            }                
+            constexpr fixed_measurement operator/(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 / v2.value(), v2.units().inv()); }             
             
-            constexpr physics::measurements::fixed_measurement operator/(const physics::measurements::fixed_measurement& v2, const double& v1) {
-                return physics::measurements::fixed_measurement(v1 / v2.value(), v2.units().inv());
-            }
+            constexpr fixed_measurement operator/(const fixed_measurement& v2, const double& v1) { return fixed_measurement(v1 / v2.value(), v2.units().inv()); }
 
-            physics::measurements::uncertain_measurement operator/(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+            uncertain_measurement operator/(const measurement& v1, const uncertain_measurement& v2) {
                 double ntol = v2.uncertainty() / v2.value();
                 double nval = v1.value() / v2.value();
-                return physics::measurements::uncertain_measurement(nval, nval * ntol, v1.units() / v2.units());
+                return uncertain_measurement(nval, nval * ntol, v1.units() / v2.units());
             }
 
-            physics::measurements::uncertain_measurement operator/(const double& v1, const physics::measurements::uncertain_measurement& v2) {
+            uncertain_measurement operator/(const double& v1, const uncertain_measurement& v2) {
                 double ntol = v2.uncertainty() / v2.value();
                 double nval = v1 / v2.value();
-                return physics::measurements::uncertain_measurement(nval, nval * ntol, v2.units().inv());
+                return uncertain_measurement(nval, nval * ntol, v2.units().inv());
             }
 
-            physics::measurements::uncertain_measurement operator/(const int& v1, const physics::measurements::uncertain_measurement& v2) {
+            uncertain_measurement operator/(const int& v1, const uncertain_measurement& v2) {
                 double ntol = v2.uncertainty() / v2.value();
                 double nval = static_cast<double>(v1) / v2.value();
-                return physics::measurements::uncertain_measurement(nval, nval * ntol, v2.units().inv());
+                return uncertain_measurement(nval, nval * ntol, v2.units().inv());
             }
 
 
-            constexpr physics::measurements::fixed_measurement operator+(const double& v1, const physics::measurements::fixed_measurement& v2) {
-                return physics::measurements::fixed_measurement(v1 + v2.value(), v2.units());
-            }
+            constexpr fixed_measurement operator+(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 + v2.value(), v2.units()); }
 
-            constexpr physics::measurements::fixed_measurement operator-(const double& v1, const physics::measurements::fixed_measurement& v2) {
-                return physics::measurements::fixed_measurement(v1 - v2.value(), v2.units());
-            }
+            constexpr fixed_measurement operator-(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 - v2.value(), v2.units()); }
             
-            physics::measurements::uncertain_measurement operator+(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+            uncertain_measurement operator+(const measurement& v1, const uncertain_measurement& v2) {
                 double cval = math::tools::convert(v2.units(), v1.units());
                 double ntol = v2.uncertainty() * cval;
-                return physics::measurements::uncertain_measurement(v1.value() + cval * v2.value(), ntol, v1.units());
+                return uncertain_measurement(v1.value() + cval * v2.value(), ntol, v1.units());
             }
 
-            physics::measurements::uncertain_measurement operator-(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+            uncertain_measurement operator-(const measurement& v1, const uncertain_measurement& v2) {
                 double cval = math::tools::convert(v2.units(), v1.units());
                 double ntol = v2.uncertainty() * cval;
-                return physics::measurements::uncertain_measurement(v1.value() - cval * v2.value(), ntol, v1.units());
+                return uncertain_measurement(v1.value() - cval * v2.value(), ntol, v1.units());
             }
 
 
-            constexpr physics::measurements::measurement pow(const physics::measurements::measurement& meas, const int& power) {
-                return physics::measurements::measurement{ std::pow(meas.value(), power), meas.units().pow(power) };
+            constexpr measurement pow(const measurement& meas, const int& power) {
+                return measurement{ std::pow(meas.value(), power), meas.units().pow(power) };
             }
 
-            constexpr physics::measurements::fixed_measurement pow(const physics::measurements::fixed_measurement& meas, const int& power) {
-                return physics::measurements::fixed_measurement{std::pow(meas.value(), power), meas.units().pow(power)};
+            constexpr fixed_measurement pow(const fixed_measurement& meas, const int& power) {
+                return fixed_measurement{std::pow(meas.value(), power), meas.units().pow(power)};
             }
 
-            physics::measurements::uncertain_measurement pow(const physics::measurements::uncertain_measurement& meas, const int& power) {
+            uncertain_measurement pow(const uncertain_measurement& meas, const int& power) {
                 auto new_value = std::pow(meas.value(), power);
                 auto new_tol = ((power >= 0) ? power : -power) * new_value * meas.uncertainty() / meas.value();
-                return physics::measurements::uncertain_measurement(new_value, new_tol, meas.units().pow(power));                    
+                return uncertain_measurement(new_value, new_tol, meas.units().pow(power));                    
             }
 
-            constexpr physics::measurements::measurement square(const physics::measurements::measurement& meas) { return square(meas); }
+            constexpr measurement square(const measurement& meas) { return square(meas); }
             
-            constexpr physics::measurements::fixed_measurement square(const physics::measurements::fixed_measurement& meas) { return square(meas); }
+            constexpr fixed_measurement square(const fixed_measurement& meas) { return square(meas); }
 
-            constexpr physics::measurements::uncertain_measurement square(const physics::measurements::uncertain_measurement& meas) { return square(meas); }
+            constexpr uncertain_measurement square(const uncertain_measurement& meas) { return square(meas); }
 
-            constexpr physics::measurements::measurement cube(const physics::measurements::measurement& meas) { return cube(meas); }
+            constexpr measurement cube(const measurement& meas) { return cube(meas); }
             
-            constexpr physics::measurements::fixed_measurement cube(const physics::measurements::fixed_measurement& meas) { return cube(meas); }
+            constexpr fixed_measurement cube(const fixed_measurement& meas) { return cube(meas); }
             
-            constexpr physics::measurements::uncertain_measurement cube(const physics::measurements::uncertain_measurement& meas) { return cube(meas); }
+            constexpr uncertain_measurement cube(const uncertain_measurement& meas) { return cube(meas); }
 
 
-            physics::measurements::measurement root(const physics::measurements::measurement& meas, const int& power) {
-                return physics::measurements::measurement(root(meas.value(), power), root(meas.units(), power));
+            inline measurement root(const measurement& meas, const int& power) {
+                return measurement(root(meas.value(), power), root(meas.units(), power));
             }
 
-            physics::measurements::fixed_measurement root(const physics::measurements::fixed_measurement& meas, const int& power) {
-                return physics::measurements::fixed_measurement(root(meas.value(), power), root(meas.units(), power));
+            inline fixed_measurement root(const fixed_measurement& meas, const int& power) {
+                return fixed_measurement(root(meas.value(), power), root(meas.units(), power));
             }
 
-            physics::measurements::uncertain_measurement root(const physics::measurements::uncertain_measurement& um, const int& power) {
+            inline uncertain_measurement root(const uncertain_measurement& um, const int& power) {
                 auto new_value = root(um.value(), power);
                 auto new_tol = new_value * um.uncertainty() / (static_cast<double>((power >= 0) ? power : -power) * um.value());
-                return physics::measurements::uncertain_measurement(new_value, new_tol, root(um.units(), power));
+                return uncertain_measurement(new_value, new_tol, root(um.units(), power));
             }
 
-            inline physics::measurements::measurement sqrt(const physics::measurements::measurement& meas) { return sqrt(meas); }
+            inline measurement sqrt(const measurement& meas) { return sqrt(meas); }
             
-            inline physics::measurements::fixed_measurement sqrt(const physics::measurements::fixed_measurement& meas) { return sqrt(meas); }
+            inline fixed_measurement sqrt(const fixed_measurement& meas) { return sqrt(meas); }
 
-            inline physics::measurements::uncertain_measurement sqrt(const physics::measurements::uncertain_measurement& meas) { return sqrt(meas); }            
+            inline uncertain_measurement sqrt(const uncertain_measurement& meas) { return sqrt(meas); }            
 
-            inline physics::measurements::measurement cbrt(const physics::measurements::measurement& meas) { return cbrt(meas); }
+            inline measurement cbrt(const measurement& meas) { return cbrt(meas); }
 
-            inline physics::measurements::fixed_measurement cbrt(const physics::measurements::fixed_measurement& meas) { return cbrt(meas); }
+            inline fixed_measurement cbrt(const fixed_measurement& meas) { return cbrt(meas); }
 
-            inline physics::measurements::uncertain_measurement cbrt(const physics::measurements::uncertain_measurement& meas) { return cbrt(meas); }
+            inline uncertain_measurement cbrt(const uncertain_measurement& meas) { return cbrt(meas); }
 
 
-            constexpr bool operator==(const double& val, const physics::measurements::fixed_measurement& v2) {
-                return v2 == val;
-            }
+            constexpr bool operator==(const double& val, const fixed_measurement& v2) { return v2 == val; }
 
-            constexpr bool operator!=(const double& val, const physics::measurements::fixed_measurement& v2) {
-                return v2 != val;
-            }
+            constexpr bool operator!=(const double& val, const fixed_measurement& v2) { return v2 != val; }
 
-            constexpr bool operator>(const double& val, const physics::measurements::fixed_measurement& v2) {
-                return val > v2.value();
-            }
+            constexpr bool operator>(const double& val, const fixed_measurement& v2) { return val > v2.value(); }
 
-            constexpr bool operator<(const double& val, const physics::measurements::fixed_measurement& v2) {
-                return val < v2.value();
-            }
+            constexpr bool operator<(const double& val, const fixed_measurement& v2) { return val < v2.value(); }
 
-            constexpr bool operator>=(const double& val, const physics::measurements::fixed_measurement& v2) {
-                return (val >= v2.value()) ? true : (v2 == val);
-            }
+            constexpr bool operator>=(const double& val, const fixed_measurement& v2) { return (val >= v2.value()) ? true : (v2 == val); }
 
-            constexpr bool operator<=(const double& val, const physics::measurements::fixed_measurement& v2) {
-                return (val <= v2.value()) ? true : (v2 == val);
-            }
+            constexpr bool operator<=(const double& val, const fixed_measurement& v2) { return (val <= v2.value()) ? true : (v2 == val); }
 
-            inline bool operator==(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
-                return v2 == other;
-            }
+            inline bool operator==(const measurement& other, const uncertain_measurement& v2) { return v2 == other; }
 
-            inline bool operator!=(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
-                return v2 != other;
-            }
+            inline bool operator!=(const measurement& other, const uncertain_measurement& v2) { return v2 != other; }
 
-            constexpr bool operator>(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
-                return other.value() > v2.value();
-            }
+            constexpr bool operator>(const measurement& other, const uncertain_measurement& v2) { return other.value() > v2.value(); }
 
-            constexpr bool operator<(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
-                return other.value() < v2.value();
-            }
+            constexpr bool operator<(const measurement& other, const uncertain_measurement& v2) { return other.value() < v2.value(); }
 
-            constexpr bool operator>=(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
-                return (other > v2) ? true : (v2 == other);
-            }
+            constexpr bool operator>=(const measurement& other, const uncertain_measurement& v2) { return (other > v2) ? true : (v2 == other); }
 
-            constexpr bool operator<=(const physics::measurements::measurement& other, const physics::measurements::uncertain_measurement& v2) {
-                return (other < v2) ? true : (v2 == other);
-            }
+            constexpr bool operator<=(const measurement& other, const uncertain_measurement& v2) { return (other < v2) ? true : (v2 == other); }
 
 
         } // namespace algebra
@@ -2864,5 +2729,280 @@ namespace physim {
 
     } // namespace math
 
+
+/*
+
+    namespace physics {
+
+        // namespace for keeping track of an object in a 3D system
+        namespace position {
+
+            // class expressing the coordinate of an object in a system
+            class coordinate {     
+
+                protected: 
+                    
+                    // =============================================
+                    // class member
+                    // =============================================
+
+                    measurements::fixed_measurement coordinate_;
+
+
+                public:  
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+
+                    explicit constexpr coordinate(const double& coord, const units::unit& unit = units::m) noexcept : coordinate_{coord, unit} {}
+                    
+                    explicit constexpr coordinate(const units::unit& unit, const double& coord) noexcept : coordinate_{coord, unit} {}
+
+                    constexpr coordinate(const measurements::fixed_measurement& coord) : coordinate_{coord} {}
+
+                    ~coordinate() = default;
+
+
+                    // =============================================
+                    // set & get
+                    // =============================================
+
+
+
+            }; // class coordinate
+
+
+            class position {
+
+                private: 
+                    
+                    // =============================================
+                    // class members
+                    // =============================================
+                    
+                    std::vector<coordinate> m_position; 
+                
+
+                public: 
+
+                    // =============================================
+                    // constructors
+                    // =============================================
+
+                    position(const coordinate& x, const coordinate& y, const coordinate& z) {
+                        m_position.resize(3); 
+                        m_position[0] = x; 
+                        m_position[1] = y;
+                        m_position[2] = z; 
+                    }
+
+                    position(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) {
+                        m_position.resize(3); 
+                        m_position[0] = x; 
+                        m_position[1] = y;
+                        m_position[2] = z;
+                    }
+
+                    position(const std::vector<coordinate>& pos) : m_position{pos} {}
+
+                    position(const position& pos) : position(pos.get_coordinates()) {}
+
+
+                    // =============================================
+                    // set, get and print methods
+                    // =============================================
+
+                    void set_position(const std::vector<coordinate>& pos) { m_position = pos; }
+
+                    void coordinate_x(const coordinate& x) { m_position[0] = x; }
+                    
+                    void coordinate_y(const coordinate& y) { m_position[1] = y; }
+                    
+                    void coordinate_z(const coordinate& z) { m_position[2] = z; }
+
+                    void value_x(const double& x) { m_position[0].value(x); }
+
+                    void value_y(const double& y) { m_position[1].value(y); }
+
+                    void value_z(const double& z) { m_position[2].value(z); }
+
+                    std::vector<coordinate> get_coordinates() const { return m_position; }
+
+                    coordinate coordinate_x() const { return m_position[0]; }
+
+                    coordinate coordinate_y() const { return m_position[1]; }
+
+                    coordinate coordinate_z() const { return m_position[2]; }
+
+                    double value_x() const { return m_position[0].value(); }
+
+                    double value_y() const { return m_position[1].value(); }
+
+                    double value_z() const { return m_position[2].value(); }
+
+                    measurements::fixed_measurement magnitude() const { 
+                        return math::op::sqrt(math::op::square(m_position[0].get_coordinate_measurement()) +
+                                                        math::op::square(m_position[1].get_coordinate_measurement()) +
+                                                        math::op::square(m_position[2].get_coordinate_measurement()));
+                    }
+
+                    measurements::fixed_measurement distance(const std::vector<coordinate>& pos) const {        
+                        return math::op::sqrt(math::op::square(pos[0].get_coordinate_measurement() - m_position[0].get_coordinate_measurement()) +
+                                                        math::op::square(pos[1].get_coordinate_measurement() - m_position[1].get_coordinate_measurement()) +
+                                                        math::op::square(pos[2].get_coordinate_measurement() - m_position[2].get_coordinate_measurement()));
+                    }                    
+
+                    measurements::fixed_measurement distance(const position& pos) const {        
+                        return math::op::sqrt(math::op::square(pos.coordinate_x().get_coordinate_measurement() - m_position[0].get_coordinate_measurement()) +
+                                                    math::op::square(pos.coordinate_y().get_coordinate_measurement() - m_position[1].get_coordinate_measurement()) +
+                                                    math::op::square(pos.coordinate_z().get_coordinate_measurement() - m_position[2].get_coordinate_measurement()));
+                    }       
+                    
+                    double rho() { return math::op::sqrt(math::op::square(value_x()) + math::op::square(value_y())); }
+
+                    double phi() const { return atan2(value_y(), value_x()); }     
+
+                    double phi(const std::vector<coordinate>& pos) const { 
+                        return atan2(pos[1].value() - value_y(), pos[0].value() - value_x()); 
+                    }
+
+                    double phi(const position& pos) const { 
+                        return atan2(pos.value_y() - value_y(), pos.value_x() - value_x()); 
+                    }
+
+                    double theta() const { return acos(value_z() / magnitude().value()); }
+            
+                    double theta(const std::vector<coordinate>& pos) const { 
+                        return acos((pos[2].value() - value_z()) / distance(pos).value()); 
+                    }
+
+                    double theta(const position& pos) const { 
+                        return acos((pos.value_z() - value_z()) / distance(pos).value()); 
+                    }
+    
+                    std::vector<coordinate> direction() const {
+                        return {cos(phi()), sin(phi()), m_position[2].coordinate() / magnitude()}};
+                    } 
+
+                    std::vector<coordinate> direction(const std::vector<coordinate>& pos1) const {
+                        return {cos(phi(pos1)), sin(phi(pos1)), (pos1[2].coordinate() - m_position[2].coordinate()) / distance(pos1)};
+                    } 
+
+                    std::vector<coordinate> direction(const position& pos1) const {
+                        return {cos(phi(pos1)), sin(phi(pos1)), (pos1.coordinate_z().coordinate() - m_position[2].coordinate()) / distance(pos1)};
+                    } 
+
+                    void print() const {
+                        std::cout << "- position = ";
+                        for (auto i : m_position) { 
+                            std::cout << "\t["; 
+                            i.coordinate::print(); 
+                            std::cout << "]";
+                        }
+                        std::cout << std::endl; 
+                    }
+
+
+            }; // class position
+
+
+            class velocity {
+
+                private: 
+                    
+                    // =============================================
+                    // class members
+                    // =============================================
+                    
+                    std::vector<coordinate> m_velocity; 
+                
+
+                public:  
+
+                    // =============================================
+                    // constructors
+                    // =============================================
+
+                    velocity(const coordinate& x, const coordinate& y, const coordinate& z) {
+                        m_velocity.push_back(x); 
+                        m_velocity.push_back(y);
+                        m_velocity.push_back(z); 
+                    }
+
+                    velocity(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) {
+                        m_velocity.push_back(x); 
+                        m_velocity.push_back(y);
+                        m_velocity.push_back(z);
+                    }
+
+                    velocity(const std::vector<coordinate>& vel) : m_velocity{vel} {}
+
+                    velocity(const velocity& vel) : m_velocity{vel.get_coordinates()} {}
+
+
+                    // =============================================
+                    // set, get and print methods
+                    // =============================================
+                    void set_velocity(const std::vector<coordinate>& pos) { m_velocity = pos; }
+
+                    void coordinate_x(const coordinate& x) { m_velocity[0] = x; }
+                    
+                    void coordinate_y(const coordinate& y) { m_velocity[1] = y; }
+                    
+                    void coordinate_z(const coordinate& z) { m_velocity[2] = z; }
+
+                    void value_x(const double& x) { m_velocity[0].value(x); }
+
+                    void value_y(const double& y) { m_velocity[1].value(y); }
+
+                    void value_z(const double& z) { m_velocity[2].value(z); }
+
+                    std::vector<coordinate> get_coordinates() const { return m_velocity; }
+
+                    coordinate coordinate_x() const { return m_velocity[0]; }
+
+                    coordinate coordinate_y() const { return m_velocity[1]; }
+
+                    coordinate coordinate_z() const { return m_velocity[2]; }
+
+                    double value_x() const { return m_velocity[0].value(); }
+
+                    double value_y() const { return m_velocity[1].value(); }
+
+                    double value_z() const { return m_velocity[2].value(); }
+
+                    measurements::fixed_measurement magnitude() const { 
+                        return math::op::sqrt(math::op::square(m_velocity[0].get_coordinate_measurement()) +
+                                                        math::op::square(m_velocity[1].get_coordinate_measurement()) +
+                                                        math::op::square(m_velocity[2].get_coordinate_measurement()));
+                    }
+                
+                    double phi() const { return atan2(value_y(), value_x()); }     
+                    
+                    double theta() const { return acos(value_z() / magnitude().value()); }
+
+                    // std::vector<coordinate> direction() const {
+                    //     return {cos(phi()), sin(phi()), cos(theta())};
+                    // } 
+
+                    void print() const {
+                        std::cout << "- velocity = { ";
+                            for (auto i : m_velocity) { 
+                            std::cout << "\t["; 
+                            i.coordinate::print(); 
+                            std::cout << "]";
+                        }
+                        std::cout << "  }" << std::endl; 
+                    }
+
+            }; // class velocity
+
+
+
+        } // namespace position
+
+    } // namespace physics
+*/
 
 } // namespace physim
