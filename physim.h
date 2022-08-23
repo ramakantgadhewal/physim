@@ -1025,7 +1025,7 @@ namespace physim {
             }
 
             // round a value to the expected level of precision of a double
-            inline double cround(double val) {
+            double cround(double val) {
                 std::uint64_t bits;
                 std::memcpy(&bits, &val, sizeof(bits));
                 bits += 0x800ULL;
@@ -1035,7 +1035,7 @@ namespace physim {
             }
 
             // rounding compare for equality on double
-            inline bool compare_round_equals(double val1, double val2) {
+            bool compare_round_equals(double val1, double val2) {
                 static constexpr double half_precise_precision{5e-13};
                 auto v1 = val1 - val2;
                 if (v1 == 0.0 || std::fpclassify(v1) == FP_SUBNORMAL) { return true; }
@@ -1814,6 +1814,19 @@ namespace physim {
             unit mol = unit(base::mol); 
             unit cd = unit(base::candela);
 
+            // distance units
+            unit km(prefix::kilo, m);
+            unit dm(prefix::deci, m);
+            unit cm(prefix::centi, m);
+            unit mm(prefix::milli, m);
+            unit um(prefix::micro, m);
+            unit nm(prefix::nano, m);
+
+            // time units
+            unit ms(prefix::milli, s);
+            unit us(prefix::micro, s);
+            unit ns(prefix::nano, s);
+            unit min(60.0, s);
 
             // special units 
             namespace special {
@@ -1866,19 +1879,9 @@ namespace physim {
             } // namespace derived_units
             
 
-            // distance units
-            unit km(prefix::kilo, m);
-            unit dm(prefix::deci, m);
-            unit cm(prefix::centi, m);
-            unit mm(prefix::milli, m);
-            unit um(prefix::micro, m);
-            unit nm(prefix::nano, m);
+            unit radians = unit(180 / math::constants::pi, special::one); 
+            unit rad = radians;
 
-            // time units
-            unit ms(prefix::milli, s);
-            unit us(prefix::micro, s);
-            unit ns(prefix::nano, s);
-            unit min(60.0, s);
             // unit hr(60.0, min, "hr");
             // unit day(24.0, hr, "day");
             // unit yr(8760.0, hr, "yr");  // median calendar year;
@@ -2178,6 +2181,10 @@ namespace physim {
 
                     constexpr fixed_measurement operator+(const double& val) const {
                         return fixed_measurement(value_ + val, unit_);
+                    }
+
+                    inline fixed_measurement operator-(const fixed_measurement& other) const {
+                        return fixed_measurement(value_ - other.value_as(unit_), unit_);
                     }
 
                     inline fixed_measurement operator-(const measurement& other) const {
@@ -2659,17 +2666,17 @@ namespace physim {
                 return uncertain_measurement(new_value, new_tol, meas.units().pow(power));                    
             }
 
-            constexpr measurement square(const measurement& meas) { return square(meas); }
+            constexpr measurement square(const measurement& meas) { return pow(meas, 2); }
             
-            constexpr fixed_measurement square(const fixed_measurement& meas) { return square(meas); }
+            constexpr fixed_measurement square(const fixed_measurement& meas) { return pow(meas, 2); }
 
-            constexpr uncertain_measurement square(const uncertain_measurement& meas) { return square(meas); }
+            inline uncertain_measurement square(const uncertain_measurement& meas) { return pow(meas, 2); }
 
-            constexpr measurement cube(const measurement& meas) { return cube(meas); }
+            constexpr measurement cube(const measurement& meas) { return pow(meas, 3); }
             
-            constexpr fixed_measurement cube(const fixed_measurement& meas) { return cube(meas); }
+            constexpr fixed_measurement cube(const fixed_measurement& meas) { return pow(meas, 3); }
             
-            constexpr uncertain_measurement cube(const uncertain_measurement& meas) { return cube(meas); }
+            inline uncertain_measurement cube(const uncertain_measurement& meas) { return pow(meas, 3); }
 
 
             inline measurement root(const measurement& meas, const int& power) {
@@ -2680,23 +2687,23 @@ namespace physim {
                 return fixed_measurement(root(meas.value(), power), root(meas.units(), power));
             }
 
-            inline uncertain_measurement root(const uncertain_measurement& um, const int& power) {
+            uncertain_measurement root(const uncertain_measurement& um, const int& power) {
                 auto new_value = root(um.value(), power);
                 auto new_tol = new_value * um.uncertainty() / (static_cast<double>((power >= 0) ? power : -power) * um.value());
                 return uncertain_measurement(new_value, new_tol, root(um.units(), power));
             }
 
-            inline measurement sqrt(const measurement& meas) { return sqrt(meas); }
+            inline measurement sqrt(const measurement& meas) { return root(meas, 2); }
             
-            inline fixed_measurement sqrt(const fixed_measurement& meas) { return sqrt(meas); }
+            inline fixed_measurement sqrt(const fixed_measurement& meas) { return root(meas, 2); }
 
-            inline uncertain_measurement sqrt(const uncertain_measurement& meas) { return sqrt(meas); }            
+            inline uncertain_measurement sqrt(const uncertain_measurement& meas) { return root(meas, 2); }            
 
-            inline measurement cbrt(const measurement& meas) { return cbrt(meas); }
+            inline measurement cbrt(const measurement& meas) { return root(meas, 3); }
 
-            inline fixed_measurement cbrt(const fixed_measurement& meas) { return cbrt(meas); }
+            inline fixed_measurement cbrt(const fixed_measurement& meas) { return root(meas, 3); }
 
-            inline uncertain_measurement cbrt(const uncertain_measurement& meas) { return cbrt(meas); }
+            inline uncertain_measurement cbrt(const uncertain_measurement& meas) { return root(meas, 3); }
 
 
             constexpr bool operator==(const double& val, const fixed_measurement& v2) { return v2 == val; }
@@ -2730,47 +2737,33 @@ namespace physim {
     } // namespace math
 
 
-/*
-
     namespace physics {
 
         // namespace for keeping track of an object in a 3D system
-        namespace position {
+        namespace tools {
 
-            // class expressing the coordinate of an object in a system
-            class coordinate {     
+            using namespace measurements; 
 
-                protected: 
+            // // class expressing the coordinate of an object in a system
+            // class coordinate : public fixed_measurement {     
+
+            //     public:  
+
+            //         // =============================================
+            //         // constructors and destructor
+            //         // =============================================
+
+            //         explicit constexpr coordinate(const double& coord, const units::unit& unit = units::m) noexcept : fixed_measurements(coord, unit) {}
                     
-                    // =============================================
-                    // class member
-                    // =============================================
+            //         explicit constexpr coordinate(const units::unit& unit, const double& coord) noexcept : fixed_measurements(coord, unit) {}
 
-                    measurements::fixed_measurement coordinate_;
-
-
-                public:  
-
-                    // =============================================
-                    // constructors and destructor
-                    // =============================================
-
-                    explicit constexpr coordinate(const double& coord, const units::unit& unit = units::m) noexcept : coordinate_{coord, unit} {}
+            //         constexpr coordinate(const fixed_measurement& coord) : fixed_measurements(coord) {}
                     
-                    explicit constexpr coordinate(const units::unit& unit, const double& coord) noexcept : coordinate_{coord, unit} {}
+            //         constexpr coordinate(const measurement& coord) : fixed_measurements(coord) {}
 
-                    constexpr coordinate(const measurements::fixed_measurement& coord) : coordinate_{coord} {}
+            //         ~coordinate() = default;
 
-                    ~coordinate() = default;
-
-
-                    // =============================================
-                    // set & get
-                    // =============================================
-
-
-
-            }; // class coordinate
+            // }; // class coordinate
 
 
             class position {
@@ -2781,132 +2774,122 @@ namespace physim {
                     // class members
                     // =============================================
                     
-                    std::vector<coordinate> m_position; 
-                
+                    std::vector<fixed_measurement> position_ = std::vector<fixed_measurement>(3);
+
 
                 public: 
 
                     // =============================================
-                    // constructors
+                    // constructors & destructor
                     // =============================================
+                    
+                    explicit position(const fixed_measurement& x, const fixed_measurement& y, const fixed_measurement& z) noexcept : 
+                        position_{x, y, z} {}
 
-                    position(const coordinate& x, const coordinate& y, const coordinate& z) {
-                        m_position.resize(3); 
-                        m_position[0] = x; 
-                        m_position[1] = y;
-                        m_position[2] = z; 
-                    }
+                    explicit position(const double& x, const double& y, const double& z) noexcept : 
+                        position_{fixed_measurement(x, units::m), fixed_measurement(y, units::m), fixed_measurement(z, units::m)} {}
 
-                    position(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) {
-                        m_position.resize(3); 
-                        m_position[0] = x; 
-                        m_position[1] = y;
-                        m_position[2] = z;
-                    }
+                    position(const std::vector<fixed_measurement>& pos) : position_{pos} {}
 
-                    position(const std::vector<coordinate>& pos) : m_position{pos} {}
+                    position(const position& pos) : position(pos.get_position()) {}
 
-                    position(const position& pos) : position(pos.get_coordinates()) {}
+                    ~position() = default; 
 
 
                     // =============================================
                     // set, get and print methods
                     // =============================================
 
-                    void set_position(const std::vector<coordinate>& pos) { m_position = pos; }
+                    void set_position(const double& x, const double& y, const double& z) { 
+                        position_[0] = x;  
+                        position_[1] = y;
+                        position_[2] = z; 
+                    }
 
-                    void coordinate_x(const coordinate& x) { m_position[0] = x; }
+                    inline void set_position(const std::vector<fixed_measurement>& pos) { position_ = pos; }
                     
-                    void coordinate_y(const coordinate& y) { m_position[1] = y; }
+                    inline void set_position(const position& pos) { position_ = pos.get_position(); }
+
+                    inline void x(const fixed_measurement& x) { position_[0] = x; }
                     
-                    void coordinate_z(const coordinate& z) { m_position[2] = z; }
-
-                    void value_x(const double& x) { m_position[0].value(x); }
-
-                    void value_y(const double& y) { m_position[1].value(y); }
-
-                    void value_z(const double& z) { m_position[2].value(z); }
-
-                    std::vector<coordinate> get_coordinates() const { return m_position; }
-
-                    coordinate coordinate_x() const { return m_position[0]; }
-
-                    coordinate coordinate_y() const { return m_position[1]; }
-
-                    coordinate coordinate_z() const { return m_position[2]; }
-
-                    double value_x() const { return m_position[0].value(); }
-
-                    double value_y() const { return m_position[1].value(); }
-
-                    double value_z() const { return m_position[2].value(); }
-
-                    measurements::fixed_measurement magnitude() const { 
-                        return math::op::sqrt(math::op::square(m_position[0].get_coordinate_measurement()) +
-                                                        math::op::square(m_position[1].get_coordinate_measurement()) +
-                                                        math::op::square(m_position[2].get_coordinate_measurement()));
-                    }
-
-                    measurements::fixed_measurement distance(const std::vector<coordinate>& pos) const {        
-                        return math::op::sqrt(math::op::square(pos[0].get_coordinate_measurement() - m_position[0].get_coordinate_measurement()) +
-                                                        math::op::square(pos[1].get_coordinate_measurement() - m_position[1].get_coordinate_measurement()) +
-                                                        math::op::square(pos[2].get_coordinate_measurement() - m_position[2].get_coordinate_measurement()));
-                    }                    
-
-                    measurements::fixed_measurement distance(const position& pos) const {        
-                        return math::op::sqrt(math::op::square(pos.coordinate_x().get_coordinate_measurement() - m_position[0].get_coordinate_measurement()) +
-                                                    math::op::square(pos.coordinate_y().get_coordinate_measurement() - m_position[1].get_coordinate_measurement()) +
-                                                    math::op::square(pos.coordinate_z().get_coordinate_measurement() - m_position[2].get_coordinate_measurement()));
-                    }       
+                    inline void y(const fixed_measurement& y) { position_[1] = y; }
                     
-                    double rho() { return math::op::sqrt(math::op::square(value_x()) + math::op::square(value_y())); }
+                    inline void z(const fixed_measurement& z) { position_[2] = z; }
 
-                    double phi() const { return atan2(value_y(), value_x()); }     
+                    inline void x(const double& x) { position_[0] = fixed_measurement(x, position_[0].units()); }
 
-                    double phi(const std::vector<coordinate>& pos) const { 
-                        return atan2(pos[1].value() - value_y(), pos[0].value() - value_x()); 
-                    }
+                    inline void y(const double& y) { position_[1] = fixed_measurement(y, position_[1].units()); }
 
-                    double phi(const position& pos) const { 
-                        return atan2(pos.value_y() - value_y(), pos.value_x() - value_x()); 
-                    }
+                    inline void z(const double& z) { position_[2] = fixed_measurement(z, position_[2].units()); }
 
-                    double theta() const { return acos(value_z() / magnitude().value()); }
-            
-                    double theta(const std::vector<coordinate>& pos) const { 
-                        return acos((pos[2].value() - value_z()) / distance(pos).value()); 
-                    }
+                    inline std::vector<fixed_measurement> get_position() const { return position_; }
 
-                    double theta(const position& pos) const { 
-                        return acos((pos.value_z() - value_z()) / distance(pos).value()); 
+                    inline fixed_measurement x() const { return position_[0]; }
+                    
+                    inline fixed_measurement y() const { return position_[1]; }
+                    
+                    inline fixed_measurement z() const { return position_[2]; }             
+
+                    inline fixed_measurement magnitude() const { 
+                        return math::algebra::sqrt(math::algebra::square(position_[0]) +
+                                                   math::algebra::square(position_[1]) +
+                                                   math::algebra::square(position_[2]));
                     }
     
-                    std::vector<coordinate> direction() const {
-                        return {cos(phi()), sin(phi()), m_position[2].coordinate() / magnitude()}};
+                    inline fixed_measurement distance(const position& pos) const {        
+                        return math::algebra::sqrt(math::algebra::square(pos.position_[0] - position_[0]) +
+                                                   math::algebra::square(pos.position_[1] - position_[1]) +
+                                                   math::algebra::square(pos.position_[2] - position_[2]));
+                    }       
+
+                    inline fixed_measurement rho() const { 
+                        return math::algebra::sqrt(math::algebra::square(position_[0]) + math::algebra::square(position_[1])); 
+                    }
+
+                    inline fixed_measurement phi() const { 
+                        return fixed_measurement(atan2(position_[1].value(), position_[0].value()), units::rad); 
+                    }     
+
+                    inline fixed_measurement phi(const position& pos) const { 
+                        return fixed_measurement(atan2(pos.position_[1].value() - position_[1].value(), pos.position_[0].value() - position_[0].value()), units::rad); 
+                    }
+
+                    inline fixed_measurement theta() const { 
+                        if (position_[2] == 0) return fixed_measurement(0, units::rad);
+                        return fixed_measurement(acos(position_[2].value() / magnitude().value()), units::rad); 
+                    }
+
+                    inline fixed_measurement theta(const position& pos) const {
+                        if (pos.position_[2] == position_[2]) return fixed_measurement(0, units::rad);
+                        return fixed_measurement(acos((pos.position_[2].value() - position_[2].value()) / distance(pos).value()), units::rad); 
+                    }
+
+                    inline std::vector<double> direction() const {
+                        return { cos(phi().value()), sin(phi().value()), position_[2].value() / magnitude().value() };
                     } 
 
-                    std::vector<coordinate> direction(const std::vector<coordinate>& pos1) const {
-                        return {cos(phi(pos1)), sin(phi(pos1)), (pos1[2].coordinate() - m_position[2].coordinate()) / distance(pos1)};
-                    } 
-
-                    std::vector<coordinate> direction(const position& pos1) const {
-                        return {cos(phi(pos1)), sin(phi(pos1)), (pos1.coordinate_z().coordinate() - m_position[2].coordinate()) / distance(pos1)};
+                    inline std::vector<double> direction(const position& pos1) const {
+                        return { cos(phi(pos1).value()), sin(phi(pos1).value()), (pos1.position_[2] - position_[2]).value() / distance(pos1).value() };
                     } 
 
                     void print() const {
-                        std::cout << "- position = ";
-                        for (auto i : m_position) { 
-                            std::cout << "\t["; 
-                            i.coordinate::print(); 
-                            std::cout << "]";
+                        std::cout << "position = {\n";
+                        for (auto i : position_) { 
+                            i.print(); 
                         }
-                        std::cout << std::endl; 
+                        std::cout << "}\n"; 
                     }
 
 
             }; // class position
 
 
+        } // namespace position
+        
+            
+
+    } // namespace physics
+/*
             class velocity {
 
                 private: 
