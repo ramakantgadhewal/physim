@@ -1981,7 +1981,7 @@ namespace physim {
                     constexpr measurement operator/(const double& val) const { return measurement(value_ / val, unit_); } 
 
                     constexpr measurement& operator=(const measurement& other) noexcept {
-                        value_ = (unit_ == other.unit_) ? other.value_ : other.value_as(unit_);
+                        value_ = (unit_ == other.units()) ? other.value() : other.value_as(unit_);
                         return *this;
                     }
 
@@ -2766,142 +2766,141 @@ namespace physim {
     // operations amongs std::vector<T>
     template <typename T> 
     std::vector<T> operator+(const std::vector<T>& v1, const std::vector<T>& v2) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + v2[i];
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + v2[i]);
         return vec;
     }
 
     template <typename T> 
     std::vector<T> operator+(const std::vector<T>& v1, const double& val) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + val);
         return vec;
     }
 
     template <typename T> 
     std::vector<T> operator-(const std::vector<T>& v1, const std::vector<T>& v2) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - v2[i];
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] - v2[i]);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator-(const std::vector<T>& v1, const double& val) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] - val);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator+=(const std::vector<T>& v1, const std::vector<T>& v2) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + v2[i];
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + v2[i]);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator+=(const std::vector<T>& v1, const double& val) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + val);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator-=(const std::vector<T>& v1, const std::vector<T>& v2) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - v2[i];
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] - v2[i]);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator-=(const std::vector<T>& v1, const double& val) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] - val);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator*(const std::vector<T>& v1, const std::vector<T>& v2) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] * v2[i];
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] * v2[i]);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator*(const std::vector<T>& v1, const double& val) {
-        std::cout << "operator* called\n"; 
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = (T) (v1[i] * val);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] * val); 
         return vec;
     }
     
     template <typename T>            
     std::vector<T> operator*(const double& val, const std::vector<T>& v1) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] * val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] * val);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator/(const std::vector<T>& v1, const std::vector<T>& v2) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] / v2[i];
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] / v2[i]);
         return vec;
     }
     
     template <typename T> 
     std::vector<T> operator/(const std::vector<T>& v1, const double& val) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] / val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] / val);
         return vec;
     }
     
     template <typename T>            
     std::vector<T> operator/(const double& val, const std::vector<T>& v1) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] / val;
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] / val);
         return vec;
     }
     
     template <typename T>            
     std::vector<T> pow(const std::vector<T>& v1, const double& power) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::pow(v1[i], power);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(math::algebra::pow(v1[i], power));
         return vec;
     }
     
     template <typename T>            
     std::vector<T> square(const std::vector<T>& v1) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::square(v1[i]);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(math::algebra::square(v1[i]));
         return vec;
     }
     
     template <typename T>            
     std::vector<T> cube(const std::vector<T>& v1) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::cube(v1[i]);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(math::algebra::cube(v1[i]));
         return vec;
     }
     
     template <typename T>            
     std::vector<T> root(const std::vector<T>& v1, const double& power) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::root(v1[i], power);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(math::algebra::root(v1[i], power));
         return vec;
     }
     
     template <typename T>            
     std::vector<T> sqrt(const std::vector<T>& v1) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::sqrt(v1[i]);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(math::algebra::sqrt(v1[i]));
         return vec;
     }
     
     template <typename T>            
     std::vector<T> cbrt(const std::vector<T>& v1) {
-        std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::cbrt(v1[i]);
+        std::vector<T> vec;
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(math::algebra::cbrt(v1[i]));
         return vec;
     }
 

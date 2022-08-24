@@ -22,10 +22,10 @@ int main() {
     plot.set_ylabel("Position [m]"); 
 
     std::vector<double> t, x;
+    unsigned int count{};
     
-    oscillators::harmonic oscillator(measurements::fixed_measurement(10, units::rad / units::s)); 
-    mass m(measurements::fixed_measurement(3, units::kg), position(3., 3., 3.), velocity(1., 0., 0.));
-    m.set_position(m.get_position() / 3); 
+    oscillators::harmonic oscillator(measurements::fixed_measurement(1, units::rad / units::s)); 
+    mass m(measurements::fixed_measurement(3, units::kg), position(0., 0., 0.), velocity(1., 0., 0.));
     objects::time tmax(70, units::s); 
     timer timer; 
         
@@ -40,47 +40,62 @@ int main() {
 
     // Euler's method
     timer.start(); 
-    // while (oscillator.get_time() < tmax.get_time()) {
-        t.emplace_back(oscillator.get_time().value()); 
-        x.emplace_back(m.get_x().value());
-        m.set_pos_vel(oscillator.euler(m.get_pos_vel())); 
-
-    // }
-
-    // m.print_pos_vel(); 
+    while (oscillator.get_time().value() < tmax.get_time().value()) {
+        if (count % 100 == 0) {
+            t.emplace_back(oscillator.get_time().value()); 
+            x.emplace_back(m.get_x().value());
+        }
+        m.set_pos_vel(oscillator.euler(m.get_pos_vel(), 1.e-5)); 
+        count++; 
+    }
     timer.pause(); 
-    std::cout << "\nSimulation ended\n"; 
+
+    std::cout << "\nSimulation with Euler ended\n"; 
     timer.print();    
-    std::cout << "Final conditions:\n"; 
+    std::cout << "\nFinal conditions:\n"; 
     m.print_pos_vel(); 
+    oscillator.print_time(); 
+    std::cout << "\n"; 
 
     plot.plot(t, x, "Euler"); 
+    std::cout << "\nPlotting ended (1/2) \n"; 
+
+    m.set_pos_vel(position(0., 0., 0.), velocity(1., 0., 0.)); 
+    oscillator.reset_time(); 
+    t.clear(); 
+    x.clear(); 
+    count = 0;
+
+    std::cout << "\nSimulation of an harmonic oscillator with RK4's method for ";
+    tmax.print_time(); 
+    std::cout << "\nInitial conditions:\n"; 
+    oscillator.print_omega(); 
+    m.print_pos_vel(); 
+    std::cout << "time = ";
+    oscillator.print_time(); 
+    std::cout << "\n"; 
+
+    // Runge Kutta's method
+    timer.start(); 
+    while (oscillator.get_time().value() < tmax.get_time().value()) {
+        if (count % 100 == 0) {
+            t.emplace_back(oscillator.get_time().value()); 
+            x.emplace_back(m.get_x().value());
+        }
+        m.set_pos_vel(oscillator.euler(m.get_pos_vel(), 1.e-5)); 
+        count++; 
+    }
+
+    std::cout << "\nSimulation with RK4 ended\n"; 
+    timer.print();    
+    std::cout << "\nFinal conditions:\n"; 
+    m.print_pos_vel(); 
+    oscillator.print_time(); 
+    std::cout << "\n"; 
+
+    plot.plot(t, x, "RK4"); 
     plot.show(); 
-
-
-    // pos.set_position({0., 0., 0.}, {1., 0., 0.}); 
-    // oscill.reset_time(); 
-    // time.clear(); 
-    // coord_x.clear(); 
-    
-    // // Runge Kutta's method
-    // start = std::chrono::system_clock::now();
-    // while (oscill.get_time() < tmax) {
-    //     time.push_back(oscill.get_time()); 
-    //     coord_x.push_back(pos.get_coord_x());
-    //     pos.set_position(oscill.rk4(pos.get_position(), h)); 
-    //     oscill.increase_time(h);
-    // }    
-    // end = std::chrono::system_clock::now();
-    // elapsed_seconds = end - start;
-    // end_time = std::chrono::system_clock::to_time_t(end);
-    
-    // std::cout << "Simulation with Runge Kutta's method ended\n"; 
-    // std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n" << std::endl;
-    
-    // plot.plot(time, coord_x, "RK4"); 
-    // plot.show(); 
-    // std::cout << "Plot ended" << std::endl; 
+    std::cout << "\nPlotting ended (2/2) \n"; 
 
     return 0; 
 

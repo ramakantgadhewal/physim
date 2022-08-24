@@ -19,14 +19,14 @@ int main() {
     measurement meas1(1, units::m); 
     measurement meas2(1, units::m); 
     measurement meas3(1, units::m); 
-    measurement meas4(meas3 * 3); 
+    measurement meas4 = meas3 * 3; 
     meas4.print(); 
     std::cout << "\n"; 
 
     std::vector<measurement> pos1({meas1, meas2, meas4}); 
     for (auto i : pos1) i.print(); 
     
-    std::vector<measurement> pos2(pos1 * 3); 
+    std::vector<measurement> pos2 = pos1 * 3; 
     for (auto i : pos2) i.print(); 
 
     // position p1(meas1, meas2, meas4);
