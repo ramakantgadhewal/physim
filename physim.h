@@ -47,50 +47,6 @@ namespace physim {
             return vec;    
         }
 
-        // class for keeping track of the inexorable passage of time
-        class timer {
-
-            public:
-
-                // =============================================
-                // class members
-                // =============================================     
-                
-                std::chrono::duration<double> m_elapsed_seconds;
-                std::chrono::time_point<std::chrono::system_clock> m_start, m_pause;
-
-
-                // =============================================
-                // constructor and destructor
-                // =============================================   
-
-                // timer(const units::unit& unit) : time(0.0, unit) {}
-
-                // timer() : time(0.0, units::defined::s) {}
-
-                timer() {}
-
-                ~timer() = default;
-
-                
-                // =============================================
-                // timer methods
-                // =============================================   
-
-                void start() { m_start = std::chrono::system_clock::now(); }
-
-                void pause() { m_pause = std::chrono::system_clock::now(); }
-
-                double elapsed_time() { 
-                    m_elapsed_seconds = m_pause - m_start;
-                    return m_elapsed_seconds.count(); 
-                }
-                
-                void print() { std::cout << "elapsed time = " << elapsed_time() << "\n"; }
-
-        }; // class timer
-
-
     } // namespace utilities
 
 
@@ -1320,6 +1276,7 @@ namespace physim {
 
             }; // class integral
 
+
         } // namespace tools
 
 
@@ -1851,36 +1808,37 @@ namespace physim {
             // derived_units
             namespace SI_derived {
 
-                // unit hertz(unit_data(0, -1, 0, 0, 0, 0, 0));
-                // unit Hz = hertz;
-                // unit volt(unit_data(2, -3, 1, -1, 0, 0, 0), "V");
-                // unit V = volt;
-                // unit newton(unit_data(1, -2, 1, 0, 0, 0, 0), "N");
-                // unit N = newton;
-                // unit Pa(unit_data(-1, -2, 1, 0, 0, 0, 0), "Pa");
-                // unit pascal = Pa;
-                // unit joule(unit_data(2, -2, 1, 0, 0, 0, 0), "J");
-                // unit J = joule;
-                // unit watt(unit_data(2, -3, 1, 0, 0, 0, 0), "W");
-                // unit W = watt;
-                // unit coulomb(unit_data(0, 1, 0, 1, 0, 0, 0), "C");
-                // unit C = coulomb;
-                // unit farad(unit_data(-2, 4, -1 2, 0, 0, 0), "F");
-                // unit F = farad;
-                // unit weber(unit_data(2, -2, 1, -1, 0, 0, 0), "Wb");
-                // unit Wb = weber;
-                // unit tesla(unit_data(0, -2, 1, -1, 0, 0, 0), "T");
-                // unit T = tesla;
-                // unit henry(unit_data(2, -2, 1, -2, 0, 0, 0), "H");                    
-                // unit H = henry;
-                unit mps(m / s);
-                unit mpss(m / s.pow(2)); 
+                unit hertz(unit_data(0, -1, 0, 0, 0, 0, 0));
+                unit Hz = hertz;
+                unit volt(unit_data(2, -3, 1, -1, 0, 0, 0));
+                unit V = volt;
+                unit newton(unit_data(1, -2, 1, 0, 0, 0, 0));
+                unit N = newton;
+                unit Pa(unit_data(-1, -2, 1, 0, 0, 0, 0));
+                unit pascal = Pa;
+                unit joule(unit_data(2, -2, 1, 0, 0, 0, 0));
+                unit J = joule;
+                unit watt(unit_data(2, -3, 1, 0, 0, 0, 0));
+                unit W = watt;
+                unit coulomb(unit_data(0, 1, 0, 1, 0, 0, 0));
+                unit C = coulomb;
+                unit farad(unit_data(-2, 4, -1, 2, 0, 0, 0));
+                unit F = farad;
+                unit weber(unit_data(2, -2, 1, -1, 0, 0, 0));
+                unit Wb = weber;
+                unit tesla(unit_data(0, -2, 1, -1, 0, 0, 0));
+                unit T = tesla;
+                unit henry(unit_data(2, -2, 1, -2, 0, 0, 0));                    
+                unit H = henry;
 
             } // namespace derived_units
             
 
             unit radians = unit(180 / math::constants::pi, special::one); 
             unit rad = radians;
+            unit mps(m / s);
+            unit mpss(m / s.pow(2)); 
+
 
             // unit hr(60.0, min, "hr");
             // unit day(24.0, hr, "day");
@@ -1983,7 +1941,7 @@ namespace physim {
                     // =============================================  
 
                     // default constructor
-                    constexpr measurement() noexcept {};
+                    measurement() noexcept {};
 
                     // constructor from a value and a unit 
                     explicit constexpr measurement(const double& value, const unit& unit) noexcept : value_(value), unit_(unit) {}
@@ -2113,7 +2071,7 @@ namespace physim {
                     // =============================================  
 
                     // default constructor
-                    constexpr fixed_measurement() noexcept {};
+                    fixed_measurement() noexcept {};
 
                     // constructor from a value and a unit 
                     explicit constexpr fixed_measurement(const double& val, const unit& unit) noexcept : value_(val), unit_(unit) {}
@@ -2330,7 +2288,7 @@ namespace physim {
                     // =============================================  
 
                     // default constructor
-                    constexpr uncertain_measurement() noexcept {};
+                    uncertain_measurement() noexcept {};
 
                     // constructor from a value, uncertainty, and unit
                     explicit constexpr uncertain_measurement(const double& val, const double& uncertainty_val, const unit& unit) noexcept :
@@ -2739,253 +2697,504 @@ namespace physim {
 
     namespace physics {
 
-        // namespace for keeping track of an object in a 3D system
+
+        // class expressing the coordinate of an object in a 3D system
+        class position {
+
+            private: 
+                
+                // =============================================
+                // class members
+                // =============================================
+                
+                std::vector<measurements::fixed_measurement> position_ = std::vector<measurements::fixed_measurement>(3);
+
+
+            public: 
+
+                // =============================================
+                // constructors & destructor
+                // =============================================
+                
+                position() noexcept {}
+
+                explicit position(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) noexcept : 
+                    position_{x, y, z} {}
+
+                explicit position(const double& x, const double& y, const double& z) noexcept : 
+                    position_{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)} {}
+
+                position(const std::vector<measurements::fixed_measurement>& pos) : position_{pos} {}
+
+                position(const position& pos) : position(pos.get_position()) {}
+
+                ~position() = default; 
+
+
+                // =============================================
+                // set, get and print methods
+                // =============================================
+
+                inline void set_position(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) { 
+                    position_ = std::vector<measurements::fixed_measurement>{x, y, z}; 
+                }
+
+                inline void set_position(const double& x, const double& y, const double& z) { 
+                    position_ = std::vector<measurements::fixed_measurement>{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)}; 
+                }
+
+                inline void set_position(const std::vector<measurements::fixed_measurement>& pos) { position_ = pos; }
+                
+                inline void set_position(const position& pos) { position_ = pos.get_position(); }
+
+                inline void x(const measurements::fixed_measurement& x) { position_[0] = x; }
+                
+                inline void y(const measurements::fixed_measurement& y) { position_[1] = y; }
+                
+                inline void z(const measurements::fixed_measurement& z) { position_[2] = z; }
+
+                inline void x(const double& x) { position_[0] = measurements::fixed_measurement(x, position_[0].units()); }
+
+                inline void y(const double& y) { position_[1] = measurements::fixed_measurement(y, position_[1].units()); }
+
+                inline void z(const double& z) { position_[2] = measurements::fixed_measurement(z, position_[2].units()); }
+
+                inline std::vector<measurements::fixed_measurement> get_position() const { return position_; }
+
+                inline measurements::fixed_measurement x() const { return position_[0]; }
+                
+                inline measurements::fixed_measurement y() const { return position_[1]; }
+                
+                inline measurements::fixed_measurement z() const { return position_[2]; }             
+
+                inline measurements::fixed_measurement magnitude() const { 
+                    return math::algebra::sqrt(math::algebra::square(position_[0]) +
+                                                math::algebra::square(position_[1]) +
+                                                math::algebra::square(position_[2]));
+                }
+
+                inline measurements::fixed_measurement distance(const position& pos) const {        
+                    return math::algebra::sqrt(math::algebra::square(pos.position_[0] - position_[0]) +
+                                                math::algebra::square(pos.position_[1] - position_[1]) +
+                                                math::algebra::square(pos.position_[2] - position_[2]));
+                }       
+
+                inline measurements::fixed_measurement rho() const { 
+                    return math::algebra::sqrt(math::algebra::square(position_[0]) + math::algebra::square(position_[1])); 
+                }
+
+                inline measurements::fixed_measurement phi() const { 
+                    return measurements::fixed_measurement(atan2(position_[1].value(), position_[0].value()), units::rad); 
+                }     
+
+                inline measurements::fixed_measurement phi(const position& pos) const { 
+                    return measurements::fixed_measurement(atan2(pos.position_[1].value() - position_[1].value(), pos.position_[0].value() - position_[0].value()), units::rad); 
+                }
+
+                inline measurements::fixed_measurement theta() const { 
+                    if (position_[2] == 0) return measurements::fixed_measurement(0, units::rad);
+                    return measurements::fixed_measurement(acos(position_[2].value() / magnitude().value()), units::rad); 
+                }
+
+                inline measurements::fixed_measurement theta(const position& pos) const {
+                    if (pos.position_[2] == position_[2]) return measurements::fixed_measurement(0, units::rad);
+                    return measurements::fixed_measurement(acos((pos.position_[2].value() - position_[2].value()) / distance(pos).value()), units::rad); 
+                }
+
+                inline std::vector<double> direction() const {
+                    return { cos(phi().value()), sin(phi().value()), position_[2].value() / magnitude().value() };
+                } 
+
+                inline std::vector<double> direction(const position& pos1) const {
+                    return { cos(phi(pos1).value()), sin(phi(pos1).value()), (pos1.position_[2] - position_[2]).value() / distance(pos1).value() };
+                } 
+
+                void print() const {
+                    std::cout << "position = {\n";
+                    for (auto i : position_) i.print(); 
+                    std::cout << "}\n"; 
+                }
+
+
+        }; // class position
+
+        
+        // class expressing the velocity of an object in a 3D system
+        class velocity {
+
+            private: 
+                
+                // =============================================
+                // class members
+                // =============================================
+                
+                std::vector<measurements::fixed_measurement> velocity_ = std::vector<measurements::fixed_measurement>(3);
+            
+
+            public:  
+
+                // =============================================
+                // constructors
+                // =============================================
+
+                velocity() noexcept {}
+
+                explicit velocity(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) noexcept : 
+                    velocity_{x, y, z} {}
+
+                explicit velocity(const double& x, const double& y, const double& z) noexcept : 
+                    velocity_{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)} {}
+
+                velocity(const std::vector<measurements::fixed_measurement>& pos) : velocity_{pos} {}
+
+                velocity(const velocity& pos) : velocity(pos.get_velocity()) {}
+
+                ~velocity() = default; 
+
+
+                // =============================================
+                // set, get and print methods
+                // =============================================
+
+                inline void set_velocity(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) { 
+                    velocity_ = std::vector<measurements::fixed_measurement>{x, y, z}; 
+                }
+
+                inline void set_velocity(const double& x, const double& y, const double& z) { 
+                    velocity_ = std::vector<measurements::fixed_measurement>{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)}; 
+                }
+
+                inline void set_velocity(const std::vector<measurements::fixed_measurement>& pos) { velocity_ = pos; }
+                
+                inline void set_velocity(const velocity& pos) { velocity_ = pos.get_velocity(); }
+
+                inline void x(const measurements::fixed_measurement& x) { velocity_[0] = x; }
+                
+                inline void y(const measurements::fixed_measurement& y) { velocity_[1] = y; }
+                
+                inline void z(const measurements::fixed_measurement& z) { velocity_[2] = z; }
+
+                inline void x(const double& x) { velocity_[0] = measurements::fixed_measurement(x, velocity_[0].units()); }
+
+                inline void y(const double& y) { velocity_[1] = measurements::fixed_measurement(y, velocity_[1].units()); }
+
+                inline void z(const double& z) { velocity_[2] = measurements::fixed_measurement(z, velocity_[2].units()); }
+
+                inline std::vector<measurements::fixed_measurement> get_velocity() const { return velocity_; }
+
+                inline measurements::fixed_measurement x() const { return velocity_[0]; }
+                
+                inline measurements::fixed_measurement y() const { return velocity_[1]; }
+                
+                inline measurements::fixed_measurement z() const { return velocity_[2]; }             
+
+                inline measurements::fixed_measurement magnitude() const { 
+                    return math::algebra::sqrt(math::algebra::square(velocity_[0]) +
+                                                math::algebra::square(velocity_[1]) +
+                                                math::algebra::square(velocity_[2]));
+                }
+ 
+                inline measurements::fixed_measurement phi() const { 
+                    return measurements::fixed_measurement(atan2(velocity_[1].value(), velocity_[0].value()), units::rad); 
+                }     
+
+                inline measurements::fixed_measurement theta() const { 
+                    if (velocity_[2] == 0) return measurements::fixed_measurement(0, units::rad);
+                    return measurements::fixed_measurement(acos(velocity_[2].value() / magnitude().value()), units::rad); 
+                }
+
+                inline std::vector<double> direction() const {
+                    return { cos(phi().value()), sin(phi().value()), velocity_[2].value() / magnitude().value() };
+                } 
+
+                void print() const {
+                    std::cout << "position = {\n";
+                    for (auto i : velocity_) i.print(); 
+                    std::cout << "}\n"; 
+                }
+
+        }; // class velocity
+        
+
+        namespace objects {
+
+            class material_point : public position, public velocity {
+
+                public: 
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+
+                    explicit material_point(const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                        position(pos), velocity(vel) {}
+
+                    ~material_point() = default;
+
+
+                    // =============================================
+                    // set, get and print methods
+                    // =============================================
+
+                    void get_pos_vel(const position& pos, const velocity& vel) {
+                        set_position(pos); 
+                        set_velocity(vel); 
+                    }
+
+                    void get_pos_vel(const std::pair<position, velocity>& pos_vel) {
+                        set_position(pos_vel.first); 
+                        set_velocity(pos_vel.second); 
+                    }
+
+                    inline std::pair<position, velocity> get_pos_vel() const { return std::make_pair(get_position(), get_velocity()); }
+
+                    void print() const {
+                        position::print(); 
+                        velocity::print(); 
+                    }
+
+
+            }; // class material point
+
+
+            class mass : public material_point {
+
+                protected: 
+
+                    // =============================================
+                    // class member
+                    // =============================================
+
+                    measurements::fixed_measurement mass_; 
+                    
+
+                public: 
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+                    
+                    explicit mass(const double& mass, const units::unit& unit = units::kg, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                        material_point(pos, vel), mass_{mass, unit} {}
+
+                    ~mass() = default; 
+
+
+                    // =============================================
+                    // set, get and print methods
+                    // =============================================
+
+                    constexpr void set_mass(const double& mass) { mass_.value(mass); }
+                    
+                    constexpr measurements::fixed_measurement get_mass() const { return mass_; }
+
+                    void print() const { 
+                        std::cout << "mass = "; 
+                        mass_.print(); 
+                    }
+                
+            }; // class mass
+
+
+            class charge : public material_point {
+
+                protected: 
+
+                    // =============================================
+                    // class member
+                    // =============================================
+
+                    measurements::fixed_measurement charge_; 
+                    
+
+                public: 
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+                    
+                    explicit charge(const double& charge, const units::unit& unit = units::SI_derived::C, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                        material_point(pos, vel), charge_{charge, unit} {}
+
+                    ~charge() = default; 
+
+
+                    // =============================================
+                    // set, get and print methods
+                    // =============================================
+
+                    constexpr void set_charge(const double& charge) { charge_.value(charge); }
+                    
+                    constexpr measurements::fixed_measurement get_charge() const { return charge_; }
+
+                    void print() const { 
+                        std::cout << "charge = "; 
+                        charge_.print(); 
+                    }
+                
+            }; // class charge
+
+
+            class time {
+
+                public:     
+
+                    // =============================================
+                    // class members
+                    // =============================================     
+
+                    measurements::fixed_measurement time_; 
+
+
+                    // =============================================
+                    // constructor and destructor
+                    // =============================================   
+
+                    explicit constexpr time(const double& time = 0.0, const units::unit& unit = units::s) noexcept : time_(time, unit) {}
+                    
+                    ~time() = default; 
+
+                    
+                    // =============================================
+                    // set & get & print methods
+                    // =============================================   
+
+                    constexpr void set_time(const double& t) { time_.value(t); }
+                                        
+                    constexpr measurements::fixed_measurement get_time() const { return time_; }
+
+                    constexpr void increase_time(const double& t) { time_ += t; } 
+
+                    constexpr void reset_time() { time_.value(0.0); }
+
+                    inline void print() const { time_.print(); }
+
+
+            }; // class time
+
+
+        } // namespace objects
+
+
+        // class for keeping track of the inexorable passage of time
+        class timer {
+            
+            protected: 
+
+                // =============================================
+                // class members
+                // =============================================     
+                
+                std::chrono::duration<double> elapsed_seconds_;
+
+                std::chrono::time_point<std::chrono::system_clock> start_, pause_;
+
+                units::unit unit_; 
+
+            
+            public:
+
+                // =============================================
+                // constructor and destructor
+                // =============================================   
+
+                timer(const units::unit& unit = units::s) noexcept : unit_{unit} {}
+
+                ~timer() = default;
+
+                
+                // =============================================
+                // timer methods
+                // =============================================   
+
+                inline void start() { start_ = std::chrono::system_clock::now(); }
+
+                inline void pause() { pause_ = std::chrono::system_clock::now(); }
+
+                inline void elapsed_time() { elapsed_seconds_ = pause_ - start_; }
+                
+                void print() const { 
+                    std::cout << "elapsed time = " << elapsed_seconds_.count(); 
+                    unit_.print(); 
+                }
+
+
+        }; // class timer
+
+
+    } // namespace physics
+
+
+    namespace math {
+        
         namespace tools {
+/*
+            class ode_solver : public physics::object::time {
 
-            using namespace measurements; 
+                protected: 
 
-            // // class expressing the coordinate of an object in a system
-            // class coordinate : public fixed_measurement {     
-
-            //     public:  
-
-            //         // =============================================
-            //         // constructors and destructor
-            //         // =============================================
-
-            //         explicit constexpr coordinate(const double& coord, const units::unit& unit = units::m) noexcept : fixed_measurements(coord, unit) {}
-                    
-            //         explicit constexpr coordinate(const units::unit& unit, const double& coord) noexcept : fixed_measurements(coord, unit) {}
-
-            //         constexpr coordinate(const fixed_measurement& coord) : fixed_measurements(coord) {}
-                    
-            //         constexpr coordinate(const measurement& coord) : fixed_measurements(coord) {}
-
-            //         ~coordinate() = default;
-
-            // }; // class coordinate
-
-
-            class position {
-
-                private: 
-                    
                     // =============================================
                     // class members
                     // =============================================
+
+                    std::vector<std::vector<double>> m_df = std::vector<std::vector<double>(3)>(2); 
                     
-                    std::vector<fixed_measurement> position_ = std::vector<fixed_measurement>(3);
+                    double m_h{}; 
 
 
                 public: 
 
                     // =============================================
-                    // constructors & destructor
+                    // virtual destructor
                     // =============================================
-                    
-                    explicit position(const fixed_measurement& x, const fixed_measurement& y, const fixed_measurement& z) noexcept : 
-                        position_{x, y, z} {}
 
-                    explicit position(const double& x, const double& y, const double& z) noexcept : 
-                        position_{fixed_measurement(x, units::m), fixed_measurement(y, units::m), fixed_measurement(z, units::m)} {}
-
-                    position(const std::vector<fixed_measurement>& pos) : position_{pos} {}
-
-                    position(const position& pos) : position(pos.get_position()) {}
-
-                    ~position() = default; 
+                    virtual ~ode_solver() {}
 
 
                     // =============================================
-                    // set, get and print methods
+                    // virtual eval methods
                     // =============================================
 
-                    void set_position(const double& x, const double& y, const double& z) { 
-                        position_[0] = x;  
-                        position_[1] = y;
-                        position_[2] = z; 
+                    virtual std::pair<position, velocity> eval(const std::pair<position, velocity>& pos, const double& h = 0.001) = 0; 
+
+
+                    // =============================================
+                    // integration methods
+                    // =============================================
+
+                    std::pair<position, velocity> euler(const std::pair<position, velocity>& pos, const double& h = 0.001) {
+                        std::pair<position, velocity> appo = pos + h * eval(pos, get_time().value()); 
+                        return appo; 
                     }
 
-                    inline void set_position(const std::vector<fixed_measurement>& pos) { position_ = pos; }
-                    
-                    inline void set_position(const position& pos) { position_ = pos.get_position(); }
-
-                    inline void x(const fixed_measurement& x) { position_[0] = x; }
-                    
-                    inline void y(const fixed_measurement& y) { position_[1] = y; }
-                    
-                    inline void z(const fixed_measurement& z) { position_[2] = z; }
-
-                    inline void x(const double& x) { position_[0] = fixed_measurement(x, position_[0].units()); }
-
-                    inline void y(const double& y) { position_[1] = fixed_measurement(y, position_[1].units()); }
-
-                    inline void z(const double& z) { position_[2] = fixed_measurement(z, position_[2].units()); }
-
-                    inline std::vector<fixed_measurement> get_position() const { return position_; }
-
-                    inline fixed_measurement x() const { return position_[0]; }
-                    
-                    inline fixed_measurement y() const { return position_[1]; }
-                    
-                    inline fixed_measurement z() const { return position_[2]; }             
-
-                    inline fixed_measurement magnitude() const { 
-                        return math::algebra::sqrt(math::algebra::square(position_[0]) +
-                                                   math::algebra::square(position_[1]) +
-                                                   math::algebra::square(position_[2]));
-                    }
-    
-                    inline fixed_measurement distance(const position& pos) const {        
-                        return math::algebra::sqrt(math::algebra::square(pos.position_[0] - position_[0]) +
-                                                   math::algebra::square(pos.position_[1] - position_[1]) +
-                                                   math::algebra::square(pos.position_[2] - position_[2]));
-                    }       
-
-                    inline fixed_measurement rho() const { 
-                        return math::algebra::sqrt(math::algebra::square(position_[0]) + math::algebra::square(position_[1])); 
+                    std::vector<std::vector<double>> euler_modified(const std::vector<std::vector<double>>& pos, const double& h = 0.001) {
+                        std::vector<std::vector<double>> appo = pos + h * eval(pos, get_time().value()); 
+                        appo = pos + h * (eval(pos, get_time().value()) + eval(appo, get_time().value() + h)) / 2.; 
+                        return appo; 
                     }
 
-                    inline fixed_measurement phi() const { 
-                        return fixed_measurement(atan2(position_[1].value(), position_[0].value()), units::rad); 
-                    }     
-
-                    inline fixed_measurement phi(const position& pos) const { 
-                        return fixed_measurement(atan2(pos.position_[1].value() - position_[1].value(), pos.position_[0].value() - position_[0].value()), units::rad); 
-                    }
-
-                    inline fixed_measurement theta() const { 
-                        if (position_[2] == 0) return fixed_measurement(0, units::rad);
-                        return fixed_measurement(acos(position_[2].value() / magnitude().value()), units::rad); 
-                    }
-
-                    inline fixed_measurement theta(const position& pos) const {
-                        if (pos.position_[2] == position_[2]) return fixed_measurement(0, units::rad);
-                        return fixed_measurement(acos((pos.position_[2].value() - position_[2].value()) / distance(pos).value()), units::rad); 
-                    }
-
-                    inline std::vector<double> direction() const {
-                        return { cos(phi().value()), sin(phi().value()), position_[2].value() / magnitude().value() };
+                    std::vector<std::vector<double>> rk4(const std::vector<std::vector<double>>& pos, const double& h = 0.001) {
+                        std::vector<std::vector<double>> k1{}, k2{}, k3{}, k4{}; 
+                        k1 = eval(pos, get_time().value()); 
+                        k2 = eval(pos + k1 * h / 2., get_time().value() + h / 2.);
+                        k3 = eval(pos + k2 * h / 2., get_time().value() + h / 2.);
+                        k4 = eval(pos + k3 * h / 2., get_time().value() + h / 2.);      
+                        return (pos + (k1 + k2 * 2. + k3 * 2. + k4) * (h / 6.)); 
                     } 
 
-                    inline std::vector<double> direction(const position& pos1) const {
-                        return { cos(phi(pos1).value()), sin(phi(pos1).value()), (pos1.position_[2] - position_[2]).value() / distance(pos1).value() };
-                    } 
 
-                    void print() const {
-                        std::cout << "position = {\n";
-                        for (auto i : position_) { 
-                            i.print(); 
-                        }
-                        std::cout << "}\n"; 
-                    }
+            }; // class ode_solver
 
-
-            }; // class position
-
-
-        } // namespace position
-        
-            
-
-    } // namespace physics
-/*
-            class velocity {
-
-                private: 
-                    
-                    // =============================================
-                    // class members
-                    // =============================================
-                    
-                    std::vector<coordinate> m_velocity; 
-                
-
-                public:  
-
-                    // =============================================
-                    // constructors
-                    // =============================================
-
-                    velocity(const coordinate& x, const coordinate& y, const coordinate& z) {
-                        m_velocity.push_back(x); 
-                        m_velocity.push_back(y);
-                        m_velocity.push_back(z); 
-                    }
-
-                    velocity(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) {
-                        m_velocity.push_back(x); 
-                        m_velocity.push_back(y);
-                        m_velocity.push_back(z);
-                    }
-
-                    velocity(const std::vector<coordinate>& vel) : m_velocity{vel} {}
-
-                    velocity(const velocity& vel) : m_velocity{vel.get_coordinates()} {}
-
-
-                    // =============================================
-                    // set, get and print methods
-                    // =============================================
-                    void set_velocity(const std::vector<coordinate>& pos) { m_velocity = pos; }
-
-                    void coordinate_x(const coordinate& x) { m_velocity[0] = x; }
-                    
-                    void coordinate_y(const coordinate& y) { m_velocity[1] = y; }
-                    
-                    void coordinate_z(const coordinate& z) { m_velocity[2] = z; }
-
-                    void value_x(const double& x) { m_velocity[0].value(x); }
-
-                    void value_y(const double& y) { m_velocity[1].value(y); }
-
-                    void value_z(const double& z) { m_velocity[2].value(z); }
-
-                    std::vector<coordinate> get_coordinates() const { return m_velocity; }
-
-                    coordinate coordinate_x() const { return m_velocity[0]; }
-
-                    coordinate coordinate_y() const { return m_velocity[1]; }
-
-                    coordinate coordinate_z() const { return m_velocity[2]; }
-
-                    double value_x() const { return m_velocity[0].value(); }
-
-                    double value_y() const { return m_velocity[1].value(); }
-
-                    double value_z() const { return m_velocity[2].value(); }
-
-                    measurements::fixed_measurement magnitude() const { 
-                        return math::op::sqrt(math::op::square(m_velocity[0].get_coordinate_measurement()) +
-                                                        math::op::square(m_velocity[1].get_coordinate_measurement()) +
-                                                        math::op::square(m_velocity[2].get_coordinate_measurement()));
-                    }
-                
-                    double phi() const { return atan2(value_y(), value_x()); }     
-                    
-                    double theta() const { return acos(value_z() / magnitude().value()); }
-
-                    // std::vector<coordinate> direction() const {
-                    //     return {cos(phi()), sin(phi()), cos(theta())};
-                    // } 
-
-                    void print() const {
-                        std::cout << "- velocity = { ";
-                            for (auto i : m_velocity) { 
-                            std::cout << "\t["; 
-                            i.coordinate::print(); 
-                            std::cout << "]";
-                        }
-                        std::cout << "  }" << std::endl; 
-                    }
-
-            }; // class velocity
-
-
-
-        } // namespace position
-
-    } // namespace physics
 */
+        } // namespace tools
+
+
+    } // namespace math
+
+
+    namespace physics {
+
+    }
+
 
 } // namespace physim
