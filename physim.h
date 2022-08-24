@@ -1959,10 +1959,10 @@ namespace physim {
                     measurement() noexcept {};
 
                     // constructor from a value and a unit 
-                    explicit constexpr measurement(const double& value, const unit& unit) noexcept : value_(value), unit_(unit) {}
+                    explicit constexpr measurement(const double& value, const unit& unit) noexcept : value_{value}, unit_{unit} {}
 
                     // constructor from a measurement
-                    constexpr measurement(const measurement& other) : value_(other.value_), unit_(other.unit_) {}
+                    constexpr measurement(const measurement& other) : value_{other.value_}, unit_{other.unit_} {}
                         
                     // destructor
                     ~measurement() = default;
@@ -1972,7 +1972,7 @@ namespace physim {
                     // operators
                     // =============================================  
 
-                    constexpr measurement operator*(const measurement& other) const { return measurement(value_ * other.value_, unit_ * other.unit_); }
+                    constexpr measurement operator*(const measurement& other) const { return measurement(value_ * ((unit_ == other.unit_) ? other.value_ : other.value_as(unit_)), unit_ * other.unit_); }
                 
                     constexpr measurement operator*(const double& val) const { return measurement(value_ * val, unit_); }
                     
@@ -2024,6 +2024,28 @@ namespace physim {
 
                 public:
 
+                    // =============================================
+                    // operations
+                    // ============================================= 
+
+                    // take the reciprocal of a measurement 
+                    constexpr measurement inv() const { return measurement(1 / value_, unit_.inv()); }
+
+                    // take a measurement to a power
+                    constexpr measurement pow(const int& power) const { return measurement(std::pow(value_, power), unit_.pow(power)); }
+
+                    constexpr measurement square() const { return measurement(math::algebra::square(value_), unit_.square()); }
+
+                    constexpr measurement cube() const { return measurement(math::algebra::cube(value_), unit_.cube()); }
+
+                    // take a measurement to a root power
+                    inline measurement root(const int& power) const { return measurement(math::algebra::root(value_, power), unit_.root(power)); }
+
+                    inline measurement sqrt() const { return measurement(math::algebra::sqrt(value_), unit_.sqrt()); }
+
+                    inline measurement cbrt() const { return measurement(math::algebra::cbrt(value_), unit_.cbrt()); }
+
+                    
                     // =============================================                                                                                         
                     // set & get, convert & print methods
                     // =============================================  
@@ -2118,15 +2140,15 @@ namespace physim {
                         value_ -= val;
                         return *this;
                     }
-
-                    constexpr fixed_measurement operator/(const double& val) const {
-                        return fixed_measurement(value_ / val, unit_);
-                    }
                     
                     constexpr fixed_measurement operator*(const double& val) const {
                         return fixed_measurement(value_ * val, unit_);
                     }
 
+                    constexpr fixed_measurement operator/(const double& val) const {
+                        return fixed_measurement(value_ / val, unit_);
+                    }
+    
                     constexpr fixed_measurement& operator*=(const double& val) {
                         value_ *= val;
                         return *this;
@@ -2237,6 +2259,28 @@ namespace physim {
                     }
 
                     constexpr bool operator<=(const double& val) const { return (value_ <= val) ? true : operator==(val); }
+
+
+                    // =============================================
+                    // operations
+                    // ============================================= 
+
+                    // take the reciprocal of a fixed_measurement 
+                    constexpr fixed_measurement inv() const { return fixed_measurement(1 / value_, unit_.inv()); }
+
+                    // take a fixed_measurement to a power
+                    constexpr fixed_measurement pow(const int& power) const { return fixed_measurement(std::pow(value_, power), unit_.pow(power)); }
+
+                    constexpr fixed_measurement square() const { return fixed_measurement(math::algebra::square(value_), unit_.square()); }
+
+                    constexpr fixed_measurement cube() const { return fixed_measurement(math::algebra::cube(value_), unit_.cube()); }
+
+                    // take a fixed_measurement to a root power
+                    inline fixed_measurement root(const int& power) const { return fixed_measurement(math::algebra::root(value_, power), unit_.root(power)); }
+
+                    inline fixed_measurement sqrt() const { return fixed_measurement(math::algebra::sqrt(value_), unit_.sqrt()); }
+
+                    inline fixed_measurement cbrt() const { return fixed_measurement(math::algebra::cbrt(value_), unit_.cbrt()); }
 
 
                     // =============================================                                                                                         
@@ -2569,71 +2613,6 @@ namespace physim {
             // generate the cubic root of an unit
             inline unit cbrt(const unit& u) { return cbrt(u); }
 
-            constexpr measurement operator*(const double& val, const measurement& meas) { return meas * val; }
-
-            constexpr measurement operator*(const double& val, const unit& unit_base) { return measurement(val, unit_base); }
-
-            constexpr measurement operator*(const unit& unit_base, const double& val) { return measurement(val, unit_base); }
-
-            constexpr fixed_measurement operator*(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 * v2.value(), v2.units()); }
-
-            constexpr fixed_measurement operator*(const fixed_measurement& v2, const double& v1) { return fixed_measurement(v1 * v2.value(), v2.units()); }
-
-            inline uncertain_measurement operator*(const measurement& v1, const uncertain_measurement& v2) { return v2.operator*(v1); }
-
-            inline uncertain_measurement operator*(const double& v1, const uncertain_measurement& v2) { return v2.operator*(v1); }
-
-            inline uncertain_measurement operator*(const uncertain_measurement& v2, const double& v1) { return v2.operator*(v1); }
-
-
-            constexpr measurement operator/(const double& val, const measurement& meas) { return measurement(val / meas.value(), meas.units().inv()); }
-
-            constexpr measurement operator/(const measurement& meas, const double& val) { return measurement(val / meas.value(), meas.units().inv()); }
-            
-            constexpr measurement operator/(const double& val, const unit& unit_base) { return measurement(val, unit_base.inv()); }
-            
-            constexpr measurement operator/(const unit& unit_base, const double& val) { return measurement(1.0 / val, unit_base); }
-
-            constexpr fixed_measurement operator/(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 / v2.value(), v2.units().inv()); }             
-            
-            constexpr fixed_measurement operator/(const fixed_measurement& v2, const double& v1) { return fixed_measurement(v1 / v2.value(), v2.units().inv()); }
-
-            uncertain_measurement operator/(const measurement& v1, const uncertain_measurement& v2) {
-                double ntol = v2.uncertainty() / v2.value();
-                double nval = v1.value() / v2.value();
-                return uncertain_measurement(nval, nval * ntol, v1.units() / v2.units());
-            }
-
-            uncertain_measurement operator/(const double& v1, const uncertain_measurement& v2) {
-                double ntol = v2.uncertainty() / v2.value();
-                double nval = v1 / v2.value();
-                return uncertain_measurement(nval, nval * ntol, v2.units().inv());
-            }
-
-            uncertain_measurement operator/(const int& v1, const uncertain_measurement& v2) {
-                double ntol = v2.uncertainty() / v2.value();
-                double nval = static_cast<double>(v1) / v2.value();
-                return uncertain_measurement(nval, nval * ntol, v2.units().inv());
-            }
-
-
-            constexpr fixed_measurement operator+(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 + v2.value(), v2.units()); }
-
-            constexpr fixed_measurement operator-(const double& v1, const fixed_measurement& v2) { return fixed_measurement(v1 - v2.value(), v2.units()); }
-            
-            uncertain_measurement operator+(const measurement& v1, const uncertain_measurement& v2) {
-                double cval = math::tools::convert(v2.units(), v1.units());
-                double ntol = v2.uncertainty() * cval;
-                return uncertain_measurement(v1.value() + cval * v2.value(), ntol, v1.units());
-            }
-
-            uncertain_measurement operator-(const measurement& v1, const uncertain_measurement& v2) {
-                double cval = math::tools::convert(v2.units(), v1.units());
-                double ntol = v2.uncertainty() * cval;
-                return uncertain_measurement(v1.value() - cval * v2.value(), ntol, v1.units());
-            }
-
-
             constexpr measurement pow(const measurement& meas, const int& power) {
                 return measurement{ std::pow(meas.value(), power), meas.units().pow(power) };
             }
@@ -2719,6 +2698,71 @@ namespace physim {
     } // namespace math
 
 
+            // constexpr physics::measurements::measurement operator*(const double& val, const physics::measurements::measurement& meas) { return meas * val; }
+
+            // constexpr physics::measurements::measurement operator*(const double& val, const physics::units::unit& unit_base) { return physics::measurements::measurement(val, unit_base); }
+
+            // constexpr physics::measurements::measurement operator*(const physics::units::unit& unit_base, const double& val) { return physics::measurements::measurement(val, unit_base); }
+
+            // constexpr physics::measurements::fixed_measurement operator*(const double& v1, const physics::measurements::fixed_measurement& v2) { return physics::measurements::fixed_measurement(v1 * v2.value(), v2.units()); }
+
+            // constexpr physics::measurements::fixed_measurement operator*(const physics::measurements::fixed_measurement& v2, const double& v1) { return physics::measurements::fixed_measurement(v1 * v2.value(), v2.units()); }
+
+            // inline physics::measurements::uncertain_measurement operator*(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) { return v2.operator*(v1); }
+
+            // inline physics::measurements::uncertain_measurement operator*(const double& v1, const physics::measurements::uncertain_measurement& v2) { return v2.operator*(v1); }
+
+            // inline physics::measurements::uncertain_measurement operator*(const physics::measurements::uncertain_measurement& v2, const double& v1) { return v2.operator*(v1); }
+
+
+            // constexpr physics::measurements::measurement operator/(const double& val, const physics::measurements::measurement& meas) { return physics::measurements::measurement(val / meas.value(), meas.units().inv()); }
+
+            // constexpr physics::measurements::measurement operator/(const physics::measurements::measurement& meas, const double& val) { return physics::measurements::measurement(val / meas.value(), meas.units().inv()); }
+            
+            // constexpr physics::measurements::measurement operator/(const double& val, const physics::units::unit& unit_base) { return physics::measurements::measurement(val, unit_base.inv()); }
+            
+            // constexpr physics::measurements::measurement operator/(const physics::units::unit& unit_base, const double& val) { return physics::measurements::measurement(1.0 / val, unit_base); }
+
+            // constexpr physics::measurements::fixed_measurement operator/(const double& v1, const physics::measurements::fixed_measurement& v2) { return physics::measurements::fixed_measurement(v1 / v2.value(), v2.units().inv()); }             
+            
+            // constexpr physics::measurements::fixed_measurement operator/(const physics::measurements::fixed_measurement& v2, const double& v1) { return physics::measurements::fixed_measurement(v1 / v2.value(), v2.units().inv()); }
+
+            // physics::measurements::uncertain_measurement operator/(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+            //     double ntol = v2.uncertainty() / v2.value();
+            //     double nval = v1.value() / v2.value();
+            //     return physics::measurements::uncertain_measurement(nval, nval * ntol, v1.units() / v2.units());
+            // }
+
+            // physics::measurements::uncertain_measurement operator/(const double& v1, const physics::measurements::uncertain_measurement& v2) {
+            //     double ntol = v2.uncertainty() / v2.value();
+            //     double nval = v1 / v2.value();
+            //     return physics::measurements::uncertain_measurement(nval, nval * ntol, v2.units().inv());
+            // }
+
+            // physics::measurements::uncertain_measurement operator/(const int& v1, const physics::measurements::uncertain_measurement& v2) {
+            //     double ntol = v2.uncertainty() / v2.value();
+            //     double nval = static_cast<double>(v1) / v2.value();
+            //     return physics::measurements::uncertain_measurement(nval, nval * ntol, v2.units().inv());
+            // }
+
+
+            // constexpr physics::measurements::fixed_measurement operator+(const double& v1, const physics::measurements::fixed_measurement& v2) { return physics::measurements::fixed_measurement(v1 + v2.value(), v2.units()); }
+
+            // constexpr physics::measurements::fixed_measurement operator-(const double& v1, const physics::measurements::fixed_measurement& v2) { return physics::measurements::fixed_measurement(v1 - v2.value(), v2.units()); }
+            
+            // physics::measurements::uncertain_measurement operator+(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+            //     double cval = math::tools::convert(v2.units(), v1.units());
+            //     double ntol = v2.uncertainty() * cval;
+            //     return physics::measurements::uncertain_measurement(v1.value() + cval * v2.value(), ntol, v1.units());
+            // }
+
+            // physics::measurements::uncertain_measurement operator-(const physics::measurements::measurement& v1, const physics::measurements::uncertain_measurement& v2) {
+            //     double cval = math::tools::convert(v2.units(), v1.units());
+            //     double ntol = v2.uncertainty() * cval;
+            //     return physics::measurements::uncertain_measurement(v1.value() - cval * v2.value(), ntol, v1.units());
+            // }
+
+
     // operations amongs std::vector<T>
     template <typename T> 
     std::vector<T> operator+(const std::vector<T>& v1, const std::vector<T>& v2) {
@@ -2785,8 +2829,9 @@ namespace physim {
     
     template <typename T> 
     std::vector<T> operator*(const std::vector<T>& v1, const double& val) {
+        std::cout << "operator* called\n"; 
         std::vector<T> vec = std::vector<T>(v1.size());
-        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] * val;
+        for (size_t i{}; i < v1.size(); i++) vec[i] = (T) (v1[i] * val);
         return vec;
     }
     
@@ -3056,11 +3101,11 @@ namespace physim {
 
                 inline std::vector<measurements::fixed_measurement> get_position() const { return pos_; }
 
-                inline measurements::fixed_measurement x() const { return pos_[0]; }
+                inline measurements::fixed_measurement get_x() const { return pos_[0]; }
                 
-                inline measurements::fixed_measurement y() const { return pos_[1]; }
+                inline measurements::fixed_measurement get_y() const { return pos_[1]; }
                 
-                inline measurements::fixed_measurement z() const { return pos_[2]; }             
+                inline measurements::fixed_measurement get_z() const { return pos_[2]; }             
 
                 inline measurements::fixed_measurement magnitude() const { 
                     return math::algebra::sqrt(math::algebra::square(pos_[0]) + math::algebra::square(pos_[1]) + math::algebra::square(pos_[2]));
@@ -3194,11 +3239,11 @@ namespace physim {
 
                 inline std::vector<measurements::fixed_measurement> get_velocity() const { return vel_; }
 
-                inline measurements::fixed_measurement x() const { return vel_[0]; }
+                inline measurements::fixed_measurement get_vx() const { return vel_[0]; }
                 
-                inline measurements::fixed_measurement y() const { return vel_[1]; }
+                inline measurements::fixed_measurement get_vy() const { return vel_[1]; }
                 
-                inline measurements::fixed_measurement z() const { return vel_[2]; }             
+                inline measurements::fixed_measurement get_vz() const { return vel_[2]; }             
 
                 inline measurements::fixed_measurement magnitude() const { 
                     return math::algebra::sqrt(math::algebra::square(vel_[0]) +
@@ -3264,11 +3309,17 @@ namespace physim {
                     void set_pos_vel(const std::pair<position, velocity>& pos_vel) {
                         set_position(pos_vel.first); 
                         set_velocity(pos_vel.second); 
-                    }                    
-                    
-                    inline std::pair<position, velocity> get_pos_vel() const { return std::make_pair(get_position(), get_velocity()); }
+                    }               
 
-                    void print() const {
+                    void set_pos_vel(const std::pair<std::vector<measurements::fixed_measurement>, std::vector<measurements::fixed_measurement>>& pos_vel) {
+                        set_position(pos_vel.first); 
+                        set_velocity(pos_vel.second); 
+                    }               
+
+                    inline std::pair<std::vector<measurements::fixed_measurement>, 
+                                    std::vector<measurements::fixed_measurement>> get_pos_vel() const { return std::make_pair(get_position(), get_velocity()); }
+
+                    void print_pos_vel() const {
                         print_position(); 
                         print_velocity(); 
                     }
@@ -3429,10 +3480,10 @@ namespace physim {
                     // constructors & destructor
                     // =============================================     
 
-                    explicit particle(const measurements::fixed_measurement& mass, const  measurements::fixed_measurement& charge, const std::pair<position, velocity>& pos_vel) noexcept : 
+                    explicit particle(const measurements::fixed_measurement& mass, const measurements::fixed_measurement& charge, const std::pair<position, velocity>& pos_vel) noexcept : 
                         material_point(pos_vel), mass::mass(mass), charge::charge(charge) {}
 
-                    explicit particle(const measurements::fixed_measurement& mass, const  measurements::fixed_measurement& charge, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                    explicit particle(const measurements::fixed_measurement& mass, const measurements::fixed_measurement& charge, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
                         material_point(pos, vel), mass::mass(mass), charge::charge(charge) {}
 
                     explicit particle(const mass& mass, const charge& charge, const material_point& pos_vel) noexcept : 
@@ -3453,7 +3504,7 @@ namespace physim {
                     void print_particle() const {
                         print_mass();
                         print_charge(); 
-                        material_point::print();
+                        material_point::print_pos_vel();
                     }
 
 
@@ -3513,7 +3564,7 @@ namespace physim {
 
                     constexpr void reset_time() { time_.value(0.0); }
 
-                    inline void print() const { time_.print(); }
+                    inline void print_time() const { time_.print(); }
 
 
             }; // class time
@@ -3531,8 +3582,6 @@ namespace physim {
                 // class members
                 // =============================================     
                 
-                std::chrono::duration<double> elapsed_seconds_;
-
                 std::chrono::time_point<std::chrono::system_clock> start_, pause_;
 
                 units::unit unit_; 
@@ -3556,12 +3605,11 @@ namespace physim {
                 inline void start() { start_ = std::chrono::system_clock::now(); }
 
                 inline void pause() { pause_ = std::chrono::system_clock::now(); }
-
-                inline void elapsed_time() { elapsed_seconds_ = pause_ - start_; }
                 
                 void print() const { 
-                    std::cout << "elapsed time = " << elapsed_seconds_.count(); 
+                    std::cout << "elapsed time = " << static_cast<std::chrono::duration<double>>(pause_ - start_).count() << " "; 
                     unit_.print(); 
+                    std::cout << "\n";
                 }
 
 
@@ -3585,7 +3633,8 @@ namespace physim {
                         // class members
                         // =============================================
 
-                        // std::vector<std::vector<double>> m_df = std::vector<std::vector<double>(3)>(2); 
+                        std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                std::vector<physics::measurements::fixed_measurement>> m_df; 
                         
                         double h_{}; 
 
@@ -3603,28 +3652,37 @@ namespace physim {
                         // virtual eval methods
                         // =============================================
 
-                        virtual std::pair<physics::position, physics::velocity> eval(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) = 0; 
+                        virtual std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                        std::vector<physics::measurements::fixed_measurement>> eval(const std::pair<std::vector<physics::measurements::fixed_measurement>, std::vector<physics::measurements::fixed_measurement>>& pos_vel, const double& h = 0.001) = 0; 
 
 
                         // =============================================
                         // integration methods
                         // =============================================
 
-                        inline std::pair<physics::position, physics::velocity> euler(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) {
+                        inline std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                        std::vector<physics::measurements::fixed_measurement>> euler(const std::pair<std::vector<physics::measurements::fixed_measurement>, std::vector<physics::measurements::fixed_measurement>>& pos_vel, const double& h = 0.001) {
+                            increase_time(h); 
                             return pos_vel + h * eval(pos_vel, h);
                         }
 
-                        std::pair<physics::position, physics::velocity> euler_modified(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) {
-                            std::pair<physics::position, physics::velocity> appo = pos_vel + h * eval(pos_vel, h); 
+                        std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                std::vector<physics::measurements::fixed_measurement>> euler_modified(const std::pair<std::vector<physics::measurements::fixed_measurement>, std::vector<physics::measurements::fixed_measurement>>& pos_vel, const double& h = 0.001) {
+                            std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                    std::vector<physics::measurements::fixed_measurement>> appo = pos_vel + h * eval(pos_vel, h); 
+                            increase_time(h); 
                             return pos_vel + h * (appo + eval(pos_vel + h * appo, h)) / 2.; 
                         }
 
-                        std::pair<physics::position, physics::velocity> rk4(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) {
-                            std::pair<physics::position, physics::velocity> k1{}, k2{}, k3{}, k4{}; 
+                        std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                std::vector<physics::measurements::fixed_measurement>> rk4(const std::pair<std::vector<physics::measurements::fixed_measurement>, std::vector<physics::measurements::fixed_measurement>>& pos_vel, const double& h = 0.001) {
+                            std::pair<std::vector<physics::measurements::fixed_measurement>,
+                                    std::vector<physics::measurements::fixed_measurement>> k1{}, k2{}, k3{}, k4{}; 
                             k1 = eval(pos_vel, h); 
                             k2 = eval(pos_vel + k1 * h / 2., h);
                             k3 = eval(pos_vel + k2 * h / 2., h);
                             k4 = eval(pos_vel + k3 * h / 2., h);      
+                            increase_time(h); 
                             return (pos_vel + (k1 + k2 * 2. + k3 * 2. + k4) * (h / 6.)); 
                         } 
 
@@ -3636,6 +3694,73 @@ namespace physim {
 
 
     } // namespace math
+
+
+    namespace physics {
+
+
+        namespace objects {
+
+
+            namespace oscillators {
+
+
+                class harmonic : public math::tools::ode_solver {
+
+                    private: 
+
+                        // =============================================
+                        // class member
+                        // =============================================
+
+                        measurements::fixed_measurement omega_;
+
+
+                    public: 
+
+                        // =============================================
+                        // constructors and destructor
+                        // =============================================
+                        
+                        harmonic(const measurements::fixed_measurement& omega, const measurements::fixed_measurement& time = measurements::fixed_measurement(0, units::s)) : omega_{omega} { time::time_ = time; }
+                        
+                        ~harmonic() {}
+
+
+                        // =============================================
+                        // set and get methods
+                        // =============================================
+
+                        constexpr void set_omega(const double& omega) { omega_ = omega; }
+
+                        constexpr measurements::fixed_measurement get_omega() const { return omega_; }
+
+                        void print_omega() const {
+                            std::cout << "omega = "; 
+                            omega_.print();
+                        }
+
+
+                        // =============================================
+                        // eval methods
+                        // =============================================
+
+                        inline std::pair<std::vector<measurements::fixed_measurement>,
+                                        std::vector<measurements::fixed_measurement>> eval(const std::pair<std::vector<physics::measurements::fixed_measurement>, std::vector<physics::measurements::fixed_measurement>>& pos_vel, const double& h = 0.001) override {
+                            return std::make_pair(pos_vel.second, - math::algebra::square(omega_.value()) * pos_vel.first);
+                        }
+
+
+                }; // class harmonic
+
+
+            } // namespace oscillators
+
+
+        } // namespace objects
+
+
+    } // namespace physics
 
 
 } // namespace physim
