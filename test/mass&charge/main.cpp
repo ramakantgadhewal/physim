@@ -17,17 +17,27 @@ using namespace objects;
 int main() {
 
     mass m1(30, units::kg); 
-    m1.print(); 
+    m1.print_mass();  
 
-    mass m2(33.5); 
-    m2.print(); 
+    mass m2(30, units::kg);
+    m2.print_mass();
+
+    mass m3 = m1 + m2;
+    m3.print_mass();
+
+    mass m4 = m1 - m2;
+    m4.print_mass();
+
+    mass m5 = m3 / 3;
+    m5.print_mass();
+
+    mass m6 = m3 * 2; 
+    m6.print_mass();
 
     charge c1(30, units::SI_derived::C); 
-    c1.print(); 
+    c1.print_charge();  
+    c1.print_position();
+    c1.print_velocity();
 
-    charge c2(33.5); 
-    c2.print(); 
-
-    
     return 0; 
 }

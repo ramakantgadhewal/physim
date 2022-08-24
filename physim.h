@@ -3,7 +3,7 @@
 // author:          Lorenzo Liuzzo
 // email:           lorenzoliuzzo@outlook.com
 // description:     physim(namespace) containing the basic tools for computational physics. 
-// last updated:    20/08/2022
+// last updated:    24/08/2022
 
 
 #include <algorithm>
@@ -19,7 +19,6 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
-#include <unordered_map>
 #include <vector>
 
 
@@ -240,9 +239,9 @@ namespace physim {
                     // class members
                     // =============================================
                 
-                    char m_op; 
-                    function_base * m_f; 
-                    function_base * m_g;
+                    char op_; 
+                    function_base * f_; 
+                    function_base * g_;
                 
                 
                 public:
@@ -252,9 +251,9 @@ namespace physim {
                     // =============================================     
                 
                     functor(const char& op, function_base* f, function_base* g) {
-                        m_op = op;
-                        m_f = f; 
-                        m_g = g;
+                        op_ = op;
+                        f_ = f; 
+                        g_ = g;
                     }
                     
                     ~functor() {}
@@ -265,25 +264,19 @@ namespace physim {
                     // =============================================
                 
                     double eval(const double& x) const override {
-                        switch (m_op) {
+                        switch (op_) {
                             case '+':
-                                return m_f->eval(x) + m_g->eval(x);
-
+                                return f_->eval(x) + g_->eval(x);
                             case '-': 
-                                return m_f->eval(x) - m_g->eval(x);
-
+                                return f_->eval(x) - g_->eval(x);
                             case '*':
-                                return m_f->eval(x) * m_g->eval(x);
-
+                                return f_->eval(x) * g_->eval(x);
                             case '/': 
-                                return m_f->eval(x) / m_g->eval(x);
-                            
+                                return f_->eval(x) / g_->eval(x);
                             case '^':
-                                return std::pow(m_f->eval(x), m_g->eval(x));
-
+                                return std::pow(f_->eval(x), g_->eval(x));
                             case 'c':
-                                return m_f->eval(m_g->eval(x));
-                            
+                                return f_->eval(g_->eval(x));
                             default:
                                 break;
                         }
@@ -311,7 +304,7 @@ namespace physim {
                     // =============================================
                     
                     // y = m * x + q
-                    double m_m, m_q; 
+                    double m_, q_; 
 
 
                 public: 
@@ -320,7 +313,7 @@ namespace physim {
                     // constructor and destructor
                     // =============================================     
             
-                    explicit line(const double& m = 1, const double& q = 0) noexcept : m_m{m}, m_q{q} {}
+                    explicit line(const double& m = 1, const double& q = 0) noexcept : m_{m}, q_{q} {}
                     
                     ~line() {}
 
@@ -329,20 +322,20 @@ namespace physim {
                     // set & get methods
                     // =============================================
             
-                    constexpr void m(const double& m) { m_m = m; } 
+                    constexpr void m(const double& m) { m_ = m; } 
 
-                    constexpr void q(const double& q) { m_q = q; }
+                    constexpr void q(const double& q) { q_ = q; }
             
-                    constexpr double m() const { return m_m; }
+                    constexpr double m() const { return m_; }
 
-                    constexpr double q() const { return m_q; } 
+                    constexpr double q() const { return q_; } 
 
 
                     // =============================================
                     // eval methods
                     // =============================================
 
-                    constexpr double eval(const double& x) const override { return m_m * x + m_q; }
+                    constexpr double eval(const double& x) const override { return m_ * x + q_; }
             
             
                     // =============================================
@@ -351,15 +344,15 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_m != 1 && m_m != -1) std::cout << m_m; 
+                        if (m_ != 1 && m_ != -1) std::cout << m_; 
                         else {
-                            if (m_m == 1) std::cout << "+";
-                            if (m_m == -1) std::cout << "-";
+                            if (m_ == 1) std::cout << "+";
+                            if (m_ == -1) std::cout << "-";
                         }
                         std::cout << "x"; 
-                        if (m_q != 0) {
-                            if (m_q > 0) std::cout << " + " << m_q << "\n"; 
-                            else std::cout << " - " << std::fabs(m_q) << "\n"; 
+                        if (q_ != 0) {
+                            if (q_ > 0) std::cout << " + " << q_ << "\n"; 
+                            else std::cout << " - " << std::fabs(q_) << "\n"; 
                         } else std::cout << "\n";
                     }  
 
@@ -377,7 +370,7 @@ namespace physim {
                     // =============================================
                     
                     // y = a * x^2 + b * x + c
-                    double m_a, m_b, m_c, m_delta; 
+                    double a_, b_, c_, delta_; 
 
 
                 public: 
@@ -387,7 +380,7 @@ namespace physim {
                     // =============================================     
             
                     explicit quadratic(const double& a, const double& b, const double& c) noexcept :
-                        m_a{a}, m_b{b}, m_c{c}, m_delta{math::algebra::square(m_b) - 4 * m_a * m_c} {}
+                        a_{a}, b_{b}, c_{c}, delta_{math::algebra::square(b_) - 4 * a_ * c_} {}
                     
                     ~quadratic() {}
 
@@ -396,23 +389,23 @@ namespace physim {
                     // set & get methods
                     // =============================================
             
-                    constexpr void a(const double& a) { m_a = a; } 
+                    constexpr void a(const double& a) { a_ = a; } 
 
-                    constexpr void b(const double& b) { m_b = b; }
+                    constexpr void b(const double& b) { b_ = b; }
 
-                    constexpr void c(const double& c) { m_c = c; }  
+                    constexpr void c(const double& c) { c_ = c; }  
             
-                    constexpr double a() const { return m_a; }
+                    constexpr double a() const { return a_; }
 
-                    constexpr double b() const { return m_b; } 
+                    constexpr double b() const { return b_; } 
 
-                    constexpr double c() const { return m_c; } 
+                    constexpr double c() const { return c_; } 
 
-                    constexpr double delta() const { return m_delta; } 
+                    constexpr double delta() const { return delta_; } 
 
                     std::pair<double, double> roots() const {
-                        if (m_delta == 0) return std::make_pair(- m_b / (2 * m_a), - m_b / (2 * m_a));
-                        else if (m_delta > 0) return std::make_pair(- m_b - algebra::sqrt(m_delta) / (2 * m_a), (- m_b + algebra::sqrt(m_delta)) / (2 * m_a));
+                        if (delta_ == 0) return std::make_pair(- b_ / (2 * a_), - b_ / (2 * a_));
+                        else if (delta_ > 0) return std::make_pair(- b_ - algebra::sqrt(delta_) / (2 * a_), (- b_ + algebra::sqrt(delta_)) / (2 * a_));
                         else std::cout << "\nThere are not real solutions...\n\n"; // note: create a complex class then come back here
                         return std::make_pair(NAN, NAN); 
                     }
@@ -422,9 +415,9 @@ namespace physim {
                     // eval methods
                     // =============================================
 
-                    constexpr double eval_Horner(const double& x) const { return m_c + x * (m_b + x * m_a); }
+                    constexpr double eval_Horner(const double& x) const { return c_ + x * (b_ + x * a_); }
 
-                    constexpr double eval(const double& x) const override { return m_a * algebra::square(x) + m_b * x + m_c; }
+                    constexpr double eval(const double& x) const override { return a_ * algebra::square(x) + b_ * x + c_; }
             
             
                     // =============================================
@@ -433,19 +426,19 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_a != 1 && m_a != -1) std::cout << m_a; 
-                        else if (m_a == -1) std::cout << "-"; 
+                        if (a_ != 1 && a_ != -1) std::cout << a_; 
+                        else if (a_ == -1) std::cout << "-"; 
                         else std::cout << "x^2 "; 
-                        if (m_b != 0) {
-                            if (m_b > 0) std::cout << "+ ";
+                        if (b_ != 0) {
+                            if (b_ > 0) std::cout << "+ ";
                             else std::cout << "- ";
-                            if (m_b != 1 && m_b != -1) std::cout << std::fabs(m_b) << "x ";  
+                            if (b_ != 1 && b_ != -1) std::cout << std::fabs(b_) << "x ";  
                             else std::cout << "x "; 
                         } 
-                        if (m_c != 0) {
-                            if (m_c > 0) std::cout << "+ ";
+                        if (c_ != 0) {
+                            if (c_ > 0) std::cout << "+ ";
                             else std::cout << "- "; 
-                            std::cout << std::fabs(m_c) << "\n";
+                            std::cout << std::fabs(c_) << "\n";
                         } else std::cout << "\n";
                     }  
 
@@ -463,7 +456,7 @@ namespace physim {
                     // =============================================
                     
                     // y = a * x^3 + b * x^2 + c * x + d
-                    double m_a, m_b, m_c, m_d; 
+                    double a_, b_, c_, d_; 
 
 
                 public: 
@@ -473,7 +466,7 @@ namespace physim {
                     // =============================================   
                 
                     explicit cubic(const double& a, const double& b, const double& c, const double& d) noexcept :
-                        m_a{a}, m_b{b}, m_c{c}, m_d{d} {}
+                        a_{a}, b_{b}, c_{c}, d_{d} {}
                 
                     ~cubic() {}  
                 
@@ -482,26 +475,26 @@ namespace physim {
                     // set methods
                     // =============================================
             
-                    constexpr void a(const double& a) { m_a = a; } 
+                    constexpr void a(const double& a) { a_ = a; } 
 
-                    constexpr void b(const double& b) { m_b = b; }
+                    constexpr void b(const double& b) { b_ = b; }
 
-                    constexpr void c(const double& c) { m_c = c; }  
+                    constexpr void c(const double& c) { c_ = c; }  
             
-                    constexpr void d(const double& d) { m_d = d; } 
+                    constexpr void d(const double& d) { d_ = d; } 
             
                 
                     // =============================================
                     // get methods
                     // =============================================
 
-                    constexpr double a() const { return m_a; }
+                    constexpr double a() const { return a_; }
 
-                    constexpr double b() const { return m_b; } 
+                    constexpr double b() const { return b_; } 
 
-                    constexpr double c() const { return m_c; } 
+                    constexpr double c() const { return c_; } 
 
-                    constexpr double d() const { return m_d; } 
+                    constexpr double d() const { return d_; } 
 
                 
                     // =============================================
@@ -509,7 +502,7 @@ namespace physim {
                     // =============================================
 
                     constexpr double eval(const double& x) const override { 
-                        return m_a * math::algebra::cube(x) + m_b * math::algebra::square(x) + m_c * x + m_d; 
+                        return a_ * math::algebra::cube(x) + b_ * math::algebra::square(x) + c_ * x + d_; 
                     }
             
             
@@ -519,17 +512,17 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_a != 1) std::cout << m_a; 
+                        if (a_ != 1) std::cout << a_; 
                         std::cout << "x^3 "; 
-                        if (m_b != 0) {
-                            if (m_b != 1) std::cout << "+ " << m_b << "x^2 "; 
+                        if (b_ != 0) {
+                            if (b_ != 1) std::cout << "+ " << b_ << "x^2 "; 
                             else std::cout << "+ x^2 "; 
                         }
-                        if (m_c != 0) {
-                            if (m_c != 1) std::cout << "+ " << m_c << "x"; 
+                        if (c_ != 0) {
+                            if (c_ != 1) std::cout << "+ " << c_ << "x"; 
                             else std::cout << "+ x"; 
                         }
-                        if (m_d != 0) std::cout << " + " << m_d << "\n";
+                        if (d_ != 0) std::cout << " + " << d_ << "\n";
                         else std::cout << "\n";  
                     }
 
@@ -547,7 +540,7 @@ namespace physim {
                     // =============================================
                     
                     // y = c * x ^ (1 / 2)
-                    double m_c; 
+                    double c_; 
 
 
                 public: 
@@ -556,7 +549,7 @@ namespace physim {
                     // constructor and destructor
                     // =============================================   
                 
-                    explicit square_root(const double& c = 1) noexcept : m_c{c} {}
+                    explicit square_root(const double& c = 1) noexcept : c_{c} {}
                 
                     ~square_root() {}
                 
@@ -565,16 +558,16 @@ namespace physim {
                     // set & get methods
                     // =============================================
                 
-                    constexpr void c(const double& c) { m_c = c; }
+                    constexpr void c(const double& c) { c_ = c; }
 
-                    constexpr double c() const { return m_c; }
+                    constexpr double c() const { return c_; }
 
                 
                     // =============================================
                     // eval methods
                     // =============================================
 
-                    double eval(const double& x) const override { return m_c * math::algebra::sqrt(x); }
+                    double eval(const double& x) const override { return c_ * math::algebra::sqrt(x); }
                             
             
                     // =============================================
@@ -583,7 +576,7 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c != 1) std::cout << m_c; 
+                        if (c_ != 1) std::cout << c_; 
                         std::cout << "x^(1/2) \n";
                     }        
                 
@@ -601,7 +594,7 @@ namespace physim {
                     // =============================================
                     
                     // y = c * x ^ (1 / 3)
-                    double m_c; 
+                    double c_; 
 
 
                 public: 
@@ -610,7 +603,7 @@ namespace physim {
                     // constructor and destructor
                     // =============================================   
                 
-                    explicit cubic_root(double c = 1) noexcept : m_c{c} {}
+                    explicit cubic_root(double c = 1) noexcept : c_{c} {}
                 
                     ~cubic_root() {} 
                 
@@ -619,16 +612,16 @@ namespace physim {
                     // set & get methods
                     // =============================================
                 
-                    constexpr void c(double c) { m_c = c; }
+                    constexpr void c(double c) { c_ = c; }
 
-                    constexpr double c() const { return m_c; }
+                    constexpr double c() const { return c_; }
 
                 
                     // =============================================
                     // eval methods
                     // =============================================
 
-                    double eval(const double& x) const override { return m_c * math::algebra::cbrt(x); }
+                    double eval(const double& x) const override { return c_ * math::algebra::cbrt(x); }
                             
             
                     // =============================================
@@ -637,7 +630,7 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c != 1) std::cout << m_c; 
+                        if (c_ != 1) std::cout << c_; 
                         std::cout << "x^(1/3) \n";
                     }        
                 
@@ -655,7 +648,7 @@ namespace physim {
                     // =============================================
                     
                     // y = c1 * base ^ (c2 * x)
-                    double m_base, m_c1, m_c2;
+                    double base_, c1_, c2_;
 
                 
                 public: 
@@ -665,10 +658,10 @@ namespace physim {
                     // =============================================   
             
                     explicit exponential(const double& base = math::constants::e, const double& c1 = 1, const double& c2 = 1) noexcept :
-                        m_base{base}, m_c1{c1}, m_c2{c2} {}
+                        base_{base}, c1_{c1}, c2_{c2} {}
 
                     explicit exponential(const double& c1 = 1, const double& c2 = 1) noexcept :
-                        m_base{math::constants::e}, m_c1{c1}, m_c2{c2} {}
+                        base_{math::constants::e}, c1_{c1}, c2_{c2} {}
 
                     ~exponential() {} 
             
@@ -677,24 +670,24 @@ namespace physim {
                     // set & get methods
                     // =============================================
             
-                    constexpr void base(const double& base) { m_base = base; } 
+                    constexpr void base(const double& base) { base_ = base; } 
                 
-                    constexpr void c1(const double& c1) { m_c1 = c1; }
+                    constexpr void c1(const double& c1) { c1_ = c1; }
                 
-                    constexpr void c2(const double& c2) { m_c2 = c2; }
+                    constexpr void c2(const double& c2) { c2_ = c2; }
             
-                    constexpr double base() const { return m_base; }
+                    constexpr double base() const { return base_; }
             
-                    constexpr double c1() const { return m_c1; }
+                    constexpr double c1() const { return c1_; }
 
-                    constexpr double c2() const { return m_c2; }
+                    constexpr double c2() const { return c2_; }
                 
                 
                     // =============================================
                     // eval methods
                     // =============================================
             
-                    constexpr double eval(const double& x) const override { return m_c1 * std::pow(m_base, m_c2 * x); }
+                    constexpr double eval(const double& x) const override { return c1_ * std::pow(base_, c2_ * x); }
                             
                 
                     // =============================================
@@ -703,11 +696,11 @@ namespace physim {
             
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c1 != 1) std::cout << m_c1;
-                        if (m_base != math::constants::e) std::cout << m_base << "^"; 
+                        if (c1_ != 1) std::cout << c1_;
+                        if (base_ != math::constants::e) std::cout << base_ << "^"; 
                         else std::cout << "e^(";
-                        if (m_c2 != 1 && m_c2 != -1) std::cout << m_c2; 
-                        if (m_c2 == -1) std::cout << "-"; 
+                        if (c2_ != 1 && c2_ != -1) std::cout << c2_; 
+                        if (c2_ == -1) std::cout << "-"; 
                         std::cout << "x) \n"; 
                     }
 
@@ -725,7 +718,7 @@ namespace physim {
                     // =============================================
                     
                     // y = c1 * log(base) (c2 * x) 
-                    double m_base, m_c1, m_c2; 
+                    double base_, c1_, c2_; 
 
                 public: 
             
@@ -734,10 +727,10 @@ namespace physim {
                     // =============================================   
             
                     explicit logarithm(const double& base = math::constants::e, const double& c1 = 1, const double& c2 = 1) noexcept : 
-                        m_base{base}, m_c1{c1}, m_c2{c2} {}
+                        base_{base}, c1_{c1}, c2_{c2} {}
 
                     explicit logarithm(const double& c1 = 1, const double& c2 = 1) noexcept : 
-                        m_base{math::constants::e}, m_c1{c1}, m_c2{c2} {}
+                        base_{math::constants::e}, c1_{c1}, c2_{c2} {}
 
                     ~logarithm() {} 
             
@@ -746,24 +739,24 @@ namespace physim {
                     // set & get methods
                     // =============================================
             
-                    constexpr void base(const double& base) { m_base = base; } 
+                    constexpr void base(const double& base) { base_ = base; } 
             
-                    constexpr void c1(const double& c1) { m_c1 = c1; }
+                    constexpr void c1(const double& c1) { c1_ = c1; }
                 
-                    constexpr void c2(const double& c2) { m_c2 = c2; }
+                    constexpr void c2(const double& c2) { c2_ = c2; }
                             
-                    constexpr double base() const { return m_base; }
+                    constexpr double base() const { return base_; }
 
-                    constexpr double c1() const { return m_c1; }
+                    constexpr double c1() const { return c1_; }
 
-                    constexpr double c2() const { return m_c2; }
+                    constexpr double c2() const { return c2_; }
                 
 
                     // =============================================
                     // eval methods
                     // =============================================
             
-                    constexpr double eval(const double& x) const override { return m_c1 * std::log(m_c2 * x) / std::log(m_base); }
+                    constexpr double eval(const double& x) const override { return c1_ * std::log(c2_ * x) / std::log(base_); }
                                 
                 
                     // =============================================
@@ -772,10 +765,10 @@ namespace physim {
             
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c1 != 1) std::cout << m_c1;
+                        if (c1_ != 1) std::cout << c1_;
                         std::cout << "log";
-                        if (m_base != math::constants::e) std::cout << "_( " << m_base << ")";
-                        if (m_c2 != 1) std::cout << "(" << m_c2 << "x) \n"; 
+                        if (base_ != math::constants::e) std::cout << "_( " << base_ << ")";
+                        if (c2_ != 1) std::cout << "(" << c2_ << "x) \n"; 
                         else std::cout << "(x) \n";
                     }                
 
@@ -793,7 +786,7 @@ namespace physim {
                     // =============================================   
                     
                     // y = c1 * sin (c2 * x)
-                    double m_c1, m_c2; 
+                    double c1_, c2_; 
                 
                 
                 public: 
@@ -802,7 +795,7 @@ namespace physim {
                     // constructor and destructor
                     // =============================================   
             
-                    explicit sine(const double& c1 = 1, const double& c2 = 1) noexcept : m_c1{c1}, m_c2{c2} {} 
+                    explicit sine(const double& c1 = 1, const double& c2 = 1) noexcept : c1_{c1}, c2_{c2} {} 
                 
                     ~sine() {} 
 
@@ -811,20 +804,20 @@ namespace physim {
                     // set & get methods
                     // =============================================
             
-                    constexpr void c1(const double& c1) { m_c1 = c1; }
+                    constexpr void c1(const double& c1) { c1_ = c1; }
                 
-                    constexpr void c2(const double& c2) { m_c2 = c2; }
+                    constexpr void c2(const double& c2) { c2_ = c2; }
                 
-                    constexpr double c1() const { return m_c1; }
+                    constexpr double c1() const { return c1_; }
 
-                    constexpr double c2() const { return m_c2; }
+                    constexpr double c2() const { return c2_; }
                 
                 
                     // =============================================
                     // eval methods
                     // =============================================
             
-                    constexpr double eval(const double& x) const override { return m_c1 * std::sin(m_c2 * x); }
+                    constexpr double eval(const double& x) const override { return c1_ * std::sin(c2_ * x); }
                         
                 
                     // =============================================
@@ -833,9 +826,9 @@ namespace physim {
             
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c1 != 1) std::cout << m_c1;
+                        if (c1_ != 1) std::cout << c1_;
                         std::cout << "sin(";
-                        if (m_c2 != 1) std::cout << m_c2; 
+                        if (c2_ != 1) std::cout << c2_; 
                         std::cout << "x) \n";
                     }
 
@@ -853,7 +846,7 @@ namespace physim {
                     // =============================================   
                     
                     // y = c1 * cos (c2 * x)
-                    double m_c1, m_c2; 
+                    double c1_, c2_; 
                 
                 
                 public: 
@@ -863,7 +856,7 @@ namespace physim {
                     // =============================================   
             
             
-                    explicit cosine(const double& c1 = 1, const double& c2 = 1) noexcept : m_c1{c1}, m_c2{c2} {} 
+                    explicit cosine(const double& c1 = 1, const double& c2 = 1) noexcept : c1_{c1}, c2_{c2} {} 
                 
                     ~cosine() {} 
 
@@ -872,20 +865,20 @@ namespace physim {
                     // set & get methods
                     // =============================================
             
-                    constexpr void c1(const double& c1) { m_c1 = c1; }
+                    constexpr void c1(const double& c1) { c1_ = c1; }
                 
-                    constexpr void c2(const double& c2) { m_c2 = c2; }
+                    constexpr void c2(const double& c2) { c2_ = c2; }
                 
-                    constexpr double c1() const { return m_c1; }
+                    constexpr double c1() const { return c1_; }
 
-                    constexpr double c2() const { return m_c2; }
+                    constexpr double c2() const { return c2_; }
                 
 
                     // =============================================
                     // eval methods
                     // =============================================
             
-                    constexpr double eval(const double& x) const override { return m_c1 * std::cos(m_c2 * x); }
+                    constexpr double eval(const double& x) const override { return c1_ * std::cos(c2_ * x); }
                         
             
                     // =============================================
@@ -894,9 +887,9 @@ namespace physim {
             
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c1 != 1) std::cout << m_c1;
+                        if (c1_ != 1) std::cout << c1_;
                         std::cout << "cos(";
-                        if (m_c2 != 1) std::cout << m_c2; 
+                        if (c2_ != 1) std::cout << c2_; 
                         std::cout << "x) \n";
                     }
 
@@ -914,7 +907,7 @@ namespace physim {
                     // =============================================   
                     
                     // y = c1 * tan (c2 * x)
-                    double m_c1, m_c2; 
+                    double c1_, c2_; 
                 
                 
                 public: 
@@ -923,7 +916,7 @@ namespace physim {
                     // constructor and destructor
                     // =============================================   
             
-                    explicit tangent(const double& c1 = 1, const double& c2 = 1) noexcept : m_c1{c1}, m_c2{c2} {} 
+                    explicit tangent(const double& c1 = 1, const double& c2 = 1) noexcept : c1_{c1}, c2_{c2} {} 
                 
                     ~tangent() {} 
 
@@ -932,25 +925,25 @@ namespace physim {
                     // set methods
                     // =============================================
             
-                    constexpr void c1(const double& c1) { m_c1 = c1; }
+                    constexpr void c1(const double& c1) { c1_ = c1; }
                 
-                    constexpr void c2(const double& c2) { m_c2 = c2; }
+                    constexpr void c2(const double& c2) { c2_ = c2; }
                 
                 
                     // =============================================
                     // get methods
                     // =============================================
 
-                    constexpr double c1() const { return m_c1; }
+                    constexpr double c1() const { return c1_; }
 
-                    constexpr double c2() const { return m_c2; }
+                    constexpr double c2() const { return c2_; }
                 
 
                     // =============================================
                     // eval methods
                     // =============================================
             
-                    constexpr double eval(const double& x) const override { return m_c1 * std::tan(m_c2 * x); }
+                    constexpr double eval(const double& x) const override { return c1_ * std::tan(c2_ * x); }
                     
             
                     // =============================================
@@ -959,9 +952,9 @@ namespace physim {
 
                     void print_equation() const override {
                         std::cout << " y = "; 
-                        if (m_c1 != 1) std::cout << m_c1;
+                        if (c1_ != 1) std::cout << c1_;
                         std::cout << "tan(";
-                        if (m_c2 != 1) std::cout << m_c2; 
+                        if (c2_ != 1) std::cout << c2_; 
                         std::cout << "x) \n";
                     }
 
@@ -1004,6 +997,7 @@ namespace physim {
                     (cround(val1 * (1.0 - half_precise_precision)) == c2);
             }
 
+
             // class random_generator for generating pseudo-casual numbers
             class random_generator {
 
@@ -1013,7 +1007,7 @@ namespace physim {
                     // class members
                     // =============================================        
                     
-                    unsigned int m_a, m_c, m_m, m_seed;
+                    unsigned int a_, c_, m_, seed_;
 
 
                 public: 
@@ -1022,11 +1016,9 @@ namespace physim {
                     // constructors & destructor
                     // =============================================
                     
-                    random_generator() : 
-                        m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))} {}
+                    random_generator() :  a_{1664525}, c_{1013904223}, m_{static_cast<unsigned int>(std::pow(2, 31))} {}
 
-                    random_generator(const unsigned int& seed) :
-                        m_a{1664525}, m_c{1013904223}, m_m{static_cast<unsigned int>(std::pow(2, 31))}, m_seed{seed} {}
+                    random_generator(const unsigned int& seed) : a_{1664525}, c_{1013904223}, m_{static_cast<unsigned int>(std::pow(2, 31))}, seed_{seed} {}
 
                     ~random_generator() {}
 
@@ -1034,21 +1026,21 @@ namespace physim {
                     // set & get methods
                     // =============================================
 
-                    constexpr void a(const unsigned int& a) { m_a = a; }
+                    constexpr void a(const unsigned int& a) { a_ = a; }
                     
-                    constexpr void c(const unsigned int& c) { m_c = c; }
+                    constexpr void c(const unsigned int& c) { c_ = c; }
                     
-                    constexpr void m(const unsigned int& m) { m_m = m; }
+                    constexpr void m(const unsigned int& m) { m_ = m; }
                     
-                    constexpr void seed(const unsigned int& seed) { m_seed = seed; }
+                    constexpr void seed(const unsigned int& seed) { seed_ = seed; }
 
-                    constexpr unsigned int a() const { return m_a; }
+                    constexpr unsigned int a() const { return a_; }
                     
-                    constexpr unsigned int c() const { return m_c; }
+                    constexpr unsigned int c() const { return c_; }
                     
-                    constexpr unsigned int m() const { return m_m; }
+                    constexpr unsigned int m() const { return m_; }
                     
-                    constexpr unsigned int seed() const { return m_seed; }
+                    constexpr unsigned int seed() const { return seed_; }
 
 
                     // =============================================
@@ -1056,8 +1048,8 @@ namespace physim {
                     // =============================================
 
                     constexpr double rand(const double& min = 0., const double& max = 1.) {
-                        seed(static_cast<unsigned int>((m_a * m_seed + m_c) % m_m)); 
-                        return min + std::fabs(max - min) * m_seed / m_m; 
+                        seed(static_cast<unsigned int>((a_ * seed_ + c_) % m_)); 
+                        return min + std::fabs(max - min) * seed_ / m_; 
                     }
 
                     constexpr double exp(const double& mean) {
@@ -1093,15 +1085,15 @@ namespace physim {
                     // class members
                     // =============================================
 
-                    double m_a{}, m_b{}, m_h{};
+                    double a_{}, b_{}, h_{};
                     
-                    unsigned int m_steps{};
+                    unsigned int steps_{};
 
-                    int m_sign{}; 
+                    int sign_{}; 
 
-                    double m_sum{}, m_integral{}, m_old_integral{}, m_error{};  
+                    double sum_{}, integral_{}, old_integral_{}, error_{};  
 
-                    random_generator m_rg;
+                    random_generator rg_;
 
 
                     // =============================================
@@ -1109,19 +1101,19 @@ namespace physim {
                     // =============================================
 
                     constexpr void steps(const unsigned int& n) { 
-                        m_steps = n; 
-                        m_h = std::fabs(m_b - m_a) / m_steps;
+                        steps_ = n; 
+                        h_ = std::fabs(b_ - a_) / steps_;
                     }        
 
-                    constexpr void check_range() { m_sign = (m_a == m_b ? 0. : (m_b > m_a ? 1. : -1)); }
+                    constexpr void check_range() { sign_ = (a_ == b_ ? 0. : (b_ > a_ ? 1. : -1)); }
                     
-                    constexpr void sum(const double& sum) { m_sum = sum; }
+                    constexpr void sum(const double& sum) { sum_ = sum; }
 
-                    constexpr void reset_integral() { m_integral = 0; }    
+                    constexpr void reset_integral() { integral_ = 0; }    
 
                     constexpr void begin_integration(const double& a, const double& b, unsigned int n = 1000, const double& sum0 = 0) {
-                        m_a = a; 
-                        m_b = b; 
+                        a_ = a; 
+                        b_ = b; 
                         check_range(); 
                         steps(n);
                         reset_integral(); 
@@ -1144,38 +1136,36 @@ namespace physim {
                     // get methods
                     // =============================================
 
-                    constexpr double a() const { return m_a; }
+                    constexpr double a() const { return a_; }
 
-                    constexpr double b() const { return m_b; }
+                    constexpr double b() const { return b_; }
 
-                    constexpr int sign() const { return m_sign; }
+                    constexpr int sign() const { return sign_; }
 
-                    constexpr unsigned int steps() const { return m_steps; }
+                    constexpr unsigned int steps() const { return steps_; }
 
-                    constexpr double h() const { return m_h; }
+                    constexpr double h() const { return h_; }
 
-                    constexpr double sum() const { return m_sum; }
+                    constexpr double sum() const { return sum_; }
 
-                    constexpr double value() const { return m_integral; }
+                    constexpr double value() const { return integral_; }
 
-                    constexpr double error() const { return m_error; }
+                    constexpr double error() const { return error_; }
 
 
                     // =============================================
                     // print methods
                     // =============================================
 
-                    constexpr void error_integral(const double& delta) { m_error = 4 * delta / 3.; } 
-
                     void print_value(const double& precision = 1.e-6) {
-                        std::cout << "\nIntegral of f(x) in [" << m_a << ", " << m_b << "] = " << std::setprecision(precision) << m_integral << "\n";
+                        std::cout << "integral of f(x) in [" << a_ << ", " << b_ << "] = " << std::setprecision(precision) << integral_ << "\n";
                     }
 
                     void print_error(const double& precision = 1.e-6) {
-                        std::cout << "error = " << std::setprecision(precision) << m_error << "\n";
+                        std::cout << "error = " << std::setprecision(precision) << error_ << "\n";
                     }        
 
-                    void print(const double& precision = 1.e-6) {
+                    void print_integral(const double& precision = 1.e-6) {
                         print_value(); 
                         print_error(); 
                     }
@@ -1187,64 +1177,64 @@ namespace physim {
 
                     void midpoint(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                         begin_integration(a, b, n); 
-                        for (unsigned int i{}; i < m_steps; i++) { m_sum += (f.eval(m_a + (i + 0.5) * m_h)); }
-                        m_integral = m_sum * m_h; 
+                        for (unsigned int i{}; i < steps_; i++) { sum_ += (f.eval(a_ + (i + 0.5) * h_)); }
+                        integral_ = sum_ * h_; 
                     }
 
                     void midpoint_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
                         begin_integration(a, b, 1); 
                         while (true) {
-                            m_old_integral = m_integral; 
-                            midpoint(m_a, m_b, f, m_steps * 2);
-                            error_integral(std::fabs(m_integral - m_old_integral));
-                            if (m_error < prec) break;
+                            old_integral_ = integral_; 
+                            midpoint(a_, b_, f, steps_ * 2);
+                            error_ = 4 * std::fabs(integral_ - old_integral_) / 3;
+                            if (error_ < prec) break;
                         }    
                     }
                     
                     void trapexoid(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                         begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 2.);
-                        for (unsigned int i{1}; i < m_steps; i++) m_sum += f.eval(m_a + i * m_h); 
-                        m_integral = m_sum * m_h; 
+                        for (unsigned int i{1}; i < steps_; i++) sum_ += f.eval(a_ + i * h_); 
+                        integral_ = sum_ * h_; 
                     } 
 
                     void trapexoid_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
                         begin_integration(a, b, 2, f.eval(a) + f.eval(b) / 2. + f.eval((a + b) / 2.)); 
                         while (true) {
-                            m_old_integral = m_integral; 
-                            trapexoid(m_a, m_b, f, m_steps * 2);
-                            error_integral(std::fabs(m_integral - m_old_integral));
-                            if (m_error < prec) break;
+                            old_integral_ = integral_; 
+                            trapexoid(a_, b_, f, steps_ * 2);
+                            error_ = 4 * std::fabs(integral_ - old_integral_) / 3;
+                            if (error_ < prec) break;
                         }
                     }
 
                     void simpson(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                         if (n % 2 == 0) begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 3.);
                         else begin_integration(a, b, n + 1);  
-                        for (unsigned int i{1}; i < m_steps; i++) m_sum += 2 * (1 + i % 2) * (f.eval(m_a + i * m_h)) / 3.; 
-                        m_integral = m_sum * m_h; 
+                        for (unsigned int i{1}; i < steps_; i++) sum_ += 2 * (1 + i % 2) * (f.eval(a_ + i * h_)) / 3.; 
+                        integral_ = sum_ * h_; 
                     }
 
                     void simpson_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
                         begin_integration(a, b, 2, (f.eval(a) + f.eval(b)) / 3.); 
                         while (true) {
-                            m_old_integral = m_integral; 
-                            simpson(m_a, m_b, f, m_steps * 2);
-                            error_integral(std::fabs(m_integral - m_old_integral));
-                            if (m_error < prec) break; 
+                            old_integral_ = integral_; 
+                            simpson(a_, b_, f, steps_ * 2);
+                            error_ = 16 * std::fabs(integral_ - old_integral_) / 15;
+                            if (error_ < prec) break; 
                         }
                     }
 
                     void mean(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                         begin_integration(a, b, n); 
-                        for (unsigned int i{}; i < n; i ++) m_sum += f.eval(m_rg.rand(a, b)); 
-                        m_integral = (m_b - m_a) * m_sum / m_steps; 
+                        for (unsigned int i{}; i < n; i ++) sum_ += f.eval(rg_.rand(a, b)); 
+                        integral_ = (b_ - a_) * sum_ / steps_; 
                     }
 
                     void mean_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
                         std::vector<double> k{};
                         for (unsigned i{}; i < 10000; i++) {
                             mean(a, b, f);
-                            k.emplace_back(m_integral); 
+                            k.emplace_back(integral_); 
                         }
                         double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
                         mean(a, b, f, static_cast<unsigned int>(math::algebra::square(k_mean / prec))); 
@@ -1255,18 +1245,18 @@ namespace physim {
                         double x{}, y{}; 
                         unsigned int hits{};
                         for (unsigned int i{}; i < n; i ++) {
-                            x = m_rg.rand(a, b); 
-                            y = m_rg.rand(0., fmax);  
+                            x = rg_.rand(a, b); 
+                            y = rg_.rand(0., fmax);  
                             if (y <= f.eval(x)) hits++; 
                         }
-                        m_integral = (m_b - m_a) * fmax * hits / n; 
+                        integral_ = (b_ - a_) * fmax * hits / n; 
                     }
 
                     void hit_or_miss_fixed(const double& a, const double& b, const functions::function_base& f, const double& fmax, const double& prec = 1.e-6) {
                         std::vector<double> k{};
                         for (unsigned i{}; i < 10000; i++) {
                             hit_or_miss(a, b, f, fmax);
-                            k.emplace_back(m_integral); 
+                            k.emplace_back(integral_); 
                         }
                         double k_mean = sqrt(100) * descriptive_statistics::sd(k); 
                         unsigned int N = static_cast<unsigned int>(math::algebra::square(k_mean / prec)); 
@@ -1432,6 +1422,10 @@ namespace physim {
                             candela_ * power
                         };
                     }
+
+                    constexpr unit_data square() const { return pow(2); }
+
+                    constexpr unit_data cube() const { return pow(3); }
                     
                     // take some root of a unit_data
                     constexpr unit_data root(const int& power) const {
@@ -1444,6 +1438,10 @@ namespace physim {
                                                                     candela_ / power);
                         else exit(-11);
                     }
+
+                    constexpr unit_data sqrt() const { return root(2); }
+
+                    constexpr unit_data cbrt() const { return root(3); }
                                         
 
                     // =============================================
@@ -1555,8 +1553,16 @@ namespace physim {
                     // take a unit_prefix to some power
                     constexpr unit_prefix pow(const int& power) const { return { std::pow(multiplier_, power) }; }
                     
+                    constexpr unit_prefix square() const { return { std::pow(multiplier_, 2) }; }
+                    
+                    constexpr unit_prefix cube() const { return { std::pow(multiplier_, 3) }; }
+
                     // take some root of a unit_prefix
                     inline unit_prefix root(const int& power) const { return { math::algebra::root(multiplier_, power) }; }
+
+                    inline unit_prefix sqrt() const { return { math::algebra::root(multiplier_, 2) }; }
+                    
+                    inline unit_prefix cbrt() const { return { math::algebra::root(multiplier_, 3) }; }
                     
                     
                     // =============================================
@@ -1660,16 +1666,6 @@ namespace physim {
                     // operators
                     // ============================================= 
 
-                    // equality operator
-                    constexpr bool operator==(const unit& other) const {
-                        if (unit_data::operator!=(other.data())) { return false; }
-                        if (unit_prefix::operator==(other.prefix())) { return true; }
-                        return math::tools::compare_round_equals(multiplier(), other.multiplier());
-                    }
-
-                    // equality operator
-                    constexpr bool operator!=(const unit& other) const { return !operator==(other); }
-
                     // multiply with another unit
                     constexpr unit operator*(const unit& other) const { 
                         return { unit_data::operator*(other.data()), unit_prefix::operator*(other.prefix()) }; 
@@ -1679,6 +1675,16 @@ namespace physim {
                     constexpr unit operator/(const unit& other) const { 
                         return { unit_data::operator/(other.data()), unit_prefix::operator/(other.prefix()) }; 
                     }                    
+
+                    // equality operator
+                    constexpr bool operator==(const unit& other) const {
+                        if (unit_data::operator!=(other.data())) { return false; }
+                        if (unit_prefix::operator==(other.prefix())) { return true; }
+                        return math::tools::compare_round_equals(multiplier(), other.multiplier());
+                    }
+
+                    // equality operator
+                    constexpr bool operator!=(const unit& other) const { return !operator==(other); }
 
 
                     // =============================================
@@ -1691,8 +1697,16 @@ namespace physim {
                     // take a unit to a power
                     constexpr unit pow(const int& power) const { return { unit_data::pow(power), unit_prefix::pow(power) }; }
 
+                    constexpr unit square() const { return { unit_data::square(), unit_prefix::square() }; }
+
+                    constexpr unit cube() const { return { unit_data::cube(), unit_prefix::cube() }; }
+
                     // take a unit to a root power
                     inline unit root(const int& power) const { return { unit_data::root(power), unit_prefix::root(power) }; }
+
+                    inline unit sqrt() const { return { inline unit_data::sqrt(), unit_prefix::sqrt() }; }
+
+                    inline unit cbrt() const { return { unit_data::cbrt(), unit_prefix::cbrt() }; }
 
 
                     // =============================================
@@ -1957,6 +1971,14 @@ namespace physim {
                     // operators
                     // =============================================  
 
+                    constexpr measurement operator*(const measurement& other) const { return measurement(value_ * other.value_, unit_ * other.unit_); }
+                
+                    constexpr measurement operator*(const double& val) const { return measurement(value_ * val, unit_); }
+                    
+                    constexpr measurement operator/(const measurement& other) const { return measurement(value_ / other.value_, unit_ / other.unit_); }
+
+                    constexpr measurement operator/(const double& val) const { return measurement(value_ / val, unit_); } 
+
                     constexpr measurement& operator=(const measurement& other) noexcept {
                         value_ = (unit_ == other.unit_) ? other.value_ : other.value_as(unit_);
                         return *this;
@@ -1967,14 +1989,6 @@ namespace physim {
                         return *this;
                     }     
     
-                    constexpr measurement operator*(const measurement& other) const { return measurement(value_ * other.value_, unit_ * other.unit_); }
-                
-                    constexpr measurement operator*(const double& val) const { return measurement(value_ * val, unit_); }
-                    
-                    constexpr measurement operator/(const measurement& other) const { return measurement(value_ / other.value_, unit_ / other.unit_); }
-
-                    constexpr measurement operator/(const double& val) const { return measurement(value_ / val, unit_); } 
-
                     constexpr bool operator==(const double& val) const { return (value_ == val) ? true : math::tools::compare_round_equals(value_, val); }
 
                     inline bool operator==(const measurement& other) const { return value_equality_check((unit_ == other.units()) ? other.value() : other.value_as(unit_)); }
@@ -1999,20 +2013,18 @@ namespace physim {
 
                     inline bool operator<=(const measurement& other) const { return (value_ < other.value_as(unit_)) ? true : value_equality_check(other.value_as(unit_)); }       
 
+                private:
+
+                    // does a numerical equality check on the value accounting for tolerances
+                    constexpr bool value_equality_check(const double& val) const {
+                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
+                    } 
+
+
+                public:
 
                     // =============================================                                                                                         
-                    // convert methods
-                    // =============================================  
-
-                    // convert a unit to have a new base
-                    inline measurement convert_to(const unit& newUnits) const { return measurement(math::tools::convert(value_, unit_, newUnits), newUnits); }
-
-                    // convert a unit into its base units
-                    constexpr measurement convert_to_base() const { return measurement(value_ * unit_.multiplier(), unit_.as_unit()); }
-
-                    
-                    // =============================================                                                                                         
-                    // set & get methods
+                    // set & get, convert & print methods
                     // =============================================  
 
                     // set the numerical value of the measurement
@@ -2030,6 +2042,12 @@ namespace physim {
                     // convert the measurement to a single unit
                     constexpr unit as_unit() const { return unit(value_, unit_); }
 
+                    // convert a unit to have a new base
+                    inline measurement convert_to(const unit& newUnits) const { return measurement(math::tools::convert(value_, unit_, newUnits), newUnits); }
+
+                    // convert a unit into its base units
+                    constexpr measurement convert_to_base() const { return measurement(value_ * unit_.multiplier(), unit_.as_unit()); }
+
                     // print the measurement
                     void print() const { 
                         // if (unit_.multiplier()!= 1) std::cout << std::setprecision(unit_.multiplier()) << value_ << " "; 
@@ -2037,14 +2055,6 @@ namespace physim {
                         unit_.print(); 
                         std::cout << "\n"; 
                     }
-                     
-
-                private:
-
-                    // does a numerical equality check on the value accounting for tolerances
-                    constexpr bool value_equality_check(const double& val) const {
-                        return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
-                    } 
 
 
             }; // class measurement
@@ -2090,6 +2100,66 @@ namespace physim {
                     // operators
                     // =============================================  
 
+                    constexpr fixed_measurement operator+(const double& val) const {
+                        return fixed_measurement(value_ + val, unit_);
+                    }
+                    
+                    constexpr fixed_measurement operator-(const double& val) const {
+                        return fixed_measurement(value_ - val, unit_);
+                    }
+
+                    constexpr fixed_measurement& operator+=(const double& val) {
+                        value_ += val;
+                        return *this;
+                    }
+
+                    constexpr fixed_measurement& operator-=(const double& val) {
+                        value_ -= val;
+                        return *this;
+                    }
+
+                    constexpr fixed_measurement operator/(const double& val) const {
+                        return fixed_measurement(value_ / val, unit_);
+                    }
+                    
+                    constexpr fixed_measurement operator*(const double& val) const {
+                        return fixed_measurement(value_ * val, unit_);
+                    }
+
+                    constexpr fixed_measurement& operator*=(const double& val) {
+                        value_ *= val;
+                        return *this;
+                    }
+
+                    constexpr fixed_measurement& operator/=(const double& val) {
+                        value_ /= val;
+                        return *this;
+                    }
+
+                    inline fixed_measurement operator+(const fixed_measurement& other) const {
+                        return fixed_measurement(value_ + other.value_as(unit_), unit_);
+                    }
+
+                    inline fixed_measurement operator+(const measurement& other) const {
+                        return fixed_measurement(value_ + other.value_as(unit_), unit_);
+                    }
+
+                    inline fixed_measurement operator-(const fixed_measurement& other) const {
+                        return fixed_measurement(value_ - other.value_as(unit_), unit_);
+                    }
+
+                    inline fixed_measurement operator-(const measurement& other) const {
+                        return fixed_measurement(value_ - other.value_as(unit_), unit_);
+                    }   
+
+                    constexpr fixed_measurement operator*(const fixed_measurement& other) const {
+                        return fixed_measurement(value_ * other.value_, unit_ * other.unit_);
+                    }
+
+                    constexpr fixed_measurement operator/(const fixed_measurement& other) const {
+                        return fixed_measurement(value_ / other.value_, unit_ / other.unit_);
+                    }
+
                     constexpr fixed_measurement& operator=(const fixed_measurement& other) noexcept {
                         value_ = (unit_ == other.units()) ? other.value() : other.value_as(unit_);
                         return *this;
@@ -2103,55 +2173,7 @@ namespace physim {
                     constexpr fixed_measurement& operator=(const double& val) noexcept {
                         value_ = val;
                         return *this;
-                    }     
-
-                    constexpr fixed_measurement& operator+=(const double& val) {
-                        value_ += val;
-                        return *this;
-                    }
-
-                    constexpr fixed_measurement& operator-=(const double& val) {
-                        value_ -= val;
-                        return *this;
-                    }
-
-                    constexpr fixed_measurement& operator*=(const double& val) {
-                        value_ *= val;
-                        return *this;
-                    }
-
-                    constexpr fixed_measurement& operator/=(const double& val) {
-                        value_ /= val;
-                        return *this;
-                    }
-
-                    constexpr fixed_measurement operator*(const double& val) const {
-                        return fixed_measurement(value_ * val, unit_);
-                    }
-
-                    constexpr fixed_measurement operator/(const double& val) const {
-                        return fixed_measurement(value_ / val, unit_);
-                    }
-
-                    inline fixed_measurement operator+(const measurement& other) const {
-                        return fixed_measurement(value_ + other.value_as(unit_), unit_);
-                    }
-
-                    constexpr fixed_measurement operator+(const double& val) const {
-                        return fixed_measurement(value_ + val, unit_);
-                    }
-
-                    inline fixed_measurement operator-(const fixed_measurement& other) const {
-                        return fixed_measurement(value_ - other.value_as(unit_), unit_);
-                    }
-
-                    inline fixed_measurement operator-(const measurement& other) const {
-                        return fixed_measurement(value_ - other.value_as(unit_), unit_);
-                    }
-
-                    constexpr fixed_measurement operator-(const double& val) const {
-                        return fixed_measurement(value_ - val, unit_);
-                    }
+                    }  
 
                     inline bool operator==(const fixed_measurement& val) const {
                         return operator==((unit_ == val.units()) ? val.value() : val.value_as(unit_));
@@ -2235,7 +2257,7 @@ namespace physim {
 
 
                     // =============================================                                                                                         
-                    // get methods
+                    // set & get & print methods
                     // =============================================  
 
                     // set the numerical component of the measurement
@@ -2382,6 +2404,7 @@ namespace physim {
                         return uncertain_measurement(value_ + cval * other.value_, ntol, unit_);
                     }
 
+                    // compute a unit addition and calculate the new uncertainties using the simple uncertainty summation method
                     uncertain_measurement simple_add(const uncertain_measurement& other) const {
                         auto cval = static_cast<double>(math::tools::convert(other.unit_, unit_));
                         double ntol = uncertainty_ + other.uncertainty_ * cval;
@@ -2688,12 +2711,257 @@ namespace physim {
 
             constexpr bool operator<=(const measurement& other, const uncertain_measurement& v2) { return (other < v2) ? true : (v2 == other); }
 
-
+    
         } // namespace algebra
 
 
     } // namespace math
 
+
+    // operations amongs std::vector<T>
+    template <typename T> 
+    std::vector<T> operator+(const std::vector<T>& v1, const std::vector<T>& v2) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + v2[i];
+        return vec;
+    }
+
+    template <typename T> 
+    std::vector<T> operator+(const std::vector<T>& v1, const double& val) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + val;
+        return vec;
+    }
+
+    template <typename T> 
+    std::vector<T> operator-(const std::vector<T>& v1, const std::vector<T>& v2) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - v2[i];
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator-(const std::vector<T>& v1, const double& val) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - val;
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator+=(const std::vector<T>& v1, const std::vector<T>& v2) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + v2[i];
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator+=(const std::vector<T>& v1, const double& val) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] + val;
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator-=(const std::vector<T>& v1, const std::vector<T>& v2) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - v2[i];
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator-=(const std::vector<T>& v1, const double& val) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] - val;
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator*(const std::vector<T>& v1, const std::vector<T>& v2) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] * v2[i];
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator*(const std::vector<T>& v1, const double& val) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] * val;
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> operator*(const double& val, const std::vector<T>& v1) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] * val;
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator/(const std::vector<T>& v1, const std::vector<T>& v2) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] / v2[i];
+        return vec;
+    }
+    
+    template <typename T> 
+    std::vector<T> operator/(const std::vector<T>& v1, const double& val) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] / val;
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> operator/(const double& val, const std::vector<T>& v1) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = v1[i] / val;
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> pow(const std::vector<T>& v1, const double& power) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::pow(v1[i], power);
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> square(const std::vector<T>& v1) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::square(v1[i]);
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> cube(const std::vector<T>& v1) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::cube(v1[i]);
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> root(const std::vector<T>& v1, const double& power) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::root(v1[i], power);
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> sqrt(const std::vector<T>& v1) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::sqrt(v1[i]);
+        return vec;
+    }
+    
+    template <typename T>            
+    std::vector<T> cbrt(const std::vector<T>& v1) {
+        std::vector<T> vec = std::vector<T>(v1.size());
+        for (size_t i{}; i < v1.size(); i++) vec[i] = math::algebra::cbrt(v1[i]);
+        return vec;
+    }
+
+
+    // operations amongs std::pair<T1, T2>
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator+(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
+        return std::make_pair(v1.first + v2.first, v1.second + v2.second);
+    }
+
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator+(const std::pair<T1, T2>& v1, const double& val) {
+        return std::make_pair(v1.first + val, v1.second + val);
+    }
+
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator-(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
+        return std::make_pair(v1.first - v2.first, v1.second - v2.second);
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator-(const std::pair<T1, T2>& v1, const double& val) {
+        return std::make_pair(v1.first - val, v1.second - val);
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator+=(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
+        return std::make_pair(v1.first + v2.first, v1.second + v2.second);
+
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator+=(const std::pair<T1, T2>& v1, const double& val) {
+        return std::make_pair(v1.first + val, v1.second + val);
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator-=(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
+        return std::make_pair(v1.first + v2.first, v1.second + v2.second);
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator-=(const std::pair<T1, T2>& v1, const double& val) {
+        return std::make_pair(v1.first + val, v1.second + val);
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator*(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
+        return std::make_pair(v1.first * v2.first, v1.second * v2.second);
+    }
+
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator*(const std::pair<T1, T2>& v1, const double& val) {
+        return std::make_pair(v1.first * val, v1.second * val);
+    }
+
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> operator*(const double& val, const std::pair<T1, T2>& v1) {
+        return std::make_pair(v1.first * val, v1.second * val);
+    }
+    
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator/(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
+        return std::make_pair(v1.first / v2.first, v1.second / v2.second);
+    }
+
+    template <typename T1, typename T2> 
+    inline std::pair<T1, T2> operator/(const std::pair<T1, T2>& v1, const double& val) {
+        return std::make_pair(v1.first / val, v1.second / val);
+    }
+
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> operator/(const double& val, const std::pair<T1, T2>& v1) {
+        return std::make_pair(v1.first / val, v1.second / val);
+    }
+    
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> pow(const std::pair<T1, T2>& v1, const double& power) {
+        return std::make_pair(math::algebra::pow(v1.first, power), math::algebra::pow(v1.secon, power));
+    }
+    
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> square(const std::pair<T1, T2>& v1) {
+        return std::make_pair(math::algebra::square(v1.first), math::algebra::square(v1.second));
+    }
+    
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> cube(const std::pair<T1, T2>& v1) {
+        return std::make_pair(math::algebra::cube(v1.first), math::algebra::cube(v1.second));
+    }
+    
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> root(const std::pair<T1, T2>& v1, const double& power) {
+        return std::make_pair(math::algebra::root(v1.first, power), math::algebra::root(v1.secon, power));
+    }
+    
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> sqrt(const std::pair<T1, T2>& v1) {
+        return std::make_pair(math::algebra::sqrt(v1.first), math::algebra::sqrt(v1.second));
+    }
+    
+    template <typename T1, typename T2>            
+    inline std::pair<T1, T2> cbrt(const std::pair<T1, T2>& v1) {
+        return std::make_pair(math::algebra::cbrt(v1.first), math::algebra::cbrt(v1.second));
+    }
+    
 
     namespace physics {
 
@@ -2707,7 +2975,7 @@ namespace physim {
                 // class members
                 // =============================================
                 
-                std::vector<measurements::fixed_measurement> position_ = std::vector<measurements::fixed_measurement>(3);
+                std::vector<measurements::fixed_measurement> pos_ = std::vector<measurements::fixed_measurement>(3);
 
 
             public: 
@@ -2719,16 +2987,42 @@ namespace physim {
                 position() noexcept {}
 
                 explicit position(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) noexcept : 
-                    position_{x, y, z} {}
+                    pos_{x, y, z} {}
 
                 explicit position(const double& x, const double& y, const double& z) noexcept : 
-                    position_{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)} {}
+                    pos_{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)} {}
 
-                position(const std::vector<measurements::fixed_measurement>& pos) : position_{pos} {}
+                position(const std::vector<measurements::fixed_measurement>& pos) noexcept : pos_{pos} {}
 
-                position(const position& pos) : position(pos.get_position()) {}
+                position(const position& pos) noexcept : position(pos.get_position()) {}
 
                 ~position() = default; 
+
+
+                // =============================================
+                // operators
+                // =============================================
+
+                inline position operator+(const position& other) { return position(pos_ + other.pos_); } 
+
+                inline position operator+(const double& val) { return position(pos_ + val); }
+
+                inline position operator-(const position& other) { return position(pos_ - other.pos_); } 
+
+                inline position operator-(const double& val) { return position(pos_ - val); }
+
+                inline position operator*(const position& other) { return position(pos_ * other.pos_); } 
+
+                inline position operator*(const double& val) { return position(pos_ * val); }
+
+                inline position operator/(const position& other) { return position(pos_ / other.pos_); } 
+
+                inline position operator/(const double& val) { return position(pos_ / val); }
+
+
+                // =============================================
+                // operations
+                // =============================================
 
 
                 // =============================================
@@ -2736,82 +3030,78 @@ namespace physim {
                 // =============================================
 
                 inline void set_position(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) { 
-                    position_ = std::vector<measurements::fixed_measurement>{x, y, z}; 
+                    pos_ = std::vector<measurements::fixed_measurement>{x, y, z}; 
                 }
 
                 inline void set_position(const double& x, const double& y, const double& z) { 
-                    position_ = std::vector<measurements::fixed_measurement>{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)}; 
+                    pos_ = std::vector<measurements::fixed_measurement>{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)}; 
                 }
 
-                inline void set_position(const std::vector<measurements::fixed_measurement>& pos) { position_ = pos; }
+                inline void set_position(const std::vector<measurements::fixed_measurement>& pos) { pos_ = pos; }
                 
-                inline void set_position(const position& pos) { position_ = pos.get_position(); }
+                inline void set_position(const position& pos) { pos_ = pos.get_position(); }
 
-                inline void x(const measurements::fixed_measurement& x) { position_[0] = x; }
+                inline void x(const measurements::fixed_measurement& x) { pos_[0] = x; }
                 
-                inline void y(const measurements::fixed_measurement& y) { position_[1] = y; }
+                inline void y(const measurements::fixed_measurement& y) { pos_[1] = y; }
                 
-                inline void z(const measurements::fixed_measurement& z) { position_[2] = z; }
+                inline void z(const measurements::fixed_measurement& z) { pos_[2] = z; }
 
-                inline void x(const double& x) { position_[0] = measurements::fixed_measurement(x, position_[0].units()); }
+                inline void x(const double& x) { pos_[0] = measurements::fixed_measurement(x, pos_[0].units()); }
 
-                inline void y(const double& y) { position_[1] = measurements::fixed_measurement(y, position_[1].units()); }
+                inline void y(const double& y) { pos_[1] = measurements::fixed_measurement(y, pos_[1].units()); }
 
-                inline void z(const double& z) { position_[2] = measurements::fixed_measurement(z, position_[2].units()); }
+                inline void z(const double& z) { pos_[2] = measurements::fixed_measurement(z, pos_[2].units()); }
 
-                inline std::vector<measurements::fixed_measurement> get_position() const { return position_; }
+                inline std::vector<measurements::fixed_measurement> get_position() const { return pos_; }
 
-                inline measurements::fixed_measurement x() const { return position_[0]; }
+                inline measurements::fixed_measurement x() const { return pos_[0]; }
                 
-                inline measurements::fixed_measurement y() const { return position_[1]; }
+                inline measurements::fixed_measurement y() const { return pos_[1]; }
                 
-                inline measurements::fixed_measurement z() const { return position_[2]; }             
+                inline measurements::fixed_measurement z() const { return pos_[2]; }             
 
                 inline measurements::fixed_measurement magnitude() const { 
-                    return math::algebra::sqrt(math::algebra::square(position_[0]) +
-                                                math::algebra::square(position_[1]) +
-                                                math::algebra::square(position_[2]));
+                    return math::algebra::sqrt(math::algebra::square(pos_[0]) + math::algebra::square(pos_[1]) + math::algebra::square(pos_[2]));
                 }
 
-                inline measurements::fixed_measurement distance(const position& pos) const {        
-                    return math::algebra::sqrt(math::algebra::square(pos.position_[0] - position_[0]) +
-                                                math::algebra::square(pos.position_[1] - position_[1]) +
-                                                math::algebra::square(pos.position_[2] - position_[2]));
+                inline measurements::fixed_measurement distance(const position& other) const {        
+                    return math::algebra::sqrt(math::algebra::square(other.pos_[0] - pos_[0]) + math::algebra::square(other.pos_[1] - pos_[1]) + math::algebra::square(other.pos_[2] - pos_[2]));
                 }       
 
                 inline measurements::fixed_measurement rho() const { 
-                    return math::algebra::sqrt(math::algebra::square(position_[0]) + math::algebra::square(position_[1])); 
+                    return math::algebra::sqrt(math::algebra::square(pos_[0]) + math::algebra::square(pos_[1])); 
                 }
 
                 inline measurements::fixed_measurement phi() const { 
-                    return measurements::fixed_measurement(atan2(position_[1].value(), position_[0].value()), units::rad); 
+                    return measurements::fixed_measurement(atan2(pos_[1].value(), pos_[0].value()), units::rad); 
                 }     
 
-                inline measurements::fixed_measurement phi(const position& pos) const { 
-                    return measurements::fixed_measurement(atan2(pos.position_[1].value() - position_[1].value(), pos.position_[0].value() - position_[0].value()), units::rad); 
+                inline measurements::fixed_measurement phi(const position& other) const { 
+                    return measurements::fixed_measurement(atan2(other.pos_[1].value() - pos_[1].value(), other.pos_[0].value() - pos_[0].value()), units::rad); 
                 }
 
                 inline measurements::fixed_measurement theta() const { 
-                    if (position_[2] == 0) return measurements::fixed_measurement(0, units::rad);
-                    return measurements::fixed_measurement(acos(position_[2].value() / magnitude().value()), units::rad); 
+                    if (pos_[2] == 0) return measurements::fixed_measurement(0, units::rad);
+                    return measurements::fixed_measurement(acos(pos_[2].value() / magnitude().value()), units::rad); 
                 }
 
-                inline measurements::fixed_measurement theta(const position& pos) const {
-                    if (pos.position_[2] == position_[2]) return measurements::fixed_measurement(0, units::rad);
-                    return measurements::fixed_measurement(acos((pos.position_[2].value() - position_[2].value()) / distance(pos).value()), units::rad); 
+                inline measurements::fixed_measurement theta(const position& other) const {
+                    if (other.pos_[2] == pos_[2]) return measurements::fixed_measurement(0, units::rad);
+                    return measurements::fixed_measurement(acos((other.pos_[2].value() - pos_[2].value()) / distance(other).value()), units::rad); 
                 }
 
                 inline std::vector<double> direction() const {
-                    return { cos(phi().value()), sin(phi().value()), position_[2].value() / magnitude().value() };
+                    return { cos(phi().value()), sin(phi().value()), pos_[2].value() / magnitude().value() };
                 } 
 
-                inline std::vector<double> direction(const position& pos1) const {
-                    return { cos(phi(pos1).value()), sin(phi(pos1).value()), (pos1.position_[2] - position_[2]).value() / distance(pos1).value() };
+                inline std::vector<double> direction(const position& other) const {
+                    return { cos(phi(other).value()), sin(phi(other).value()), (other.pos_[2] - pos_[2]).value() / distance(other).value() };
                 } 
 
-                void print() const {
+                void print_position() const {
                     std::cout << "position = {\n";
-                    for (auto i : position_) i.print(); 
+                    for (auto i : pos_) i.print(); 
                     std::cout << "}\n"; 
                 }
 
@@ -2828,7 +3118,7 @@ namespace physim {
                 // class members
                 // =============================================
                 
-                std::vector<measurements::fixed_measurement> velocity_ = std::vector<measurements::fixed_measurement>(3);
+                std::vector<measurements::fixed_measurement> vel_ = std::vector<measurements::fixed_measurement>(3);
             
 
             public:  
@@ -2840,12 +3130,12 @@ namespace physim {
                 velocity() noexcept {}
 
                 explicit velocity(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) noexcept : 
-                    velocity_{x, y, z} {}
+                    vel_{x, y, z} {}
 
                 explicit velocity(const double& x, const double& y, const double& z) noexcept : 
-                    velocity_{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)} {}
+                    vel_{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)} {}
 
-                velocity(const std::vector<measurements::fixed_measurement>& pos) : velocity_{pos} {}
+                velocity(const std::vector<measurements::fixed_measurement>& pos) : vel_{pos} {}
 
                 velocity(const velocity& pos) : velocity(pos.get_velocity()) {}
 
@@ -2853,70 +3143,93 @@ namespace physim {
 
 
                 // =============================================
-                // set, get and print methods
+                // operators
+                // =============================================
+
+                inline velocity operator+(const velocity& other) { return velocity(vel_ + other.vel_); } 
+
+                inline velocity operator+(const double& val) { return velocity(vel_ + val); }
+
+                inline velocity operator-(const velocity& other) { return velocity(vel_ - other.vel_); } 
+
+                inline velocity operator-(const double& val) { return velocity(vel_ - val); }
+
+                inline velocity operator*(const velocity& other) { return velocity(vel_ * other.vel_); } 
+
+                inline velocity operator*(const double& val) { return velocity(vel_ * val); }
+
+                inline velocity operator/(const velocity& other) { return velocity(vel_ / other.vel_); } 
+
+                inline velocity operator/(const double& val) { return velocity(vel_ / val); }
+
+
+                // =============================================
+                // set & get & print methods
                 // =============================================
 
                 inline void set_velocity(const measurements::fixed_measurement& x, const measurements::fixed_measurement& y, const measurements::fixed_measurement& z) { 
-                    velocity_ = std::vector<measurements::fixed_measurement>{x, y, z}; 
+                    vel_ = std::vector<measurements::fixed_measurement>{x, y, z}; 
                 }
 
                 inline void set_velocity(const double& x, const double& y, const double& z) { 
-                    velocity_ = std::vector<measurements::fixed_measurement>{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)}; 
+                    vel_ = std::vector<measurements::fixed_measurement>{measurements::fixed_measurement(x, units::m), measurements::fixed_measurement(y, units::m), measurements::fixed_measurement(z, units::m)}; 
                 }
 
-                inline void set_velocity(const std::vector<measurements::fixed_measurement>& pos) { velocity_ = pos; }
+                inline void set_velocity(const std::vector<measurements::fixed_measurement>& pos) { vel_ = pos; }
                 
-                inline void set_velocity(const velocity& pos) { velocity_ = pos.get_velocity(); }
+                inline void set_velocity(const velocity& pos) { vel_ = pos.get_velocity(); }
 
-                inline void x(const measurements::fixed_measurement& x) { velocity_[0] = x; }
+                inline void x(const measurements::fixed_measurement& x) { vel_[0] = x; }
                 
-                inline void y(const measurements::fixed_measurement& y) { velocity_[1] = y; }
+                inline void y(const measurements::fixed_measurement& y) { vel_[1] = y; }
                 
-                inline void z(const measurements::fixed_measurement& z) { velocity_[2] = z; }
+                inline void z(const measurements::fixed_measurement& z) { vel_[2] = z; }
 
-                inline void x(const double& x) { velocity_[0] = measurements::fixed_measurement(x, velocity_[0].units()); }
+                inline void x(const double& x) { vel_[0] = measurements::fixed_measurement(x, vel_[0].units()); }
 
-                inline void y(const double& y) { velocity_[1] = measurements::fixed_measurement(y, velocity_[1].units()); }
+                inline void y(const double& y) { vel_[1] = measurements::fixed_measurement(y, vel_[1].units()); }
 
-                inline void z(const double& z) { velocity_[2] = measurements::fixed_measurement(z, velocity_[2].units()); }
+                inline void z(const double& z) { vel_[2] = measurements::fixed_measurement(z, vel_[2].units()); }
 
-                inline std::vector<measurements::fixed_measurement> get_velocity() const { return velocity_; }
+                inline std::vector<measurements::fixed_measurement> get_velocity() const { return vel_; }
 
-                inline measurements::fixed_measurement x() const { return velocity_[0]; }
+                inline measurements::fixed_measurement x() const { return vel_[0]; }
                 
-                inline measurements::fixed_measurement y() const { return velocity_[1]; }
+                inline measurements::fixed_measurement y() const { return vel_[1]; }
                 
-                inline measurements::fixed_measurement z() const { return velocity_[2]; }             
+                inline measurements::fixed_measurement z() const { return vel_[2]; }             
 
                 inline measurements::fixed_measurement magnitude() const { 
-                    return math::algebra::sqrt(math::algebra::square(velocity_[0]) +
-                                                math::algebra::square(velocity_[1]) +
-                                                math::algebra::square(velocity_[2]));
+                    return math::algebra::sqrt(math::algebra::square(vel_[0]) +
+                                                math::algebra::square(vel_[1]) +
+                                                math::algebra::square(vel_[2]));
                 }
  
                 inline measurements::fixed_measurement phi() const { 
-                    return measurements::fixed_measurement(atan2(velocity_[1].value(), velocity_[0].value()), units::rad); 
+                    return measurements::fixed_measurement(atan2(vel_[1].value(), vel_[0].value()), units::rad); 
                 }     
 
                 inline measurements::fixed_measurement theta() const { 
-                    if (velocity_[2] == 0) return measurements::fixed_measurement(0, units::rad);
-                    return measurements::fixed_measurement(acos(velocity_[2].value() / magnitude().value()), units::rad); 
+                    if (vel_[2] == 0) return measurements::fixed_measurement(0, units::rad);
+                    return measurements::fixed_measurement(acos(vel_[2].value() / magnitude().value()), units::rad); 
                 }
 
                 inline std::vector<double> direction() const {
-                    return { cos(phi().value()), sin(phi().value()), velocity_[2].value() / magnitude().value() };
+                    return { cos(phi().value()), sin(phi().value()), vel_[2].value() / magnitude().value() };
                 } 
 
-                void print() const {
-                    std::cout << "position = {\n";
-                    for (auto i : velocity_) i.print(); 
+                void print_velocity() const {
+                    std::cout << "velocity = {\n";
+                    for (auto i : vel_) i.print(); 
                     std::cout << "}\n"; 
                 }
+
 
         }; // class velocity
         
 
         namespace objects {
+
 
             class material_point : public position, public velocity {
 
@@ -2929,6 +3242,12 @@ namespace physim {
                     explicit material_point(const position& pos = position(), const velocity& vel = velocity()) noexcept : 
                         position(pos), velocity(vel) {}
 
+                    explicit material_point(const std::pair<position, velocity>& pos_vel) noexcept : 
+                        position(pos_vel.first), velocity(pos_vel.second) {}
+
+                    material_point(const material_point& other) noexcept : 
+                        position(other.get_position()), velocity(other.get_velocity()) {}    
+                    
                     ~material_point() = default;
 
 
@@ -2936,21 +3255,21 @@ namespace physim {
                     // set, get and print methods
                     // =============================================
 
-                    void get_pos_vel(const position& pos, const velocity& vel) {
+                    void set_pos_vel(const position& pos, const velocity& vel) {
                         set_position(pos); 
                         set_velocity(vel); 
                     }
 
-                    void get_pos_vel(const std::pair<position, velocity>& pos_vel) {
+                    void set_pos_vel(const std::pair<position, velocity>& pos_vel) {
                         set_position(pos_vel.first); 
                         set_velocity(pos_vel.second); 
-                    }
-
+                    }                    
+                    
                     inline std::pair<position, velocity> get_pos_vel() const { return std::make_pair(get_position(), get_velocity()); }
 
                     void print() const {
-                        position::print(); 
-                        velocity::print(); 
+                        print_position(); 
+                        print_velocity(); 
                     }
 
 
@@ -2977,7 +3296,39 @@ namespace physim {
                     explicit mass(const double& mass, const units::unit& unit = units::kg, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
                         material_point(pos, vel), mass_{mass, unit} {}
 
+                    explicit mass(const double& mass, const units::unit& unit, const std::pair<position, velocity>& pos_vel) noexcept :
+                        material_point(pos_vel), mass_{mass, unit} {}
+
+                    explicit mass(const measurements::fixed_measurement& mass, const position& pos = position(), const velocity& vel = velocity()) noexcept :
+                        material_point(pos, vel), mass_{mass} {}
+
+                    explicit mass(const measurements::fixed_measurement& mass, const std::pair<position, velocity>& pos_vel) noexcept :
+                        material_point(pos_vel), mass_{mass} {}
+
+                    mass(const mass& mass) noexcept : material_point(mass.get_pos_vel()), mass_{mass.mass_} {}
+
                     ~mass() = default; 
+
+
+                    // =============================================
+                    // operators
+                    // =============================================
+
+                    inline mass operator+(const mass& other) const { return mass(mass_ + other.mass_, get_pos_vel()); }                    
+                    
+                    inline mass operator-(const mass& other) const { return mass(mass_ - other.mass_, get_pos_vel()); }                    
+
+                    inline mass operator+=(const mass& other) const { return mass(mass_ + other.mass_, get_pos_vel()); }                    
+                    
+                    inline mass operator-=(const mass& other) const { return mass(mass_ - other.mass_, get_pos_vel()); }                    
+                    
+                    inline mass operator*(const mass& other) const { return mass(mass_ * other.mass_, get_pos_vel()); }                    
+                    
+                    inline mass operator*(const double& val) const { return mass(mass_ * val, get_pos_vel()); }  
+
+                    inline mass operator/(const mass& other) const { return mass(mass_ / other.mass_, get_pos_vel()); }                    
+
+                    inline mass operator/(const double& val) const { return mass(mass_ / val, get_pos_vel()); }  
 
 
                     // =============================================
@@ -2988,11 +3339,12 @@ namespace physim {
                     
                     constexpr measurements::fixed_measurement get_mass() const { return mass_; }
 
-                    void print() const { 
+                    void print_mass() const { 
                         std::cout << "mass = "; 
                         mass_.print(); 
                     }
                 
+
             }; // class mass
 
 
@@ -3013,24 +3365,57 @@ namespace physim {
                     // constructors and destructor
                     // =============================================
                     
-                    explicit charge(const double& charge, const units::unit& unit = units::SI_derived::C, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                    explicit charge(const double& charge, const units::unit& unit = units::kg, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
                         material_point(pos, vel), charge_{charge, unit} {}
+
+                    explicit charge(const double& charge, const units::unit& unit, const std::pair<position, velocity>& pos_vel) noexcept :
+                        material_point(pos_vel), charge_{charge, unit} {}
+
+                    explicit charge(const measurements::fixed_measurement& charge, const position& pos = position(), const velocity& vel = velocity()) noexcept :
+                        material_point(pos, vel), charge_{charge} {}
+
+                    explicit charge(const measurements::fixed_measurement& charge, const std::pair<position, velocity>& pos_vel) noexcept :
+                        material_point(pos_vel), charge_{charge} {}
+
+                    charge(const charge& charge) noexcept : material_point(charge.get_pos_vel()), charge_{charge.charge_} {}
 
                     ~charge() = default; 
 
 
                     // =============================================
-                    // set, get and print methods
+                    // operators
+                    // =============================================
+
+                    inline charge operator+(const charge& other) const { return charge(charge_ + other.charge_, get_pos_vel()); }                    
+                    
+                    inline charge operator-(const charge& other) const { return charge(charge_ - other.charge_, get_pos_vel()); }                    
+
+                    inline charge operator+=(const charge& other) const { return charge(charge_ + other.charge_, get_pos_vel()); }                    
+                    
+                    inline charge operator-=(const charge& other) const { return charge(charge_ - other.charge_, get_pos_vel()); }                    
+                    
+                    inline charge operator*(const charge& other) const { return charge(charge_ * other.charge_, get_pos_vel()); }                    
+                    
+                    inline charge operator*(const double& val) const { return charge(charge_ * val, get_pos_vel()); }  
+
+                    inline charge operator/(const charge& other) const { return charge(charge_ / other.charge_, get_pos_vel()); }                    
+
+                    inline charge operator/(const double& val) const { return charge(charge_ / val, get_pos_vel()); }  
+
+
+                    // =============================================
+                    // set & get & print methods
                     // =============================================
 
                     constexpr void set_charge(const double& charge) { charge_.value(charge); }
                     
                     constexpr measurements::fixed_measurement get_charge() const { return charge_; }
 
-                    void print() const { 
+                    void print_charge() const { 
                         std::cout << "charge = "; 
                         charge_.print(); 
                     }
+
                 
             }; // class charge
 
@@ -3127,6 +3512,10 @@ namespace physim {
 
     namespace math {
         
+        namespace algebra {
+
+        }
+
         namespace tools {
 /*
             class ode_solver : public physics::object::time {
@@ -3139,7 +3528,7 @@ namespace physim {
 
                     std::vector<std::vector<double>> m_df = std::vector<std::vector<double>(3)>(2); 
                     
-                    double m_h{}; 
+                    double h_{}; 
 
 
                 public: 
@@ -3190,11 +3579,6 @@ namespace physim {
 
 
     } // namespace math
-
-
-    namespace physics {
-
-    }
 
 
 } // namespace physim
