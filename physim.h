@@ -1275,6 +1275,7 @@ namespace physim {
 
     namespace physics {
 
+
         // namespace defining the units of measurements
         namespace units {
             
@@ -1704,7 +1705,7 @@ namespace physim {
                     // take a unit to a root power
                     inline unit root(const int& power) const { return { unit_data::root(power), unit_prefix::root(power) }; }
 
-                    inline unit sqrt() const { return { inline unit_data::sqrt(), unit_prefix::sqrt() }; }
+                    inline unit sqrt() const { return { unit_data::sqrt(), unit_prefix::sqrt() }; }
 
                     inline unit cbrt() const { return { unit_data::cbrt(), unit_prefix::cbrt() }; }
 
@@ -2863,7 +2864,7 @@ namespace physim {
     // operations amongs std::pair<T1, T2>
     template <typename T1, typename T2> 
     inline std::pair<T1, T2> operator+(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
-        return std::make_pair(v1.first + v2.first, v1.second + v2.second);
+        return std::make_pair((T1) v1.first + v2.first, (T2) v1.second + v2.second);
     }
 
     template <typename T1, typename T2> 
@@ -2904,17 +2905,17 @@ namespace physim {
     
     template <typename T1, typename T2> 
     inline std::pair<T1, T2> operator*(const std::pair<T1, T2>& v1, const std::pair<T1, T2>& v2) {
-        return std::make_pair(v1.first * v2.first, v1.second * v2.second);
+        return std::make_pair(static_cast<T1>(v1.first * v2.first)), static_cast<T2>(v1.second * v2.second);
     }
 
     template <typename T1, typename T2> 
     inline std::pair<T1, T2> operator*(const std::pair<T1, T2>& v1, const double& val) {
-        return std::make_pair(v1.first * val, v1.second * val);
+        return std::make_pair(static_cast<T1>(v1.first) * val, static_cast<T2>(v1.second) * val);
     }
 
     template <typename T1, typename T2>            
     inline std::pair<T1, T2> operator*(const double& val, const std::pair<T1, T2>& v1) {
-        return std::make_pair(v1.first * val, v1.second * val);
+        return std::make_pair(static_cast<T1>(v1.first) * val, static_cast<T2>(v1.second) * val);
     }
     
     template <typename T1, typename T2> 
@@ -2924,7 +2925,7 @@ namespace physim {
 
     template <typename T1, typename T2> 
     inline std::pair<T1, T2> operator/(const std::pair<T1, T2>& v1, const double& val) {
-        return std::make_pair(v1.first / val, v1.second / val);
+        return std::make_pair(static_cast<T1>(v1.first) / val, static_cast<T2>(v1.second) / val);
     }
 
     template <typename T1, typename T2>            
@@ -3276,7 +3277,7 @@ namespace physim {
             }; // class material point
 
 
-            class mass : public material_point {
+            class mass : virtual public material_point {
 
                 protected: 
 
@@ -3348,7 +3349,7 @@ namespace physim {
             }; // class mass
 
 
-            class charge : public material_point {
+            class charge : public virtual material_point {
 
                 protected: 
 
@@ -3418,6 +3419,66 @@ namespace physim {
 
                 
             }; // class charge
+
+
+            class particle : public mass, public charge {
+
+                public:  
+
+                    // =============================================
+                    // constructors & destructor
+                    // =============================================     
+
+                    explicit particle(const measurements::fixed_measurement& mass, const  measurements::fixed_measurement& charge, const std::pair<position, velocity>& pos_vel) noexcept : 
+                        material_point(pos_vel), mass::mass(mass), charge::charge(charge) {}
+
+                    explicit particle(const measurements::fixed_measurement& mass, const  measurements::fixed_measurement& charge, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                        material_point(pos, vel), mass::mass(mass), charge::charge(charge) {}
+
+                    explicit particle(const mass& mass, const charge& charge, const material_point& pos_vel) noexcept : 
+                        material_point(pos_vel), mass::mass(mass), charge::charge(charge) {}
+
+                    explicit particle(const mass& mass, const charge& charge, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                        material_point(pos, vel), mass::mass(mass), charge::charge(charge) {}
+
+                    particle(const particle& part) noexcept : particle(part.get_mass(), part.get_charge(), part.material_point::get_pos_vel()) {}
+
+                    ~particle() = default; 
+
+
+                    // =============================================
+                    // print methods
+                    // =============================================
+
+                    void print_particle() const {
+                        print_mass();
+                        print_charge(); 
+                        material_point::print();
+                    }
+
+
+            }; // class particle
+
+        
+        } // namespace objects
+
+
+        // namespace defining some usefull constants
+        namespace constants {
+
+            objects::mass e_mass = objects::mass(9.109383701528e-31, units::kg);     
+            objects::mass p_mass = objects::mass(1.672621923695e-27, units::kg);
+            objects::charge e_charge = objects::charge(-1.602176634e-19, units::SI_derived::C);
+            objects::charge p_charge = objects::charge(1.602176634e-19, units::SI_derived::C); 
+
+        } // namespace constants
+
+
+        namespace objects {
+
+            particle electon = particle(constants::e_mass, constants::e_charge); 
+            
+            particle proton = particle(constants::p_mass, constants::p_charge);
 
 
             class time {
@@ -3511,70 +3572,66 @@ namespace physim {
 
 
     namespace math {
-        
-        namespace algebra {
 
-        }
 
         namespace tools {
-/*
-            class ode_solver : public physics::object::time {
-
-                protected: 
-
-                    // =============================================
-                    // class members
-                    // =============================================
-
-                    std::vector<std::vector<double>> m_df = std::vector<std::vector<double>(3)>(2); 
-                    
-                    double h_{}; 
 
 
-                public: 
+            class ode_solver : public physics::objects::time {
 
-                    // =============================================
-                    // virtual destructor
-                    // =============================================
+                    protected: 
 
-                    virtual ~ode_solver() {}
+                        // =============================================
+                        // class members
+                        // =============================================
 
-
-                    // =============================================
-                    // virtual eval methods
-                    // =============================================
-
-                    virtual std::pair<position, velocity> eval(const std::pair<position, velocity>& pos, const double& h = 0.001) = 0; 
+                        // std::vector<std::vector<double>> m_df = std::vector<std::vector<double>(3)>(2); 
+                        
+                        double h_{}; 
 
 
-                    // =============================================
-                    // integration methods
-                    // =============================================
+                    public: 
 
-                    std::pair<position, velocity> euler(const std::pair<position, velocity>& pos, const double& h = 0.001) {
-                        std::pair<position, velocity> appo = pos + h * eval(pos, get_time().value()); 
-                        return appo; 
-                    }
+                        // =============================================
+                        // virtual destructor
+                        // =============================================
 
-                    std::vector<std::vector<double>> euler_modified(const std::vector<std::vector<double>>& pos, const double& h = 0.001) {
-                        std::vector<std::vector<double>> appo = pos + h * eval(pos, get_time().value()); 
-                        appo = pos + h * (eval(pos, get_time().value()) + eval(appo, get_time().value() + h)) / 2.; 
-                        return appo; 
-                    }
-
-                    std::vector<std::vector<double>> rk4(const std::vector<std::vector<double>>& pos, const double& h = 0.001) {
-                        std::vector<std::vector<double>> k1{}, k2{}, k3{}, k4{}; 
-                        k1 = eval(pos, get_time().value()); 
-                        k2 = eval(pos + k1 * h / 2., get_time().value() + h / 2.);
-                        k3 = eval(pos + k2 * h / 2., get_time().value() + h / 2.);
-                        k4 = eval(pos + k3 * h / 2., get_time().value() + h / 2.);      
-                        return (pos + (k1 + k2 * 2. + k3 * 2. + k4) * (h / 6.)); 
-                    } 
+                        virtual ~ode_solver() {}
 
 
-            }; // class ode_solver
+                        // =============================================
+                        // virtual eval methods
+                        // =============================================
 
-*/
+                        virtual std::pair<physics::position, physics::velocity> eval(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) = 0; 
+
+
+                        // =============================================
+                        // integration methods
+                        // =============================================
+
+                        inline std::pair<physics::position, physics::velocity> euler(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) {
+                            return pos_vel + h * eval(pos_vel, h);
+                        }
+
+                        std::pair<physics::position, physics::velocity> euler_modified(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) {
+                            std::pair<physics::position, physics::velocity> appo = pos_vel + h * eval(pos_vel, h); 
+                            return pos_vel + h * (appo + eval(pos_vel + h * appo, h)) / 2.; 
+                        }
+
+                        std::pair<physics::position, physics::velocity> rk4(const std::pair<physics::position, physics::velocity>& pos_vel, const double& h = 0.001) {
+                            std::pair<physics::position, physics::velocity> k1{}, k2{}, k3{}, k4{}; 
+                            k1 = eval(pos_vel, h); 
+                            k2 = eval(pos_vel + k1 * h / 2., h);
+                            k3 = eval(pos_vel + k2 * h / 2., h);
+                            k4 = eval(pos_vel + k3 * h / 2., h);      
+                            return (pos_vel + (k1 + k2 * 2. + k3 * 2. + k4) * (h / 6.)); 
+                        } 
+
+
+                }; // class ode_solver
+
+
         } // namespace tools
 
 
