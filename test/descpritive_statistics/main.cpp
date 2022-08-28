@@ -1,7 +1,6 @@
 
 #include "../../physim.hpp"
 
-using namespace physim; 
 
 int main() {
 

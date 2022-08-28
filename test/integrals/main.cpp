@@ -10,9 +10,6 @@
 #include "gplot++.h"
 
 
-using namespace physim; 
-
-
 int main() {
 
     math::tools::integral integral; 

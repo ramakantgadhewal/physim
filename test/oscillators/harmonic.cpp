@@ -11,7 +11,6 @@
 
 using namespace physics; 
 using namespace measurements; 
-using namespace units::SI;
 using namespace objects; 
 using namespace oscillators; 
 
@@ -34,7 +33,7 @@ int main() {
     std::cout << "\nSimulation of an harmonic oscillator with Euler's method\n";
     std::cout << "duration = ";
     tmax.print_time(); 
-    std::cout << "increments = "; 
+    std::cout << "increment = "; 
     h.print_measurement(); 
     std::cout << "\nInitial conditions:\n"; 
     oscillator.print_omega(); 

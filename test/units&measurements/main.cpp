@@ -9,7 +9,6 @@
 #include "physim.hpp"
 
 
-using namespace physim; 
 using namespace physics;
 using namespace measurements;
 

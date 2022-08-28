@@ -7,7 +7,6 @@
 
 
 #include <algorithm>
-#include <vector>
 #include <cassert>
 #include <chrono>
 #include <cmath>
@@ -1949,11 +1948,15 @@ namespace physics {
                 // =============================================  
 
                 constexpr measurement operator+(const measurement& other) const { return measurement(value_ + other.value_as(unit_), unit_); }
+                
+                constexpr measurement operator+(const double& val) const { return measurement(value_ + val, unit_); }
 
                 constexpr measurement operator-() const { return measurement(- value_, unit_); }
 
                 constexpr measurement operator-(const measurement& other) const { return measurement(value_ - other.value_as(unit_), unit_); }
-                                    
+
+                constexpr measurement operator-(const double& val) const { return measurement(value_ - val, unit_); }
+
                 constexpr measurement operator*(const double& val) const { return measurement(value_ * val, unit_); }
 
                 constexpr measurement operator*(const measurement& other) const { return measurement(value_ * other.value_, unit_ * other.unit_); }
@@ -2398,10 +2401,24 @@ namespace std {
     std::vector<physics::measurements::measurement> operator+(const physics::measurements::measurement& val, const std::vector<physics::measurements::measurement>& v1) {
         std::vector<physics::measurements::measurement> vec;
         vec.reserve(v1.size()); 
-        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(val + v1[i]);
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + val);
         return vec;
     }
-    
+
+    std::vector<physics::measurements::measurement> operator+(const std::vector<physics::measurements::measurement>& v1, const double& val) {
+        std::vector<physics::measurements::measurement> vec;
+        vec.reserve(v1.size()); 
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + val);
+        return vec;
+    }
+
+    std::vector<physics::measurements::measurement> operator+(const double& val, const std::vector<physics::measurements::measurement>& v1) {
+        std::vector<physics::measurements::measurement> vec;
+        vec.reserve(v1.size()); 
+        for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] + val);
+        return vec;
+    }
+
     std::vector<physics::measurements::measurement> operator-(const std::vector<physics::measurements::measurement>& v1, const std::vector<physics::measurements::measurement>& v2) {
         std::vector<physics::measurements::measurement> vec;
         vec.reserve(v1.size()); 
@@ -2485,13 +2502,6 @@ namespace std {
         for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] * val); 
         return vec;
     }
-
-    // std::vector<physics::measurements::measurement> operator*(physics::measurements::measurement& val, const std::vector<physics::measurements::measurement>& v1) {
-    //     std::vector<physics::measurements::measurement> vec;
-    //     vec.reserve(v1.size()); 
-    //     for (size_t i{}; i < v1.size(); i++) vec.emplace_back(v1[i] * val); 
-    //     return vec;
-    // }
 
     std::vector<physics::measurements::measurement> operator*(const std::vector<physics::measurements::measurement>& v1, const double& val) {
         std::vector<physics::measurements::measurement> vec;
@@ -3534,6 +3544,205 @@ namespace physics {
 
 
             }; // class harmonic
+
+
+            class forced : public math::tools::ode_solver {
+
+                private: 
+
+                    // =============================================
+                    // class member
+                    // =============================================
+
+                    measurements::measurement omega_0_, omega_1_;
+
+
+                public: 
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+                    
+                    forced(const measurements::measurement& omega0, 
+                           const measurements::measurement& omega1, 
+                           const measurements::measurement& time = measurements::measurement(0.0, units::SI::s)) : 
+                        omega_0_{omega0}, omega_1_{omega1} { time::time_ = time; }
+                    
+                    ~forced() {}
+
+
+                    // =============================================
+                    // set and get methods
+                    // =============================================
+
+                    constexpr void set_omega0(const measurements::measurement& omega) { omega_0_ = omega; }
+
+                    constexpr void set_omega1(const measurements::measurement& omega) { omega_1_ = omega; }
+
+                    constexpr measurements::measurement get_omega0() const { return omega_0_; }
+
+                    constexpr measurements::measurement get_omega1() const { return omega_1_; }
+
+                    void print_omega0() const {
+                        std::cout << "omega0 = "; 
+                        omega_0_.print_measurement();
+                    }
+
+                    void print_omega1() const {
+                        std::cout << "omega1 = "; 
+                        omega_1_.print_measurement();
+                    }
+
+
+                    // =============================================
+                    // diff methods
+                    // =============================================
+
+                    inline std::pair<std::vector<measurements::measurement>, 
+                                        std::vector<measurements::measurement>> diff(const std::pair<std::vector<physics::measurements::measurement>, 
+                                                                                                    std::vector<physics::measurements::measurement>>& pos_vel, 
+                                                                                    const physics::measurements::measurement& h = physics::measurements::measurement(0.001, physics::units::SI::s)) override {
+                        return std::make_pair(pos_vel.second, - omega_0_.square() * pos_vel.first + std::sin(omega_1_.value() * time::time_.value()));
+                    }
+
+
+            }; // class forced
+
+
+            class damped : public math::tools::ode_solver {
+
+                private: 
+
+                    // =============================================
+                    // class member
+                    // =============================================
+
+                    measurements::measurement omega_, alpha_;
+
+
+                public: 
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+                    
+                    damped(const measurements::measurement& omega, 
+                           const measurements::measurement& alpha, 
+                           const measurements::measurement& time = measurements::measurement(0.0, units::SI::s)) : 
+                        omega_{omega}, alpha_{alpha} { time::time_ = time; }
+                    
+                    ~damped() {}
+
+
+                    // =============================================
+                    // set and get methods
+                    // =============================================
+
+                    constexpr void set_omega(const measurements::measurement& omega) { omega_ = omega; }
+
+                    constexpr void set_alpha(const measurements::measurement& alpha) { alpha_ = alpha; }
+
+                    constexpr measurements::measurement get_omega() const { return omega_; }
+
+                    constexpr measurements::measurement get_alpha() const { return alpha_; }
+
+                    void print_omega() const {
+                        std::cout << "omega = "; 
+                        omega_.print_measurement();
+                    }
+
+                    void print_alpha() const {
+                        std::cout << "alpha = "; 
+                        alpha_.print_measurement();
+                    }
+
+
+                    // =============================================
+                    // diff methods
+                    // =============================================
+
+                    inline std::pair<std::vector<measurements::measurement>, 
+                                        std::vector<measurements::measurement>> diff(const std::pair<std::vector<physics::measurements::measurement>, 
+                                                                                                    std::vector<physics::measurements::measurement>>& pos_vel, 
+                                                                                    const physics::measurements::measurement& h = physics::measurements::measurement(0.001, physics::units::SI::s)) override {
+                        return std::make_pair(pos_vel.second, - omega_.square() * pos_vel.first - alpha_ * pos_vel.second);
+                    }
+
+
+            }; // class damped
+
+
+            class forced_damped : public math::tools::ode_solver {
+
+                private: 
+
+                    // =============================================
+                    // class member
+                    // =============================================
+
+                    measurements::measurement omega_0_, omega_1_, alpha_;
+
+
+                public: 
+
+                    // =============================================
+                    // constructors and destructor
+                    // =============================================
+                    
+                    forced_damped(const measurements::measurement& omega0, 
+                                  const measurements::measurement& omega1, 
+                                  const measurements::measurement& alpha,
+                                  const measurements::measurement& time = measurements::measurement(0.0, units::SI::s)) : 
+                        omega_0_{omega0}, omega_1_{omega1}, alpha_{alpha} { time::time_ = time; }
+                    
+                    ~forced_damped() {}
+
+
+                    // =============================================
+                    // set and get methods
+                    // =============================================
+
+                    constexpr void set_omega0(const measurements::measurement& omega) { omega_0_ = omega; }
+
+                    constexpr void set_omega1(const measurements::measurement& omega) { omega_1_ = omega; }
+
+                    constexpr void set_alpha(const measurements::measurement& alpha) { alpha_ = alpha; }
+
+                    constexpr measurements::measurement get_omega0() const { return omega_0_; }
+
+                    constexpr measurements::measurement get_omega1() const { return omega_1_; }
+
+                    constexpr measurements::measurement get_alpha() const { return alpha_; }
+
+                    void print_omega0() const {
+                        std::cout << "omega0 = "; 
+                        omega_0_.print_measurement();
+                    }
+
+                    void print_omega1() const {
+                        std::cout << "omega1 = "; 
+                        omega_1_.print_measurement();
+                    }
+
+                    void print_alpha() const {
+                        std::cout << "alpha = "; 
+                        alpha_.print_measurement();
+                    }
+
+
+                    // =============================================
+                    // diff methods
+                    // =============================================
+
+                    inline std::pair<std::vector<measurements::measurement>, 
+                                        std::vector<measurements::measurement>> diff(const std::pair<std::vector<physics::measurements::measurement>, 
+                                                                                                    std::vector<physics::measurements::measurement>>& pos_vel, 
+                                                                                    const physics::measurements::measurement& h = physics::measurements::measurement(0.001, physics::units::SI::s)) override {
+                        return std::make_pair(pos_vel.second, - omega_0_.square() * pos_vel.first + std::sin(omega_1_.value() * time::time_.value()) - alpha_ * pos_vel.second);
+                    }
+
+
+            }; // class forced_damped
 
 
         } // namespace oscillators
