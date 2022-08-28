@@ -1,5 +1,5 @@
 
-#include "../../physim.h"
+#include "../../physim.hpp"
 
 using namespace physim; 
 

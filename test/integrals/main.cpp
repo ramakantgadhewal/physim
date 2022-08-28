@@ -6,7 +6,7 @@
 // last updated:    20/08/2022
 
 
-#include "physim.h"
+#include "physim.hpp"
 #include "gplot++.h"
 
 

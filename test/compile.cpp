@@ -4,9 +4,8 @@
 // description:     main for checking whether the physim.h compiles. 
 // last updated:    19/08/2022
 
-#include "physim.h"
+#include "physim.hpp"
 
-using namespace physim; 
 
 int main() {
 

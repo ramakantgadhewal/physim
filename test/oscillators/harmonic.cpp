@@ -2,50 +2,54 @@
 // author:          Lorenzo Liuzzo
 // email:           lorenzoliuzzo@outlook.com
 // description:     Plot of an harmonic oscillator using ODE's methods.
-// last updated:    24/08/2022
+// last updated:    28/08/2022
 
 
-#include "physim.h"
+#include "physim.hpp"
 #include "gplot++.h"
 
 
-using namespace physim; 
 using namespace physics; 
+using namespace measurements; 
+using namespace units::SI;
 using namespace objects; 
+using namespace oscillators; 
 
 
 int main() {
 
     Gnuplot plot{};
+    std::vector<double> t{}, x{};
+    unsigned int count{};
+    measurement h(1.e-4, s);  
+    objects::time tmax(70, s); 
+    harmonic oscillator(measurement(1, s.inv())); 
+    mass mas(measurement(3, kg), position(0 * m, 0 * m, 0 * m), velocity(1 * mps, 0 * mps, 0 * mps));
+    timer timer; 
+
     plot.redirect_to_png("images/harmonic.png");
     plot.set_xlabel("Time [s]");
     plot.set_ylabel("Position [m]"); 
-
-    std::vector<double> t, x;
-    unsigned int count{};
     
-    oscillators::harmonic oscillator(measurements::fixed_measurement(1, units::rad / units::s)); 
-    mass m(measurements::fixed_measurement(3, units::kg), position(0., 0., 0.), velocity(1., 0., 0.));
-    objects::time tmax(70, units::s); 
-    timer timer; 
-        
-    std::cout << "\nSimulation of an harmonic oscillator with Euler's method for ";
+    std::cout << "\nSimulation of an harmonic oscillator with Euler's method\n";
+    std::cout << "duration = ";
     tmax.print_time(); 
+    std::cout << "increments = "; 
+    h.print_measurement(); 
     std::cout << "\nInitial conditions:\n"; 
     oscillator.print_omega(); 
-    m.print_pos_vel(); 
+    mas.print_pos_vel(); 
     std::cout << "time = ";
     oscillator.print_time(); 
-    std::cout << "\n"; 
 
     // Euler's method
     timer.start(); 
-    while (oscillator.get_time().value() < tmax.get_time().value()) {
+    while (oscillator.get_time() < tmax.get_time()) {
         if (count % 100 == 0) {
             t.emplace_back(oscillator.get_time().value()); 
-            x.emplace_back(m.get_x().value());
+            x.emplace_back(mas.get_x().value());
         }
-        m.set_pos_vel(oscillator.euler(m.get_pos_vel(), 1.e-5)); 
+        mas.set_pos_vel(oscillator.euler(mas.get_pos_vel(), h)); 
         count++; 
     }
     timer.pause(); 
@@ -53,14 +57,15 @@ int main() {
     std::cout << "\nSimulation with Euler ended\n"; 
     timer.print();    
     std::cout << "\nFinal conditions:\n"; 
-    m.print_pos_vel(); 
+    mas.print_pos_vel(); 
+    std::cout << "time = ";
     oscillator.print_time(); 
     std::cout << "\n"; 
 
     plot.plot(t, x, "Euler"); 
     std::cout << "\nPlotting ended (1/2) \n"; 
 
-    m.set_pos_vel(position(0., 0., 0.), velocity(1., 0., 0.)); 
+    mas.set_pos_vel(position(0., 0., 0.), velocity(1., 0., 0.)); 
     oscillator.reset_time(); 
     t.clear(); 
     x.clear(); 
@@ -70,26 +75,26 @@ int main() {
     tmax.print_time(); 
     std::cout << "\nInitial conditions:\n"; 
     oscillator.print_omega(); 
-    m.print_pos_vel(); 
+    mas.print_pos_vel(); 
     std::cout << "time = ";
     oscillator.print_time(); 
     std::cout << "\n"; 
 
     // Runge Kutta's method
-    timer.start(); 
-    while (oscillator.get_time().value() < tmax.get_time().value()) {
+    while (oscillator.get_time() < tmax.get_time()) {
         if (count % 100 == 0) {
             t.emplace_back(oscillator.get_time().value()); 
-            x.emplace_back(m.get_x().value());
+            x.emplace_back(mas.get_x().value());
         }
-        m.set_pos_vel(oscillator.euler(m.get_pos_vel(), 1.e-5)); 
+        mas.set_pos_vel(oscillator.euler(mas.get_pos_vel(), h)); 
         count++; 
     }
+    timer.pause(); 
 
     std::cout << "\nSimulation with RK4 ended\n"; 
     timer.print();    
     std::cout << "\nFinal conditions:\n"; 
-    m.print_pos_vel(); 
+    mas.print_pos_vel(); 
     oscillator.print_time(); 
     std::cout << "\n"; 
 

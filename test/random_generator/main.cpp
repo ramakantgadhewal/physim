@@ -4,7 +4,7 @@
 // description:     testing the math::tools::random_generator class
 // last updated:    20/08/2022
 
-#include "physim.h"
+#include "physim.hpp"
 #include "gplot++.h"
 
 using namespace physim; 
