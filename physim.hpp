@@ -1908,6 +1908,8 @@ namespace physics {
     // namespace defining some usefull measurement structures
     namespace measurements {
 
+        using namespace units::SI;
+
 
         // measurement class with a value and an unit
         class measurement {
