@@ -2752,7 +2752,7 @@ namespace std {
     }
 
 
-} // namespace algebra
+} // namespace std
 
 
 namespace physics {
@@ -2818,6 +2818,7 @@ namespace physics {
             inline position operator/(const double& val) const { return position(pos_ / val); }
 
             inline position operator/(const int& val) const { return position(pos_ / val); }
+
 
             // =============================================
             // set, get and print methods
@@ -3038,8 +3039,9 @@ namespace physics {
     
 
     namespace objects {
-        
 
+        
+        // class expressing the position and velocity of a material point in a 3D system
         class material_point : public position, public velocity {
 
             public: 
@@ -3306,7 +3308,9 @@ namespace physics {
 
     namespace objects {
 
+
         particle electon = particle(constants::e_mass, constants::e_charge); 
+
         particle proton = particle(constants::p_mass, constants::p_charge);
 
 
@@ -3352,50 +3356,50 @@ namespace physics {
         }; // class time
 
 
+        // class for keeping track of the inexorable passage of time
+        class timer {
+            
+            protected: 
+
+                // =============================================
+                // class members
+                // =============================================     
+                
+                std::chrono::time_point<std::chrono::system_clock> start_, pause_;
+
+                units::unit unit_; 
+
+            
+            public:
+
+                // =============================================
+                // constructor and destructor
+                // =============================================   
+
+                explicit constexpr timer(const units::unit& unit = units::SI::s) noexcept : unit_{unit} {}
+
+                ~timer() = default;
+
+                
+                // =============================================
+                // timer methods
+                // =============================================   
+
+                inline void start() { start_ = std::chrono::system_clock::now(); }
+
+                inline void pause() { pause_ = std::chrono::system_clock::now(); }
+                
+                void print() const { 
+                    std::cout << "elapsed time = " << static_cast<std::chrono::duration<double>>(pause_ - start_).count() << " "; 
+                    unit_.print_unit(); 
+                    std::cout << "\n";
+                }
+
+
+        }; // class timer
+
+
     } // namespace objects
-
-
-    // class for keeping track of the inexorable passage of time
-    class timer {
-        
-        protected: 
-
-            // =============================================
-            // class members
-            // =============================================     
-            
-            std::chrono::time_point<std::chrono::system_clock> start_, pause_;
-
-            units::unit unit_; 
-
-        
-        public:
-
-            // =============================================
-            // constructor and destructor
-            // =============================================   
-
-            explicit constexpr timer(const units::unit& unit = units::SI::s) noexcept : unit_{unit} {}
-
-            ~timer() = default;
-
-            
-            // =============================================
-            // timer methods
-            // =============================================   
-
-            inline void start() { start_ = std::chrono::system_clock::now(); }
-
-            inline void pause() { pause_ = std::chrono::system_clock::now(); }
-            
-            void print() const { 
-                std::cout << "elapsed time = " << static_cast<std::chrono::duration<double>>(pause_ - start_).count() << " "; 
-                unit_.print_unit(); 
-                std::cout << "\n";
-            }
-
-
-    }; // class timer
 
 
 } // namespace physics
