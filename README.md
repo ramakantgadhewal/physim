@@ -24,8 +24,8 @@ And there are some physics stuff that allows you to use:
 * keeping track of the inexorable passage of time with a timer.
 
 # Table of Contents
-* [namespace math](namespace_math)
-  * [namespace constants](namespace_constants)
+* [namespace math](#namespace_math)
+  * [namespace constants](#namespace_constants)
   * [namespace algebra](#namespace_algebra)
   * [namespace descriptive_statistics](#namespace_descriptive_statistics)
   * [namespace functions](#namespace_functions)
