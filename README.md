@@ -5,7 +5,7 @@ The goal of this project is to offer the user the opportunity to do his physics'
 
 # Table of Contents
 * [How to install and include it](#how_to_install_and_include_it)
-* [namespace math](#namespace_math)
+* [namespace math](#namespace-math)
   * [constants](#constants)
   * [algebra](#algebra)
   * [descriptive_statistics](#descriptive_statistics)
@@ -13,7 +13,7 @@ The goal of this project is to offer the user the opportunity to do his physics'
   * [integrals](#integrals)
   * [random_generator](#random_generator)
   * [ode_solver](#ode_solver)
-* [namespace physics](#namespace_physics)
+* [namespace physics](#namespace-physics)
 
 
 # How to install and include it
