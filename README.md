@@ -17,6 +17,7 @@ Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/bl
 ```
 
 # namespace math
+In this namespace there are few basic tools that allows you to do your calculations.
 
   * [namespace constants](#namespace_constants)
   * [namespace algebra](#namespace_algebra)
