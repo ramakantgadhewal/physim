@@ -8,10 +8,7 @@ The goal of this project is to offer the user the opportunity to do his physics'
 
 * [How to install and include it](#how_to_install_and_include_it)
 * [namespace math](#namespace_math)
-  * [namespace constants](#namespace_constants)
-  * [namespace algebra](#namespace_algebra)
-  * [namespace descriptive_statistics](#namespace_descriptive_statistics)
-  * [namespace functions](#namespace_functions)
+
 
 # How to install and include it
 Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/blob/e0432f73e1ba4ade984c00e8e4b08537f8b42e27/physim.hpp) and include it in your .cpp as 
@@ -21,6 +18,12 @@ Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/bl
 
 # namespace math
 
+  * [namespace constants](#namespace_constants)
+  * [namespace algebra](#namespace_algebra)
+  * [namespace descriptive_statistics](#namespace_descriptive_statistics)
+  * [namespace functions](#namespace_functions)
+  
+  
 ## namespace constants
 
 ## namespace algebra
