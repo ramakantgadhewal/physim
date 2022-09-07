@@ -91,7 +91,7 @@ int main() {
    return 0; 
 }
 ```
-The available functions are ``` line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent ```
+The available functions are ``` line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent ```.
 
 
 ## integrals
@@ -119,15 +119,11 @@ int main() {
     integral.print_error(); // print the error (only after a fixed precision method)
     integral.print_integral(); // print the value and the error
 
-    // others integration methods 
-    integral.trapexoid_fixed(0, constants::pi, sine, precision);
-    integral.simpson_fixed(0, constants::pi, sine, precision);
-    integral.mean_fixed(0, constants::pi, sine, precision); 
-    integral.hit_or_miss_fixed(0, constants::pi, sine, max_value); 
 
     return 0; 
 }
 ```
+The available integration methods are ``` midpoint, trapexoid, simpson, mean, hit_or_miss```, in both "fixed steps" and "fixed precision" (_fixed) mode.
 
 ## random_generator
 
