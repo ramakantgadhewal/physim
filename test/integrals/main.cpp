@@ -13,7 +13,7 @@
 using namespace math; 
 using namespace tools; 
 using namespace functions; 
-using namespace physics::objects;
+using physics::objects::timer;
 
 
 void test_midpoint(integral& integral, const sine& sin) {
@@ -90,10 +90,13 @@ void plot_error_runtime(const std::vector<double>& precisions, integral& integra
     for (const auto& precision : precisions) {
         std::cout << "precision: " << precision << "\n";
         integral.midpoint_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision);
         error_midpoint.emplace_back(integral.error());
         integral.trapexoid_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision);
         error_trapexoid.emplace_back(integral.error());        
-        integral.simpson_fixed(0., constants::pi, sin, precision);
+        integral.simpson_fixed(0., constants::pi, sin, precision); 
+        integral.print_integral(precision);
         error_simpson.emplace_back(integral.error());   
     }
     timer.pause();
@@ -127,10 +130,13 @@ void plot_error_known_value(const std::vector<double>& precisions, integral& int
     for (const auto& precision : precisions) {
         std::cout << "precision: " << precision << "\n";
         integral.midpoint_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision); 
         error_midpoint.emplace_back(std::fabs(integral.value() - 2.0));
         integral.trapexoid_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision); 
         error_trapexoid.emplace_back(std::fabs(integral.value() - 2.0));        
         integral.simpson_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision); 
         error_simpson.emplace_back(std::fabs(integral.value() - 2.0));   
     }
     timer.pause();
@@ -150,20 +156,71 @@ void plot_error_known_value(const std::vector<double>& precisions, integral& int
 }
 
 
+void plot_error(const std::vector<double>& precisions, integral& integral, const sine& sin, const char* title_runtime, const char* title_known_value) {
+    Gnuplot plot; 
+    plot.redirect_to_png(title_runtime);
+    plot.set_logscale(Gnuplot::AxisScale::LOGXY);
+    plot.set_xlabel("precision");
+    plot.set_ylabel("error"); 
+    std::vector<double> error_runtime_midpoint{}, error_runtime_trapexoid{}, error_runtime_simpson{}; 
+    std::vector<double> error_known_value_midpoint{}, error_known_value_trapexoid{}, error_known_value_simpson{}; 
+    timer timer;
+
+    timer.start();
+    for (const auto& precision : precisions) {
+        std::cout << "precision: " << precision << "\n";
+        integral.midpoint_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision);
+        error_known_value_midpoint.emplace_back(std::fabs(integral.value() - 2.0));
+        error_runtime_midpoint.emplace_back(integral.error());
+        integral.trapexoid_fixed(0., constants::pi, sin, precision);
+        integral.print_integral(precision);
+        error_known_value_trapexoid.emplace_back(std::fabs(integral.value() - 2.0));
+        error_runtime_trapexoid.emplace_back(integral.error());        
+        integral.simpson_fixed(0., constants::pi, sin, precision); 
+        integral.print_integral(precision);
+        error_known_value_simpson.emplace_back(std::fabs(integral.value() - 2.0));
+        error_runtime_simpson.emplace_back(integral.error());   
+    }
+    timer.pause();
+    std::cout << "\ncalculations are finished \n";
+    timer.print();
+
+    timer.start();
+    plot.plot(precisions, precisions, "worst case", Gnuplot::LineStyle::LINESPOINTS);
+    plot.plot(precisions, error_runtime_midpoint, "midpoint", Gnuplot::LineStyle::LINESPOINTS);
+    plot.plot(precisions, error_runtime_trapexoid, "trapexoid", Gnuplot::LineStyle::LINESPOINTS);
+    plot.plot(precisions, error_runtime_simpson, "simpson", Gnuplot::LineStyle::LINESPOINTS);
+    plot.show();
+    
+    plot.redirect_to_png(title_known_value);
+    plot.set_logscale(Gnuplot::AxisScale::LOGXY);
+    plot.set_xlabel("precision");
+    plot.set_ylabel("error"); 
+    plot.plot(precisions, precisions, "worst case", Gnuplot::LineStyle::LINESPOINTS);
+    plot.plot(precisions, error_known_value_midpoint, "midpoint", Gnuplot::LineStyle::LINESPOINTS);
+    plot.plot(precisions, error_known_value_trapexoid, "trapexoid", Gnuplot::LineStyle::LINESPOINTS);
+    plot.plot(precisions, error_known_value_simpson, "simpson", Gnuplot::LineStyle::LINESPOINTS);
+    plot.show();
+
+    timer.pause();
+    std::cout << "\nplotting is finished \n";
+    timer.print();
+
+}
+
+
 int main() {
 
     integral integral; 
     sine sin;
-    timer timer; 
+    std::vector<double> precisions = {1.e-1, 1.e-2, 1.e-3, 1.e-4, 1.e-5, 1.e-6, 1.e-7}; //, 1.e-8, 1.e-9, 1.e-10, 1.e-11, 1.e-12};
 
     test_midpoint(integral, sin);
     test_trapexoid(integral, sin);
     test_simpson(integral, sin);
 
-    std::vector<double> precisions = {1.e-1, 1.e-2, 1.e-3, 1.e-4, 1.e-5, 1.e-6, 1.e-7, 1.e-8, 1.e-9, 1.e-10, 1.e-11, 1.e-12};
-
-    plot_error_known_value(precisions, integral, sin, "images/error_known_value.png");
-    plot_error_runtime(precisions, integral, sin, "images/error_runtime.png");
+    plot_error(precisions, integral, sin, "images/prova_runtime.png", "images/prova_known_value.png");
 
     return 0;
 

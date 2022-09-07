@@ -17,7 +17,7 @@ using namespace units;
 int main() {
 
     std::cout << "\nmeasurements\n";
-    measurement meas1(336, m); 
+    measurement meas1(336 * m); 
     measurement meas2(3, SI_derived::mps); 
     measurement meas3 = meas1 / meas2; 
 
