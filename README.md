@@ -7,7 +7,6 @@ The goal of this project is to offer the user the opportunity to do his physics'
 * [How to install and include it](#how_to_install_and_include_it)
 * [namespace math](#namespace-math)
   * [constants](#constants)
-  * [algebra](#algebra)
   * [descriptive_statistics](#descriptive_statistics)
   * [functions](#functions)
   * [integrals](#integrals)
@@ -70,16 +69,16 @@ In this namespace there are defined some of the most common functions that can b
 using namespace math::functions; 
 
 int main() {
-   sine sin(3, 2); // y = 3 * sin(2 * x)
+   sine sine(3, 2); // y = 3 * sin(2 * x)
    cube cb(4, -2, 0, 1); // y = 4 * x^3 - 2 * x^2 + 1
-   square_root sqrt; // y = sqrt(x)
+   square_root sq_rt; // y = sqrt(x)
    
    // you can print the equation
-   sin.print_equation(); 
+   sine.print_equation(); 
    
    // you can compone functions using functors
-   functor f('+', sin, cb); // y = 3 * sin(2 * x) + 4 * x^3 - 2 * x^2 + 1
-   functor g('c', sqrt, sin); // y = sqrt(3 * sin(2 * x))
+   functor f('+', sine, cb); // y = 3 * sin(2 * x) + 4 * x^3 - 2 * x^2 + 1
+   functor g('c', sq_rt, sine); // y = sqrt(3 * sin(2 * x))
    
    // you can use funtors as functions as well
    functor h('/', f, g); // y = f / g
@@ -94,6 +93,39 @@ int main() {
 ```
 
 ## integrals
+``` c++
+using namespace math; 
+
+int main() {
+
+    integral integral; 
+    functions::sine sine; 
+    unsigned int steps = 100; 
+    double precision = 1.e-6;
+    double max_value = 1; 
+
+    // integrate with the midpoint method (default steps = 100) 
+    integral.midpoint(0, constants::pi, sine, steps); 
+
+    double value = integral.value(); // get the integral value
+    integral.print_value(1.e-6); // print the value
+
+    // integrate with a fixed level of error (default precision = 1.e-6)
+    integral.midpoint_fixed(0, constants::pi, sine, precision);
+
+    double error = integral.error(); // get the integral error
+    integral.print_error(); // print the error (only after a fixed precision method)
+    integral.print_integral(); // print the value and the error
+
+    // others integration methods 
+    integral.trapexoid_fixed(0, constants::pi, sine, precision);
+    integral.simpson_fixed(0, constants::pi, sine, precision);
+    integral.mean_fixed(0, constants::pi, sine, precision); 
+    integral.hit_or_miss_fixed(0, constants::pi, sine, max_value); 
+
+    return 0; 
+}
+```
 
 ## random_generator
 
