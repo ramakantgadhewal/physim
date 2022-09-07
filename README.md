@@ -13,7 +13,7 @@ The goal of this project is to offer the user the opportunity to do his physics'
   * [integrals](#integrals)
   * [random_generator](#random_generator)
   * [ode_solver](#ode_solver)
-* [physics](#physics)
+* [namespace physics](#namespace_physics)
 
 
 # How to install and include it
