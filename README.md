@@ -27,7 +27,7 @@ Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/bl
 In this namespace there are defined a few basic tools that allows you to do your calculations. 
 
 ## namespace constants
-Here there are defined some usefull math constants that can be used as constexpr as shown by the example below. 
+Here there are defined some useful math constants that can be used as constexpr as shown by the example below. 
 ``` c++
 using namespace math::constants; 
 
@@ -65,7 +65,7 @@ int main() {
 ```
 
 ## namespace functions
-In this namespace there are defined some of the most common functions that can be use alone or combined toghether using a functor, providing the two functions and the type of operation (```'+', '-', '*', '/', '^', 'c'```). 
+In this namespace there are defined some of the most common functions that can be used alone or combined toghether using a functor, providing the two functions and the type of operation (```'+', '-', '*', '/', '^', 'c'```). 
 ``` c++
 using namespace math::functions; 
 
