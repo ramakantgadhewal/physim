@@ -1,21 +1,20 @@
 # physim
-
 **physim** is a c++ header-only namespace for computational physics.
 The goal of this project is to offer the user the opportunity to do his physics' things without having too much trouble with the c++ language and syntax. 
 
 
 # Table of Contents
-
 * [How to install and include it](#how_to_install_and_include_it)
 * [namespace math](#namespace_math)
-  * [namespace constants](#namespace_constants)
-  * [namespace algebra](#namespace_algebra)
-  * [namespace descriptive_statistics](#namespace_descriptive_statistics)
-  * [namespace functions](#namespace_functions)
+  * [namespace constants](##namespace_constants)
+  * [namespace algebra](##namespace_algebra)
+  * [namespace descriptive_statistics](##namespace_descriptive_statistics)
+  * [namespace functions](##namespace_functions)
   * [integrals](#integrals)
   * [random_generator](#random_generator)
   * [ode_solver](#ode_solver)
 * [namespace physics](#namespace_physics)
+
 
 # How to install and include it
 Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/blob/e0432f73e1ba4ade984c00e8e4b08537f8b42e27/physim.hpp) and include it in your .cpp as 
@@ -23,8 +22,9 @@ Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/bl
 #include "physim.hpp"
 ```
 
-# Namespace math
-In this namespace there are few basic tools that allows you to do your calculations.
+
+# namespace math
+In this namespace there are defined a few basic tools that allows you to do your calculations. 
 
 ## namespace constants
 Here there are defined some usefull math constants that can be used as constexpr as shown by the example below. 
