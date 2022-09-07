@@ -10,8 +10,8 @@
 
 int main() {    
 
-    unsigned int nmax{100000}; 
-    math::tools::random_generator rg(1);
+    unsigned int nmax{1000000}; 
+    math::tools::random_generator rg;
     std::vector<double> rand{}, exp{}, gaussBM{}, gaussAR{}; 
     Gnuplot plot{};
     plot.redirect_to_png("distributions.png");

@@ -4,14 +4,15 @@ The goal of this project is to offer the user the opportunity to do his physics'
 
 
 # Table of Contents
-* [How to install and include it](#how_to_install_and_include_it)
+* [How to install and include it](#how-to-install-and-include-it)
 * [namespace math](#namespace-math)
   * [constants](#constants)
   * [descriptive_statistics](#descriptive_statistics)
   * [functions](#functions)
-  * [integrals](#integrals)
-  * [random_generator](#random_generator)
-  * [ode_solver](#ode_solver)
+  * [tools](#tools)
+    * [integral](#integrals)
+    * [random_generator](#random_generator)
+    * [ode_solver](#ode_solver)
 * [namespace physics](#namespace-physics)
 
 
@@ -32,14 +33,12 @@ using namespace math::constants;
 
 int main() {
 
-   double r = 1; 
-   double cfr = 2 * pi * r; 
-   
-   return 0;
+    double r = 1; 
+    double cfr = 2 * pi * r; 
+    
+    return 0;
 }
 ```
-
-## algebra
 
 ## descriptive_statistics
 ``` c++
@@ -47,56 +46,59 @@ using namespace math::descriptive_statistics;
 
 int main() {
 
-   std::vector<double> data = utilities::read_from_file<double>("data.dat"); 
-   double mean = mean(data); 
-   double variance = variance(data); 
-   double standard_deviation = sd(data); 
-   double sd_mean = sdom(data); 
-   double median = median(data);
-   
-   double expected_value = 3.45; 
-   double gdl = 3; 
-   double chi_squared = chi_sq(data, expected_value);
-   double chi_squared_reduced = chi_sq_r(data, expected_value, gdl);
-   
-   return 0; 
+    std::vector<double> data = utilities::read_from_file<double>("data.dat"); 
+    double mean = mean(data); 
+    double variance = variance(data); 
+    double standard_deviation = sd(data); 
+    double sd_mean = sdom(data); 
+    double median = median(data);
+    
+    double expected_value = 3.45; 
+    double gdl = 3; 
+    double chi_squared = chi_sq(data, expected_value);
+    double chi_squared_reduced = chi_sq_r(data, expected_value, gdl);
+    
+    return 0; 
 }
 ```
 
 ## functions
-In this namespace there are defined some of the most common functions that can be used alone or combined toghether using a functor, providing the two functions and the type of operation (```'+', '-', '*', '/', '^', 'c'```). 
+In this namespace there are defined some of the most common functions that can be used alone or combined toghether using a functor, providing the two functions and the type of operation (``` '+', '-', '*', '/', '^', 'c' ```). 
 ``` c++
 using namespace math::functions; 
 
 int main() {
-   sine sine(3, 2); // y = 3 * sin(2 * x)
-   cube cb(4, -2, 0, 1); // y = 4 * x^3 - 2 * x^2 + 1
-   square_root sq_rt; // y = sqrt(x)
-   
-   // you can print the equation
-   sine.print_equation(); 
-   
-   // you can compone functions using functors
-   functor f('+', sine, cb); // y = 3 * sin(2 * x) + 4 * x^3 - 2 * x^2 + 1
-   functor g('c', sq_rt, sine); // y = sqrt(3 * sin(2 * x))
-   
-   // you can use funtors as functions as well
-   functor h('/', f, g); // y = f / g
-   
-   // you can evaluate the function in a specific point and print the value
-   double value = h.eval(constants::pi); 
-   std::cout << value << "\n"; // old school
-   h.print_eval(constants::pi); // cool way
-   
-   return 0; 
+
+    sine sine(3, 2); // y = 3 * sin(2 * x)
+    cube cb(4, -2, 0, 1); // y = 4 * x^3 - 2 * x^2 + 1
+    square_root sq_rt; // y = sqrt(x)
+
+    // you can print the equation
+    sine.print_equation(); 
+
+    // you can compone functions using functors
+    functor f('+', sine, cb); // y = 3 * sin(2 * x) + 4 * x^3 - 2 * x^2 + 1
+    functor g('c', sq_rt, sine); // y = sqrt(3 * sin(2 * x))
+
+    // you can use funtors as functions as well
+    functor h('/', f, g); // y = f / g
+
+    // you can evaluate the function in a specific point and print the value
+    double value = h.eval(constants::pi); 
+    std::cout << value << "\n"; // old school
+    h.print_eval(constants::pi); // cool way
+
+    return 0; 
 }
 ```
 The available functions are ``` line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent ```.
 
 
-## integrals
+## tools
+
+### integrals
 ``` c++
-using namespace math; 
+using namespace math::tools; 
 
 int main() {
 
@@ -123,11 +125,31 @@ int main() {
     return 0; 
 }
 ```
-The available integration methods are ``` midpoint, trapexoid, simpson, mean, hit_or_miss```, in both "fixed steps" and "fixed precision" (_fixed) mode.
+The available integration methods are ``` midpoint, trapexoid, simpson, mean,  ```, in both "fixed steps" and "fixed precision" (``` _fixed ```) mode.
 
-## random_generator
 
-## ode_solver
+### random_generator
+``` c++
+using namespace math::tools; 
+
+int main() {
+
+    random_generator rg; 
+    double mean = 2; 
+    double sigma = 0.1; 
+
+    double rand = rg.rand(3, 6); // default are 0 and 1
+    double exp = rg.exp(mean); 
+    double gauss_BM = rg.gauss_box_muller(mean, sigma); 
+    double gauss_AR = rg.gauss_accept_reject(mean, sigma); 
+
+    return 0; 
+}
+```
+
+### ode_solver
+In this virtual class are defined some of the method for evaluating ordinary differential equations. The available methods are ``` euler, rk4 ```.
+
 
 # namespace physics
 
