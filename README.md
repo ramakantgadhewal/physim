@@ -91,6 +91,8 @@ int main() {
    return 0; 
 }
 ```
+The available functions are ``` c++ line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent ```
+
 
 ## integrals
 ``` c++
