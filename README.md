@@ -17,11 +17,15 @@ The goal of this project is to offer the user the opportunity to do his physics'
 
 
 # How to install and include it
-Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/blob/e0432f73e1ba4ade984c00e8e4b08537f8b42e27/physim.hpp) and include it in your .cpp as 
+Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/blob/e0432f73e1ba4ade984c00e8e4b08537f8b42e27/physim.hpp) from terminal typing the following command 
+```
+wget https://raw.githubusercontent.com/lorenzoliuzzo/physim/master/physim.hpp
+``` 
+
+Once you have downloaded the file you can include it in your desireded .cpp file as 
 ``` c++
 #include "physim.hpp"
 ```
-
 
 # namespace math
 In this namespace there are defined a few basic tools that allows you to do your calculations. 
@@ -63,7 +67,7 @@ int main() {
 ```
 
 ## functions
-In this namespace there are defined some of the most common functions that can be used alone or combined toghether using a functor, providing the two functions and the type of operation (``` '+', '-', '*', '/', '^', 'c' ```). 
+In this namespace there are defined some of the most common functions that can be used alone or combined toghether using a functor, providing the two functions and the type of operation (```'+', '-', '*', '/', '^', 'c'```). 
 ``` c++
 using namespace math::functions; 
 
@@ -91,7 +95,7 @@ int main() {
     return 0; 
 }
 ```
-The available functions are ``` line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent ```.
+The available functions are ```line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent```.
 
 
 ## tools
@@ -125,7 +129,7 @@ int main() {
     return 0; 
 }
 ```
-The available integration methods are ``` midpoint, trapexoid, simpson, mean,  ```, in both "fixed steps" and "fixed precision" (``` _fixed ```) mode.
+The available integration methods are ```midpoint, trapexoid, simpson, mean,  hit_or_miss```, in both "fixed steps" and "fixed precision" (```_fixed```) mode.
 
 
 ### random_generator
