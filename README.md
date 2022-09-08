@@ -6,14 +6,21 @@ The goal of this project is to offer the user the opportunity to do his physics'
 # Table of Contents
 * [How to install](#how-to-install)
 * [namespace math](#namespace-math)
-  * [descriptive_statistics](#descriptive_statistics)
-  * [functions](#functions)
-  * [tools](#tools)
-    * [integral](#integrals)
-    * [random_generator](#random_generator)
-    * [ode_solver](#ode_solver)
+    * [descriptive_statistics](#descriptive_statistics)
+    * [functions](#functions)
+    * [tools](#tools)
+        * [integral](#integrals)
+        * [random_generator](#random_generator)
+        * [ode_solver](#ode_solver)
 * [namespace physics](#namespace-physics)
-
+    * [constants](#constants)
+    * [units](#units)
+    * [measurements](#measurements)
+    * [position and velocity](#position-and-velocity)
+    * [objects](#objects)
+        * [material point](#material-point)
+        * [mass and charge](#mass-and-charge)
+        * [particle](#particle)
 
 # How to install
 Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/blob/e0432f73e1ba4ade984c00e8e4b08537f8b42e27/physim.hpp) from terminal typing the following command 
@@ -60,7 +67,7 @@ using namespace math::constants;
 int main() {
 
     sine sine(3, 2); // y = 3 * sin(2 * x)
-    logarithm log(e, 2, 3); // y = 2 * log_e (3 * x)
+    logarithm log(e, 2, 3); // y = 2 * log_5 (3 * x)
     cube cb(4, -2, 0, 1); // y = 4 * x^3 - 2 * x^2 + 1
     square_root sq_rt; // y = sqrt(x)
 
@@ -83,9 +90,7 @@ int main() {
 }
 ```
 The available functions are ```line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent```. 
-The multiplicative parameters are fixed as 1 by default, the adding parameters are fixed as 0 by default, the basis parameters for the exponential and the logarithm are the ```c++ 
-math::constants::e
-``` by default. 
+By default, the multiplicative parameters are fixed as 1, the adding parameters are fixed as 0 and the basis parameters for the exponential and the logarithm are fixed as ```math::constants::e```. 
 
 
 ## tools
@@ -93,6 +98,7 @@ math::constants::e
 ### integrals
 ``` c++
 using namespace math::tools; 
+using namespace math::constants; 
 
 int main() {
 
@@ -103,13 +109,13 @@ int main() {
     double max_value = 1; 
 
     // integrate with the midpoint method (default steps = 100) 
-    integral.midpoint(0, constants::pi, sine, steps); 
+    integral.midpoint(0, pi, sine, steps); 
 
     double value = integral.value(); // get the integral value
     integral.print_value(1.e-6); // print the value
 
     // integrate with a fixed level of error (default precision = 1.e-6)
-    integral.midpoint_fixed(0, constants::pi, sine, precision);
+    integral.midpoint_fixed(0, pi, sine, precision);
 
     double error = integral.error(); // get the integral error
     integral.print_error(); // print the error (only after a fixed precision method)
@@ -137,12 +143,15 @@ int main() {
     double gauss_BM = rg.gauss_box_muller(mean, sigma); 
     double gauss_AR = rg.gauss_accept_reject(mean, sigma); 
 
+    rg.seed(34); // setting the seed
+    rg.seed(); // getting the seed
+
     return 0; 
 }
 ```
 
 ### ode_solver
-In this virtual class are defined some of the method for evaluating ordinary differential equations. The available methods are ``` euler, rk4 ```.
+In this virtual class are defined some of the method for evaluating ordinary differential equations. The available methods are ```euler, rk4```.
 
 
 # namespace physics
