@@ -1,12 +1,11 @@
 # physim
-**physim** is a c++ header-only namespace for computational physics.
+**physim** is a c++ _header-only_ library for computational physics.
 The goal of this project is to offer the user the opportunity to do his physics' things without having too much trouble with the c++ language and syntax. 
 
 
 # Table of Contents
-* [How to install and include it](#how-to-install-and-include-it)
+* [How to install](#how-to-install)
 * [namespace math](#namespace-math)
-  * [constants](#constants)
   * [descriptive_statistics](#descriptive_statistics)
   * [functions](#functions)
   * [tools](#tools)
@@ -16,33 +15,19 @@ The goal of this project is to offer the user the opportunity to do his physics'
 * [namespace physics](#namespace-physics)
 
 
-# How to install and include it
+# How to install
 Download the header file [physim.hpp](https://github.com/lorenzoliuzzo/physim/blob/e0432f73e1ba4ade984c00e8e4b08537f8b42e27/physim.hpp) from terminal typing the following command 
 ```
 wget https://raw.githubusercontent.com/lorenzoliuzzo/physim/master/physim.hpp
 ``` 
 
-Once you have downloaded the file you can include it in your desireded .cpp file as 
+Once you have downloaded the file, you can include it in your desireded .cpp file as 
 ``` c++
 #include "physim.hpp"
 ```
 
 # namespace math
 In this namespace there are defined a few basic tools that allows you to do your calculations. 
-
-## constants
-Here there are defined some useful math constants that can be used as constexpr as shown by the example below. 
-``` c++
-using namespace math::constants; 
-
-int main() {
-
-    double r = 1; 
-    double cfr = 2 * pi * r; 
-    
-    return 0;
-}
-```
 
 ## descriptive_statistics
 ``` c++
@@ -70,10 +55,12 @@ int main() {
 In this namespace there are defined some of the most common functions that can be used alone or combined toghether using a functor, providing the two functions and the type of operation (```'+', '-', '*', '/', '^', 'c'```). 
 ``` c++
 using namespace math::functions; 
+using namespace math::constants; 
 
 int main() {
 
     sine sine(3, 2); // y = 3 * sin(2 * x)
+    logarithm log(e, 2, 3); // y = 2 * log_e (3 * x)
     cube cb(4, -2, 0, 1); // y = 4 * x^3 - 2 * x^2 + 1
     square_root sq_rt; // y = sqrt(x)
 
@@ -88,14 +75,17 @@ int main() {
     functor h('/', f, g); // y = f / g
 
     // you can evaluate the function in a specific point and print the value
-    double value = h.eval(constants::pi); 
+    double value = h.eval(pi); 
     std::cout << value << "\n"; // old school
-    h.print_eval(constants::pi); // cool way
+    h.print_eval(pi); // cool way
 
     return 0; 
 }
 ```
-The available functions are ```line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent```.
+The available functions are ```line, quadratic, cubic, square_root, cubic_root, exponential, logarithm, sine, cosine, tangent```. 
+The multiplicative parameters are fixed as 1 by default, the adding parameters are fixed as 0 by default, the basis parameters for the exponential and the logarithm are the ```c++ 
+math::constants::e
+``` by default. 
 
 
 ## tools
