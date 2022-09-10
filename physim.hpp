@@ -3,13 +3,14 @@
 // author:          Lorenzo Liuzzo
 // email:           lorenzoliuzzo@outlook.com
 // description:     physim(namespace) containing the basic tools for computational physics. 
-// last updated:    28/08/2022
+// last updated:    10/09/2022
 
 
 #include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -207,24 +208,23 @@ namespace math {
                 // eval methods
                 // =============================================
             
-                virtual double eval(const double& x) const = 0; 
+                virtual constexpr double eval(const double& x) const = 0; 
             
-                int signum(const double& x) const { return (eval(x) == 0. ? 0. : (eval(x) > 0 ? 1. : -1)); }
+                constexpr int signum(const double& x) const { return (eval(x) == 0. ? 0. : (eval(x) > 0 ? 1. : -1)); }
 
 
                 // =============================================
                 // print methods
                 // =============================================
             
-                void print_eval(const double& x, const double& precision = 1.e-6) const {
-                    std::cout << "f(" << x << ") = " << std::setprecision(precision) << eval(x) << "\n"; 
-                }
+                void print_eval(const double& x, const double& precision = 1.e-6) const { std::cout << "f(" << x << ") = " << std::setprecision(precision) << eval(x) << "\n"; }
             
                 virtual void print_equation() const = 0;
             
 
         }; // class function_base
         
+
         // functor class for composing single functions into some more complex expressions
         class functor : public function_base {
 
@@ -235,7 +235,9 @@ namespace math {
                 // =============================================
             
                 char op_; 
+
                 function_base * f_; 
+
                 function_base * g_;
             
             
@@ -245,7 +247,8 @@ namespace math {
                 // constructor and destructor
                 // =============================================     
             
-                functor(const char& op, function_base* f, function_base* g) {
+                functor(const char& op, function_base* f, function_base* g) noexcept {
+                    if (op != '+' && op != '-' && op != '*' && op != '/' && op != '^' && op != 'c') std::cerr << "Wrong functor operation. The possibles operations are ['+', '-', '*', '/', '^', 'c'] \n"; 
                     op_ = op;
                     f_ = f; 
                     g_ = g;
@@ -258,24 +261,15 @@ namespace math {
                 // eval methods
                 // =============================================
             
-                double eval(const double& x) const override {
+                constexpr double eval(const double& x) const override {
                     switch (op_) {
-                        case '+':
-                            return f_->eval(x) + g_->eval(x);
-                        case '-': 
-                            return f_->eval(x) - g_->eval(x);
-                        case '*':
-                            return f_->eval(x) * g_->eval(x);
-                        case '/': 
-                            return f_->eval(x) / g_->eval(x);
-                        case '^':
-                            return std::pow(f_->eval(x), g_->eval(x));
-                        case 'c':
-                            return f_->eval(g_->eval(x));
-                        default:
-                            break;
+                        case '+': return f_->eval(x) + g_->eval(x);
+                        case '-': return f_->eval(x) - g_->eval(x);
+                        case '*': return f_->eval(x) * g_->eval(x);
+                        case '/': return f_->eval(x) / g_->eval(x);
+                        case '^': return std::pow(f_->eval(x), g_->eval(x));
+                        case 'c': return f_->eval(g_->eval(x));
                     }
-                    return NAN;
                 }
 
                 
@@ -308,7 +302,7 @@ namespace math {
                 // constructor and destructor
                 // =============================================     
         
-                explicit line(const double& m = 1, const double& q = 0) noexcept : m_{m}, q_{q} {}
+                explicit constexpr line(const double& m = 1, const double& q = 0) noexcept : m_{m}, q_{q} {}
                 
                 ~line() {}
 
@@ -374,7 +368,7 @@ namespace math {
                 // constructor and destructor
                 // =============================================     
         
-                explicit quadratic(const double& a, const double& b, const double& c) noexcept :
+                explicit constexpr quadratic(const double& a, const double& b, const double& c) noexcept :
                     a_{a}, b_{b}, c_{c}, delta_{algebra::square(b_) - 4 * a_ * c_} {}
                 
                 ~quadratic() {}
@@ -398,12 +392,12 @@ namespace math {
 
                 constexpr double delta() const { return delta_; } 
 
-                std::pair<double, double> roots() const {
-                    if (delta_ == 0) return std::make_pair(- b_ / (2 * a_), - b_ / (2 * a_));
-                    else if (delta_ > 0) return std::make_pair(- b_ - algebra::sqrt(delta_) / (2 * a_), (- b_ + algebra::sqrt(delta_)) / (2 * a_));
-                    else std::cout << "\nThere are not real solutions...\n\n"; // note: create a complex class then come back here
-                    return std::make_pair(NAN, NAN); 
-                }
+                // constexpr std::pair<auto, auto> roots() const {
+                //     if (delta_ == 0) return std::make_pair(- b_ / (2 * a_), - b_ / (2 * a_));
+                //     else if (delta_ > 0) return std::make_pair(- b_ - algebra::sqrt(delta_) / (2 * a_), (- b_ + algebra::sqrt(delta_)) / (2 * a_));
+                //     else return std::make_pair<std::complex<double>, std::complex<double>>((- b_, algebra::sqrt(std::fabs(delta_))), (- b_, - algebra::sqrt(std::fabs(delta_))));
+                //     return std::make_pair(NAN, NAN); 
+                // }
 
 
                 // =============================================
@@ -460,7 +454,7 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
             
-                explicit cubic(const double& a, const double& b, const double& c, const double& d) noexcept :
+                explicit constexpr cubic(const double& a, const double& b, const double& c, const double& d) noexcept :
                     a_{a}, b_{b}, c_{c}, d_{d} {}
             
                 ~cubic() {}  
@@ -544,7 +538,7 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
             
-                explicit square_root(const double& c = 1) noexcept : c_{c} {}
+                explicit constexpr square_root(const double& c = 1) noexcept : c_{c} {}
             
                 ~square_root() {}
             
@@ -562,7 +556,7 @@ namespace math {
                 // eval methods
                 // =============================================
 
-                double eval(const double& x) const override { return c_ * algebra::sqrt(x); }
+                constexpr double eval(const double& x) const override { return c_ * algebra::sqrt(x); }
                         
         
                 // =============================================
@@ -598,7 +592,7 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
             
-                explicit cubic_root(double c = 1) noexcept : c_{c} {}
+                explicit constexpr cubic_root(double c = 1) noexcept : c_{c} {}
             
                 ~cubic_root() {} 
             
@@ -616,7 +610,7 @@ namespace math {
                 // eval methods
                 // =============================================
 
-                double eval(const double& x) const override { return c_ * algebra::cbrt(x); }
+                constexpr double eval(const double& x) const override { return c_ * algebra::cbrt(x); }
                         
         
                 // =============================================
@@ -652,11 +646,8 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
         
-                explicit exponential(const double& base = constants::e, const double& c1 = 1, const double& c2 = 1) noexcept :
+                explicit constexpr exponential(const double& base = constants::e, const double& c1 = 1, const double& c2 = 1) noexcept :
                     base_{base}, c1_{c1}, c2_{c2} {}
-
-                explicit exponential(const double& c1 = 1, const double& c2 = 1) noexcept :
-                    base_{constants::e}, c1_{c1}, c2_{c2} {}
 
                 ~exponential() {} 
         
@@ -721,11 +712,8 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
         
-                explicit logarithm(const double& base = constants::e, const double& c1 = 1, const double& c2 = 1) noexcept : 
+                explicit constexpr logarithm(const double& base = constants::e, const double& c1 = 1, const double& c2 = 1) noexcept : 
                     base_{base}, c1_{c1}, c2_{c2} {}
-
-                explicit logarithm(const double& c1 = 1, const double& c2 = 1) noexcept : 
-                    base_{constants::e}, c1_{c1}, c2_{c2} {}
 
                 ~logarithm() {} 
         
@@ -780,8 +768,8 @@ namespace math {
                 // class members
                 // =============================================   
                 
-                // y = c1 * sin (c2 * x)
-                double c1_, c2_; 
+                // y = c1 * sin (c2 * x + c3)
+                double c1_, c2_, c3_; 
             
             
             public: 
@@ -790,7 +778,8 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
         
-                explicit sine(const double& c1 = 1, const double& c2 = 1) noexcept : c1_{c1}, c2_{c2} {} 
+                explicit constexpr sine(const double& c1 = 1, const double& c2 = 1, const double& c3 = 0.) noexcept : 
+                    c1_{c1}, c2_{c2}, c3_{c3} {} 
             
                 ~sine() {} 
 
@@ -802,10 +791,14 @@ namespace math {
                 constexpr void c1(const double& c1) { c1_ = c1; }
             
                 constexpr void c2(const double& c2) { c2_ = c2; }
+
+                constexpr void c3(const double& c3) { c3_ = c3; }
             
                 constexpr double c1() const { return c1_; }
 
                 constexpr double c2() const { return c2_; }
+
+                constexpr double c3() const { return c3_; }
             
             
                 // =============================================
@@ -840,8 +833,8 @@ namespace math {
                 // class members
                 // =============================================   
                 
-                // y = c1 * cos (c2 * x)
-                double c1_, c2_; 
+                // y = c1 * cos (c2 * x + c3)
+                double c1_, c2_, c3_; 
             
             
             public: 
@@ -851,7 +844,8 @@ namespace math {
                 // =============================================   
         
         
-                explicit cosine(const double& c1 = 1, const double& c2 = 1) noexcept : c1_{c1}, c2_{c2} {} 
+                explicit constexpr cosine(const double& c1 = 1, const double& c2 = 1, const double& c3 = 0.) noexcept : 
+                    c1_{c1}, c2_{c2}, c3_{c3} {} 
             
                 ~cosine() {} 
 
@@ -863,10 +857,14 @@ namespace math {
                 constexpr void c1(const double& c1) { c1_ = c1; }
             
                 constexpr void c2(const double& c2) { c2_ = c2; }
+
+                constexpr void c3(const double& c3) { c3_ = c3; }
             
                 constexpr double c1() const { return c1_; }
 
                 constexpr double c2() const { return c2_; }
+
+                constexpr double c3() const { return c3_; }
             
 
                 // =============================================
@@ -901,8 +899,8 @@ namespace math {
                 // class members
                 // =============================================   
                 
-                // y = c1 * tan (c2 * x)
-                double c1_, c2_; 
+                // y = c1 * tan (c2 * x + c3)
+                double c1_, c2_, c3_; 
             
             
             public: 
@@ -911,27 +909,27 @@ namespace math {
                 // constructor and destructor
                 // =============================================   
         
-                explicit tangent(const double& c1 = 1, const double& c2 = 1) noexcept : c1_{c1}, c2_{c2} {} 
+                explicit constexpr tangent(const double& c1 = 1, const double& c2 = 1, const double& c3 = 0.) noexcept : 
+                    c1_{c1}, c2_{c2}, c3_{c3} {} 
             
                 ~tangent() {} 
 
             
                 // =============================================
-                // set methods
+                // set & get methods
                 // =============================================
         
                 constexpr void c1(const double& c1) { c1_ = c1; }
             
                 constexpr void c2(const double& c2) { c2_ = c2; }
-            
-            
-                // =============================================
-                // get methods
-                // =============================================
 
+                constexpr void c3(const double& c3) { c3_ = c3; }
+            
                 constexpr double c1() const { return c1_; }
 
                 constexpr double c2() const { return c2_; }
+
+                constexpr double c3() const { return c3_; }
             
 
                 // =============================================
@@ -1005,71 +1003,120 @@ namespace math {
                 // class members
                 // =============================================        
                 
-                unsigned int a_, c_, m_, seed_;
+                unsigned int m1, m2, m3, m4, l1, l2, l3, l4, n1, n2, n3, n4;
 
 
             public: 
         
                 // =============================================
-                // constructors & destructor
+                // constructor & destructor
                 // =============================================
-                
-                random_generator() :  a_{1664525}, c_{1013904223}, m_{static_cast<unsigned int>(std::pow(2, 31))} {}
 
-                random_generator(const unsigned int& seed) : a_{1664525}, c_{1013904223}, m_{static_cast<unsigned int>(std::pow(2, 31))}, seed_{seed} {}
+                random_generator() noexcept {}
 
                 ~random_generator() {}
+
 
                 // =============================================
                 // set & get methods
                 // =============================================
 
-                constexpr void a(const unsigned int& a) { a_ = a; }
-                
-                constexpr void c(const unsigned int& c) { c_ = c; }
-                
-                constexpr void m(const unsigned int& m) { m_ = m; }
-                
-                constexpr void seed(const unsigned int& seed) { seed_ = seed; }
+                constexpr void set_seed(const unsigned int * s, const unsigned int& p1, const unsigned int& p2) {
+                    m1 = 502;
+                    m2 = 1521;
+                    m3 = 4071;
+                    m4 = 2107;
+                    l1 = s[0] % 4096;
+                    l2 = s[1] % 4096;
+                    l3 = s[2] % 4096;
+                    l4 = s[3] % 4096;
+                    l4 = 2 * (l4 / 2) + 1;
+                    n1 = 0;
+                    n2 = 0;
+                    n3 = p1;
+                    n4 = p2;
+                }
 
-                constexpr unsigned int a() const { return a_; }
-                
-                constexpr unsigned int c() const { return c_; }
-                
-                constexpr unsigned int m() const { return m_; }
-                
-                constexpr unsigned int seed() const { return seed_; }
+                void set_up() {
+                    unsigned int seed[4];
+                    unsigned int p1, p2;
+                    std::ifstream file_in("primes");
+                    if (file_in.is_open()) { file_in >> p1 >> p2 ; } 
+                    else std::cerr << "PROBLEM: Unable to open Primes\n";
+                    file_in.close();
+
+                    file_in.open("seed.in");
+                    std::string property;
+                    if (file_in.is_open()) {
+                        while (!file_in.eof()) {
+                            file_in >> property;
+                            if (property == "RANDOMSEED") {
+                                file_in >> seed[0] >> seed[1] >> seed[2] >> seed[3];
+                                set_seed(seed, p1, p2);
+                            }
+                        }
+                        file_in.close();
+                    } else std::cerr << "PROBLEM: Unable to open seed.in\n";
+                }
+
+                void save_seed() const { 
+                    std::ofstream file_out("seed.out");
+                    if (file_out.is_open()) file_out << l1 << " " << l2 << " " << l3 << " " << l4 << "\n";
+                    else std::cerr << "PROBLEM: Unable to open random.out\n";
+                    file_out.close();
+                }
 
 
                 // =============================================
                 // distributions methods
                 // =============================================
 
-                constexpr double rand(const double& min = 0., const double& max = 1.) {
-                    seed(static_cast<unsigned int>((a_ * seed_ + c_) % m_)); 
-                    return min + std::fabs(max - min) * seed_ / m_; 
+                constexpr double rannyu() {
+                    const double twom12{0.000244140625};
+                    int i1{}, i2{}, i3{}, i4{};
+                    i1 = l1 * m4 + l2 * m3 + l3 * m2 + l4 * m1 + n1;
+                    i2 = l2 * m4 + l3 * m3 + l4 * m2 + n2;
+                    i3 = l3 * m4 + l4 * m3 + n3;
+                    i4 = l4 * m4 + n4;
+                    l4 = i4 % 4096;
+                    i3 = i3 + i4 / 4096;
+                    l3 = i3 % 4096;
+                    i2 = i2 + i3 / 4096;
+                    l2 = i2 % 4096;
+                    l1 = (i1 + i2 / 4096) % 4096;
+                    return twom12 * (l1 + twom12 * (l2 + twom12 * (l3 + twom12 * l4)));
                 }
 
-                constexpr double exp(const double& mean) {
-                    return - std::log(1 - rand()) / mean; 
+                constexpr double unif(const double& min, const double& max) {
+                    return min + std::fabs(max - min) * rannyu(); 
                 }
 
-                double gauss_box_muller(const double& mean, const double& sigma) {
-                    double s{rand()}, t{rand()}; 
+                constexpr double exp(const double& lambda) {
+                    return - std::log(1 - rannyu()) / lambda; 
+                }
+
+                constexpr double lorentzian(const double& mean, const double& gamma) {
+                    double y = rannyu();
+                    return mean + gamma * std::tan(constants::pi * (y - 0.5));
+                }
+
+                constexpr double gauss_box_muller(const double& mean, const double& sigma) {
+                    double s{rannyu()}, t{rannyu()}; 
                     double x = algebra::sqrt(-2 * std::log(s)) * std::cos(2 * constants::pi * t);
                     return mean + sigma * x;
                 }
 
-                double gauss_accept_reject(const double& mean, const double& sigma) {
+                constexpr double gauss_accept_reject(const double& mean, const double& sigma) {
                     double x{}, y{}, g{}; 
                     while (true) {
-                        x = rand(-5., 5.); 
-                        y = rand(); 
+                        x = unif(-5., 5.); 
+                        y = rannyu(); 
                         g = exp(algebra::square(x) / 2); 
                         if (y <= g) break;
                     }
                     return mean + x * sigma;
                 }
+
 
         }; // class tools::random_generator
 
@@ -1125,7 +1172,7 @@ namespace math {
                 // constructors
                 // =============================================
 
-                integral() {}
+                integral() noexcept {}
                 
                 ~integral() {} 
 
@@ -1173,58 +1220,70 @@ namespace math {
                 // integration methods
                 // =============================================
 
-                void midpoint(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                constexpr void midpoint(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                     begin_integration(a, b, n); 
                     for (unsigned int i{}; i < steps_; i++) { sum_ += (f.eval(a_ + (i + 0.5) * h_)); }
                     integral_ = sum_ * h_; 
                 }
 
-                void midpoint_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                constexpr void midpoint_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    double old_integral_2{}, old_integral_3{};
                     begin_integration(a, b, 1); 
                     while (true) {
+                        old_integral_3 = old_integral_2;
+                        old_integral_2 = old_integral_;
                         old_integral_ = integral_; 
                         midpoint(a_, b_, f, steps_ * 2);
-                        error_ = 4 * std::fabs(integral_ - old_integral_) / 3;
+                        error_ = 64 * std::fabs(64 * integral_ - 84 * old_integral_ + 21 * old_integral_2 - old_integral_3) / 2835; // errore al sesto ordine
                         if (error_ < prec) break;
-                    }    
+                    }  
+                    integral_ = (4096 * integral_ - 1344 * old_integral_ + 84 * old_integral_2 - old_integral_3) / 2835; // integrale all'ottavo ordine
                 }
                 
-                void trapexoid(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                constexpr void trapexoid(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                     begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 2.);
                     for (unsigned int i{1}; i < steps_; i++) sum_ += f.eval(a_ + i * h_); 
                     integral_ = sum_ * h_; 
                 } 
 
-                void trapexoid_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                constexpr void trapexoid_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    double old_integral_2{}, old_integral_3{};
                     begin_integration(a, b, 2, f.eval(a) + f.eval(b) / 2. + f.eval((a + b) / 2.)); 
                     while (true) {
+                        old_integral_3 = old_integral_2;
+                        old_integral_2 = old_integral_;
                         old_integral_ = integral_; 
                         trapexoid(a_, b_, f, steps_ * 2);
-                        error_ = 4 * std::fabs(integral_ - old_integral_) / 3;
+                        error_ = 64 * std::fabs(64 * integral_ - 84 * old_integral_ + 21 * old_integral_2 - old_integral_3) / 2835; // errore al sesto ordine
                         if (error_ < prec) break;
                     }
+                    integral_ = (4096 * integral_ - 1344 * old_integral_ + 84 * old_integral_2 - old_integral_3) / 2835; // integrale all'ottavo ordine
                 }
 
-                void simpson(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                constexpr void simpson(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                     if (n % 2 == 0) begin_integration(a, b, n, (f.eval(a) + f.eval(b)) / 3.);
                     else begin_integration(a, b, n + 1);  
                     for (unsigned int i{1}; i < steps_; i++) sum_ += 2 * (1 + i % 2) * (f.eval(a_ + i * h_)) / 3.; 
                     integral_ = sum_ * h_; 
                 }
 
-                void simpson_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                constexpr void simpson_fixed(const double& a, const double& b, const functions::function_base& f, const double& prec = 1.e-6) {
+                    double old_integral_2{}, old_integral_3{};
                     begin_integration(a, b, 2, (f.eval(a) + f.eval(b)) / 3.); 
                     while (true) {
+                        old_integral_3 = old_integral_2;
+                        old_integral_2 = old_integral_;
                         old_integral_ = integral_; 
                         simpson(a_, b_, f, steps_ * 2);
-                        error_ = 16 * std::fabs(integral_ - old_integral_) / 15;
+                        error_ = 256 * std::fabs(1024 * integral_ - 1104 * old_integral_ + 81 * old_integral_2 - old_integral_3) / 240975;
                         if (error_ < prec) break; 
                     }
+                    integral_ = (1024 * integral_ - 80 * old_integral_ + old_integral_2) / 945; 
                 }
 
-                void mean(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
+                constexpr void mean(const double& a, const double& b, const functions::function_base& f, unsigned int n = 1000) {
                     begin_integration(a, b, n); 
-                    for (unsigned int i{}; i < n; i ++) sum_ += f.eval(rg_.rand(a, b)); 
+                    for (unsigned int i{}; i < n; i ++) sum_ += f.eval(rg_.unif(a, b)); 
                     integral_ = (b_ - a_) * sum_ / steps_; 
                 }
 
@@ -1238,13 +1297,13 @@ namespace math {
                     mean(a, b, f, static_cast<unsigned int>(algebra::square(k_mean / prec))); 
                 }
         
-                void hit_or_miss(const double& a, const double& b, const functions::function_base& f, const double& fmax, unsigned int n = 1000) {
+                constexpr void hit_or_miss(const double& a, const double& b, const functions::function_base& f, const double& fmax, unsigned int n = 1000) {
                     begin_integration(a, b, n); 
                     double x{}, y{}; 
                     unsigned int hits{};
                     for (unsigned int i{}; i < n; i ++) {
-                        x = rg_.rand(a, b); 
-                        y = rg_.rand(0., fmax);  
+                        x = rg_.unif(a, b); 
+                        y = rg_.unif(0., fmax);  
                         if (y <= f.eval(x)) hits++; 
                     }
                     integral_ = (b_ - a_) * fmax * hits / n; 
@@ -1784,11 +1843,16 @@ namespace physics {
             unit us(prefix::micro, s);
             unit ns(prefix::nano, s);
             unit min(60.0, s);
-
+            unit hr(60.0, min);
+            unit day(24.0, hr);
+            
             unit radians = unit(180 / math::constants::pi, special::one); 
             unit rad = radians;
+
             unit mps(m / s);
             unit mpss(m / s.pow(2)); 
+            unit kmps(km / s);
+            unit kmpss(km / s.pow(2)); 
 
 
             // derived_units
@@ -1834,8 +1898,6 @@ namespace physics {
         } // namespace SI
 
 
-        // unit hr(60.0, min, "hr");
-        // unit day(24.0, hr, "day");
         // unit yr(8760.0, hr, "yr");  // median calendar year;
         // unit sday(365.24 / 366.24, day, "sday");  // sidereal day
         // unit syr(365.256363004, day, "syr");  // sidereal year
@@ -1906,8 +1968,10 @@ namespace physics {
 
     // namespace defining some usefull measurement structures
     namespace measurements {
-
+        
+        
         using namespace units::SI;
+        using namespace units::SI::derived;
 
 
         // measurement class with a value and an unit
@@ -2050,9 +2114,7 @@ namespace physics {
             private:
 
                 // does a numerical equality check on the value accounting for tolerances
-                constexpr bool value_equality_check(const double& val) const {
-                    return (value_ == val) ? true : math::tools::compare_round_equals(value_, val);
-                } 
+                constexpr bool value_equality_check(const double& val) const { return (value_ == val) ? true : math::tools::compare_round_equals(value_, val); } 
 
 
         }; // class measurement
@@ -2325,7 +2387,7 @@ namespace physics {
         constexpr measurement operator*(const int& val, const measurement& meas) { return meas * val; }
 
         constexpr measurement operator*(const double& val, const units::unit& unit_base) { return measurement(val, unit_base); }
-
+        
         constexpr measurement operator*(const units::unit& unit_base, const double& val) { return measurement(val, unit_base); }
 
         constexpr measurement operator/(const double& val, const measurement& meas) { return measurement(val / meas.value(), meas.units().inv()); }
@@ -2758,289 +2820,269 @@ namespace std {
 namespace physics {
 
 
-    // class expressing the coordinate of an object in a 3D system
-    class position {
+    namespace tools {
 
-        private: 
-            
-            // =============================================
-            // class members
-            // =============================================
-            
-            std::vector<measurements::measurement> pos_;
+        using namespace measurements; 
 
 
-        public: 
+        // class expressing the coordinate of an object in a 3D system
+        class position {
 
-            // =============================================
-            // constructors & destructor
-            // =============================================
-            
-            explicit position(const measurements::measurement& x = measurements::measurement(0., units::SI::m), 
-                                const measurements::measurement& y = measurements::measurement(0., units::SI::m), 
-                                const measurements::measurement& z = measurements::measurement(0., units::SI::m)) noexcept {
-                pos_.reserve(3); 
-                pos_.emplace_back(x); 
-                pos_.emplace_back(y); 
-                pos_.emplace_back(z); 
-            }
+            private: 
+                
+                // =============================================
+                // class members
+                // =============================================
+                
+                std::vector<measurement> pos_ = std::vector<measurement>(3); 
 
-            explicit position(const double& x, const double& y, const double& z) noexcept {
-                pos_.reserve(3); 
-                pos_.emplace_back(x, units::SI::m);
-                pos_.emplace_back(y, units::SI::m);
-                pos_.emplace_back(z, units::SI::m);
-            }
 
-            position(const std::vector<measurements::measurement>& pos) noexcept : pos_{pos} {}
+            public: 
 
-            position(const position& pos) noexcept : position(pos.get_position()) {}
+                // =============================================
+                // constructors & destructor
+                // =============================================
+                
+                explicit position(const measurement& x = (0. * units::SI::m), 
+                                  const measurement& y = (0. * units::SI::m), 
+                                  const measurement& z = (0. * units::SI::m)) noexcept {
+                    pos_.emplace_back(x); 
+                    pos_.emplace_back(y); 
+                    pos_.emplace_back(z); 
+                }
 
-            ~position() = default; 
+                position(const std::vector<measurement>& pos) noexcept : pos_{pos} {}
 
+                position(const position& pos) noexcept : position(pos.get_position()) {}
 
-            // =============================================
-            // operators
-            // =============================================
+                ~position() = default; 
 
-            inline position operator+(const position& other) const { return position(pos_ + other.pos_); } 
 
-            inline position operator-(const position& other) const { return position(pos_ - other.pos_); } 
+                // =============================================
+                // operators
+                // =============================================
 
-            inline position operator*(const position& other) const { return position(pos_ * other.pos_); } 
+                inline position operator+(const position& other) const { return { pos_ + other.pos_ }; } 
 
-            inline position operator*(const double& val) const { return position(pos_ * val); }
+                inline position operator-(const position& other) const { return { pos_ - other.pos_ }; } 
 
-            inline position operator*(const int& val) const { return position(pos_ * val); }
+                inline position operator*(const position& other) const { return { pos_ * other.pos_ }; } 
 
-            inline position operator/(const position& other) const { return position(pos_ / other.pos_); } 
+                inline position operator*(const double& val) const { return { pos_ * val }; }
 
-            inline position operator/(const double& val) const { return position(pos_ / val); }
+                inline position operator*(const int& val) const { return { pos_ * val }; }
 
-            inline position operator/(const int& val) const { return position(pos_ / val); }
+                inline position operator/(const position& other) const { return { pos_ / other.pos_ }; } 
 
+                inline position operator/(const double& val) const { return { pos_ / val }; }
 
-            // =============================================
-            // set, get and print methods
-            // =============================================
+                inline position operator/(const int& val) const { return { pos_ / val }; }
 
-            inline void set_position(const measurements::measurement& x, const measurements::measurement& y, const measurements::measurement& z) { 
-                pos_ = {x, y, z}; 
-            }
 
-            inline void set_position(const double& x, const double& y, const double& z) { 
-                pos_ = {measurements::measurement(x, units::SI::m), measurements::measurement(y, units::SI::m), measurements::measurement(z, units::SI::m)}; 
-            }
+                // =============================================
+                // set, get and print methods
+                // =============================================
 
-            inline void set_position(const std::vector<measurements::measurement>& pos) { pos_ = pos; }
-            
-            inline void set_position(const position& pos) { pos_ = pos.get_position(); }
+                inline void set_position(const measurement& x, const measurement& y, const measurement& z) { pos_ = {x, y, z}; }
 
-            inline void x(const measurements::measurement& x) { pos_[0] = x; }
-            
-            inline void y(const measurements::measurement& y) { pos_[1] = y; }
-            
-            inline void z(const measurements::measurement& z) { pos_[2] = z; }
+                inline void set_position(const std::vector<measurement>& pos) { pos_ = pos; }
+                
+                inline void set_position(const position& pos) { pos_ = pos.get_position(); }
 
-            inline void x(const double& x) { pos_[0] = measurements::measurement(x, pos_[0].units()); }
+                inline void x(const measurement& x) { pos_[0] = x; }
+                
+                inline void y(const measurement& y) { pos_[1] = y; }
+                
+                inline void z(const measurement& z) { pos_[2] = z; }
 
-            inline void y(const double& y) { pos_[1] = measurements::measurement(y, pos_[1].units()); }
+                inline position as_position() const { return *this; }
 
-            inline void z(const double& z) { pos_[2] = measurements::measurement(z, pos_[2].units()); }
+                inline std::vector<measurement> get_position() const { return pos_; }
 
-            inline position as_position() const { return *this; }
+                inline measurement x() const { return pos_[0]; }
+                
+                inline measurement y() const { return pos_[1]; }
+                
+                inline measurement z() const { return pos_[2]; }             
 
-            inline std::vector<measurements::measurement> get_position() const { return pos_; }
+                inline measurement magnitude() const { return (pos_[0].square() + pos_[1].square() + pos_[2].square()).sqrt(); }
 
-            inline measurements::measurement get_x() const { return pos_[0]; }
-            
-            inline measurements::measurement get_y() const { return pos_[1]; }
-            
-            inline measurements::measurement get_z() const { return pos_[2]; }             
+                inline measurement distance(const position& other) {        
+                    return ((pos_[0] - other.pos_[0]).square() + (pos_[1] - other.pos_[1]).square() + (pos_[2] - other.pos_[2]).square()).sqrt();
+                }       
 
-            inline measurements::measurement magnitude() const { 
-                return (pos_[0].square() + pos_[1].square() + pos_[2].square()).sqrt();
-            }
+                inline measurement rho() const { return (pos_[0].square() + pos_[1].square()).sqrt(); }
 
-            inline measurements::measurement distance(const position& other) {        
-                return ((pos_[0] - other.pos_[0]).square() + (pos_[1] - other.pos_[1]).square() + (pos_[2] - other.pos_[2]).square()).sqrt();
-            }       
+                inline measurement phi() const { return measurement(atan2(pos_[1].value(), pos_[0].value()), units::SI::rad); }     
 
-            inline measurements::measurement rho() const { return (pos_[0].square() + pos_[1].square()).sqrt(); }
+                inline measurement phi(const position& other) const { 
+                    return measurement(atan2(other.pos_[1].value() - pos_[1].value(), other.pos_[0].value() - pos_[0].value()), units::SI::rad); 
+                }
 
-            inline measurements::measurement phi() const { return measurements::measurement(atan2(pos_[1].value(), pos_[0].value()), units::SI::rad); }     
-
-            inline measurements::measurement phi(const position& other) const { 
-                return measurements::measurement(atan2(other.pos_[1].value() - pos_[1].value(), other.pos_[0].value() - pos_[0].value()), units::SI::rad); 
-            }
-
-            inline measurements::measurement theta() const { 
-                if (pos_[2] == 0) return measurements::measurement(0, units::SI::rad);
-                return measurements::measurement(acos(pos_[2].value() / magnitude().value()), units::SI::rad); 
-            }
-
-            inline measurements::measurement theta(const position& other) {
-                if (other.pos_[2] == pos_[2]) return measurements::measurement(0, units::SI::rad);
-                return measurements::measurement(acos((other.pos_[2].value() - pos_[2].value()) / distance(other).value()), units::SI::rad); 
-            }
-
-            inline std::vector<double> direction() const {
-                return {cos(phi().value()), sin(phi().value()), pos_[2].value() / magnitude().value()};
-            } 
-
-            inline std::vector<double> direction(position& other) {
-                return {cos(phi(other).value()), sin(phi(other).value()), (other.pos_[2] - pos_[2]).value() / distance(other).value()};
-            } 
-
-            void print_position() const {
-                std::cout << "position = {\n";
-                for (auto i : pos_) i.print_measurement(); 
-                std::cout << "}\n"; 
-            }
-
-
-    }; // class position
-
-    
-    // class expressing the velocity of an object in a 3D system
-    class velocity {
-
-        private: 
-            
-            // =============================================
-            // class members
-            // =============================================
-            
-            std::vector<measurements::measurement> vel_; 
-        
-
-        public:  
-
-            // =============================================
-            // constructors
-            // =============================================
-
-            explicit velocity(const measurements::measurement& x = measurements::measurement(0., units::SI::mps), 
-                                const measurements::measurement& y = measurements::measurement(0., units::SI::mps), 
-                                const measurements::measurement& z = measurements::measurement(0., units::SI::mps)) noexcept {
-                vel_.reserve(3); 
-                vel_.emplace_back(x); 
-                vel_.emplace_back(y); 
-                vel_.emplace_back(z); 
-            }
-
-            explicit velocity(const double& x, const double& y, const double& z) noexcept {
-                vel_.reserve(3); 
-                vel_.emplace_back(x, units::SI::mps);
-                vel_.emplace_back(y, units::SI::mps);
-                vel_.emplace_back(z, units::SI::mps);
-            }
-
-            velocity(const std::vector<measurements::measurement>& pos) noexcept : vel_{pos} {}
-
-            velocity(const velocity& pos) noexcept : velocity(pos.get_velocity()) {}
-
-            ~velocity() = default; 
-
-
-            // =============================================
-            // operators
-            // =============================================
-
-            inline velocity operator+(const velocity& other) const { return velocity(vel_ + other.vel_); } 
-
-            inline velocity operator-(const velocity& other) const { return velocity(vel_ - other.vel_); } 
-
-            inline velocity operator*(const velocity& other) const { return velocity(vel_ * other.vel_); } 
-
-            inline velocity operator*(const double& val) const { return velocity(vel_ * val); }
-            
-            inline velocity operator*(const int& val) const { return velocity(vel_ * val); }
-
-            inline velocity operator/(const velocity& other) const { return velocity(vel_ / other.vel_); } 
-
-            inline velocity operator/(const double& val) const { return velocity(vel_ / val); }
-
-            inline velocity operator/(const int& val) const { return velocity(vel_ / val); }
-
-
-            // =============================================
-            // set & get & print methods
-            // =============================================
-
-            inline void set_velocity(const measurements::measurement& x, const measurements::measurement& y, const measurements::measurement& z) { 
-                vel_ = std::vector<measurements::measurement>{x, y, z}; 
-            }
-
-            inline void set_velocity(const double& x, const double& y, const double& z) { 
-                vel_ = std::vector<measurements::measurement>{measurements::measurement(x, units::SI::mps), 
-                                                                measurements::measurement(y, units::SI::mps), 
-                                                                measurements::measurement(z, units::SI::mps)}; 
-            }
-
-            inline void set_velocity(const std::vector<measurements::measurement>& pos) { vel_ = pos; }
-            
-            inline void set_velocity(const velocity& pos) { vel_ = pos.get_velocity(); }
-
-            inline void x(const measurements::measurement& x) { vel_[0] = x; }
-            
-            inline void y(const measurements::measurement& y) { vel_[1] = y; }
-            
-            inline void z(const measurements::measurement& z) { vel_[2] = z; }
-
-            inline void x(const double& x) { vel_[0] = measurements::measurement(x, vel_[0].units()); }
-
-            inline void y(const double& y) { vel_[1] = measurements::measurement(y, vel_[1].units()); }
-
-            inline void z(const double& z) { vel_[2] = measurements::measurement(z, vel_[2].units()); }
-
-            inline velocity as_velocity() const { return *this; }
-
-            inline std::vector<measurements::measurement> get_velocity() const { return vel_; }
-
-            inline measurements::measurement get_vx() const { return vel_[0]; }
-            
-            inline measurements::measurement get_vy() const { return vel_[1]; }
-            
-            inline measurements::measurement get_vz() const { return vel_[2]; }             
-
-            inline measurements::measurement magnitude() const { return (vel_[0].square() + vel_[1].square() + vel_[2].square()).sqrt(); }
-
-            inline measurements::measurement phi() const { 
-                return measurements::measurement(atan2(vel_[1].value(), vel_[0].value()), units::SI::rad); 
-            }     
-
-            inline measurements::measurement theta() const { 
-                if (vel_[2] == 0) return measurements::measurement(0, units::SI::rad);
-                return measurements::measurement(acos(vel_[2].value() / magnitude().value()), units::SI::rad); 
-            }
-
-            inline std::vector<double> direction() const {
-                return {cos(phi().value()), sin(phi().value()), vel_[2].value() / magnitude().value()};
-            } 
-
-            void print_velocity() const {
-                std::cout << "velocity = {\n";
-                for (auto i : vel_) i.print_measurement(); 
-                std::cout << "}\n"; 
-            }
-
-
-    }; // class velocity
-    
-
-    inline position operator*(const double& val, position& pos) { return position(pos * val); }
-    
-    inline position operator*(const int& val, position& pos) { return position(pos * val); }
-    
-    inline velocity operator*(const double& val, velocity& vel) { return velocity(vel * val); }
-    
-    inline velocity operator*(const int& val, velocity& vel) { return velocity(vel * val); }
-    
-
-    namespace objects {
+                inline measurement theta() const { 
+                    if (pos_[2] == 0) return measurement(0, units::SI::rad);
+                    return measurement(acos(pos_[2].value() / magnitude().value()), units::SI::rad); 
+                }
+
+                inline measurement theta(const position& other) {
+                    if (other.pos_[2] == pos_[2]) return measurement(0, units::SI::rad);
+                    return measurement(acos((other.pos_[2].value() - pos_[2].value()) / distance(other).value()), units::SI::rad); 
+                }
+
+                inline std::vector<double> direction() const {
+                    return {cos(phi().value()), sin(phi().value()), pos_[2].value() / magnitude().value()};
+                } 
+
+                inline std::vector<double> direction(position& other) {
+                    return {cos(phi(other).value()), sin(phi(other).value()), (other.pos_[2] - pos_[2]).value() / distance(other).value()};
+                } 
+
+                void print_position() const {
+                    std::cout << "position = {\n";
+                    for (auto i : pos_) i.print_measurement(); 
+                    std::cout << "}\n"; 
+                }
+
+
+        }; // class position
 
         
+        // class expressing the velocity of an object in a 3D system
+        class velocity {
+
+            private: 
+                
+                // =============================================
+                // class members
+                // =============================================
+                
+                std::vector<measurement> vel_; 
+            
+
+            public:  
+
+                // =============================================
+                // constructors
+                // =============================================
+
+                explicit velocity(const measurement& x = measurement(0., units::SI::mps), 
+                                    const measurement& y = measurement(0., units::SI::mps), 
+                                    const measurement& z = measurement(0., units::SI::mps)) noexcept {
+                    vel_.reserve(3); 
+                    vel_.emplace_back(x); 
+                    vel_.emplace_back(y); 
+                    vel_.emplace_back(z); 
+                }
+
+                explicit velocity(const double& x, const double& y, const double& z) noexcept {
+                    vel_.reserve(3); 
+                    vel_.emplace_back(x, units::SI::mps);
+                    vel_.emplace_back(y, units::SI::mps);
+                    vel_.emplace_back(z, units::SI::mps);
+                }
+
+                velocity(const std::vector<measurement>& pos) noexcept : vel_{pos} {}
+
+                velocity(const velocity& pos) noexcept : velocity(pos.get_velocity()) {}
+
+                ~velocity() = default; 
+
+
+                // =============================================
+                // operators
+                // =============================================
+
+                inline velocity operator+(const velocity& other) const { return velocity(vel_ + other.vel_); } 
+
+                inline velocity operator-(const velocity& other) const { return velocity(vel_ - other.vel_); } 
+
+                inline velocity operator*(const velocity& other) const { return velocity(vel_ * other.vel_); } 
+
+                inline velocity operator*(const double& val) const { return velocity(vel_ * val); }
+                
+                inline velocity operator*(const int& val) const { return velocity(vel_ * val); }
+
+                inline velocity operator/(const velocity& other) const { return velocity(vel_ / other.vel_); } 
+
+                inline velocity operator/(const double& val) const { return velocity(vel_ / val); }
+
+                inline velocity operator/(const int& val) const { return velocity(vel_ / val); }
+
+
+                // =============================================
+                // set & get & print methods
+                // =============================================
+
+                inline void set_velocity(const measurement& x, const measurement& y, const measurement& z) { 
+                    vel_ = std::vector<measurement>{x, y, z}; 
+                }
+
+                inline void set_velocity(const double& x, const double& y, const double& z) { 
+                    vel_ = std::vector<measurement>{measurement(x, units::SI::mps), 
+                                                                    measurement(y, units::SI::mps), 
+                                                                    measurement(z, units::SI::mps)}; 
+                }
+
+                inline void set_velocity(const std::vector<measurement>& pos) { vel_ = pos; }
+                
+                inline void set_velocity(const velocity& pos) { vel_ = pos.get_velocity(); }
+
+                inline void x(const measurement& x) { vel_[0] = x; }
+                
+                inline void y(const measurement& y) { vel_[1] = y; }
+                
+                inline void z(const measurement& z) { vel_[2] = z; }
+
+                inline void x(const double& x) { vel_[0] = measurement(x, vel_[0].units()); }
+
+                inline void y(const double& y) { vel_[1] = measurement(y, vel_[1].units()); }
+
+                inline void z(const double& z) { vel_[2] = measurement(z, vel_[2].units()); }
+
+                inline velocity as_velocity() const { return *this; }
+
+                inline std::vector<measurement> get_velocity() const { return vel_; }
+
+                inline measurement get_vx() const { return vel_[0]; }
+                
+                inline measurement get_vy() const { return vel_[1]; }
+                
+                inline measurement get_vz() const { return vel_[2]; }             
+
+                inline measurement magnitude() const { return (vel_[0].square() + vel_[1].square() + vel_[2].square()).sqrt(); }
+
+                inline measurement phi() const { 
+                    return measurement(atan2(vel_[1].value(), vel_[0].value()), units::SI::rad); 
+                }     
+
+                inline measurement theta() const { 
+                    if (vel_[2] == 0) return measurement(0, units::SI::rad);
+                    return measurement(acos(vel_[2].value() / magnitude().value()), units::SI::rad); 
+                }
+
+                inline std::vector<double> direction() const {
+                    return {cos(phi().value()), sin(phi().value()), vel_[2].value() / magnitude().value()};
+                } 
+
+                void print_velocity() const {
+                    std::cout << "velocity = {\n";
+                    for (auto i : vel_) i.print_measurement(); 
+                    std::cout << "}\n"; 
+                }
+
+
+        }; // class velocity
+        
+
+        inline position operator*(const double& val, position& pos) { return position(pos * val); }
+        
+        inline position operator*(const int& val, position& pos) { return position(pos * val); }
+        
+        inline velocity operator*(const double& val, velocity& vel) { return velocity(vel * val); }
+        
+        inline velocity operator*(const int& val, velocity& vel) { return velocity(vel * val); }
+
+
         // class expressing the position and velocity of a material point in a 3D system
         class material_point : public position, public velocity {
 
@@ -3076,12 +3118,12 @@ namespace physics {
                     set_velocity(pos_vel.second); 
                 }               
 
-                void set_pos_vel(const std::pair<std::vector<measurements::measurement>, std::vector<measurements::measurement>>& pos_vel) {
+                void set_pos_vel(const std::pair<std::vector<measurement>, std::vector<measurement>>& pos_vel) {
                     set_position(pos_vel.first); 
                     set_velocity(pos_vel.second); 
                 }               
 
-                inline std::pair<std::vector<measurements::measurement>, std::vector<measurements::measurement>> get_pos_vel() const { 
+                inline std::pair<std::vector<measurement>, std::vector<measurement>> get_pos_vel() const { 
                     return std::make_pair(get_position(), get_velocity()); 
                 }
 
@@ -3095,8 +3137,113 @@ namespace physics {
 
         }; // class material point
 
+        // class expressing the possible shapes for an object in a 3D system
+        class shape {
 
-        class mass : virtual public material_point {
+            protected: 
+
+                // =============================================
+                // class member
+                // =============================================
+
+                measurement perimetre_, area_, volume_; 
+                
+            
+            public: 
+
+                // =============================================
+                // virtual destructor
+                // =============================================
+
+                virtual ~shape() {}
+
+
+                // =============================================
+                // set and get methods
+                // =============================================
+
+                constexpr measurement perimetre() const { return perimetre_; }
+                
+                constexpr measurement area() const { return area_; }
+
+                constexpr measurement volume() const { return volume_; }
+
+
+                // =============================================
+                // print methods
+                // =============================================
+
+                void print_perimetre() const { 
+                    std::cout << "perimetre = "; 
+                    perimetre_.print_measurement(); 
+                }                        
+                
+                void print_area() const { 
+                    std::cout << "area = "; 
+                    area_.print_measurement(); 
+                }        
+                
+                void print_volume() const { 
+                    std::cout << "volume = "; 
+                    volume_.print_measurement(); 
+                }
+
+        }; // class shape
+
+
+        class sphere : public shape {
+
+            protected:
+                
+                // =============================================
+                // class member
+                // =============================================
+
+                measurement radius_; 
+
+
+            public: 
+
+                // =============================================
+                // constructor and destructor
+                // =============================================
+
+                sphere(const measurement& radius) : radius_{radius} { 
+                    perimetre_ = 2 * math::constants::pi * radius_;
+                    area_ = 4 * math::constants::pi * radius_.square(); 
+                    volume_ = 4. * math::constants::pi * radius_.cube() / 3.; 
+                }
+                
+                ~sphere() {}
+
+
+                // =============================================
+                // set and get methods
+                // =============================================
+
+                constexpr void radius(const double& radius) { 
+                    radius_ = radius; 
+                    perimetre_ = 2 * math::constants::pi * radius_; 
+                    area_ = 4 * math::constants::pi * radius_.square(); 
+                    volume_ = 4. * math::constants::pi * radius_.cube() / 3.;  
+                }
+
+                constexpr measurement radius() const { return radius_; }
+
+                void print_radius() const { 
+                    std::cout << "radius = "; 
+                    radius_.print_measurement(); 
+                }
+
+        }; // class sphere
+
+        
+    } // namespace tools 
+
+    namespace objects {
+
+    
+        class mass : virtual public tools::material_point {
 
             protected: 
 
@@ -3113,19 +3260,19 @@ namespace physics {
                 // constructors and destructor
                 // =============================================
                 
-                explicit mass(const double& mass = 0., const units::unit& unit = units::SI::kg, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
-                    material_point(pos, vel), mass_{mass, unit} {}
+                explicit mass(const double& mass = 0., const units::unit& unit = units::SI::kg, const tools::position& pos = position(), const tools::velocity& vel = velocity()) noexcept : 
+                    tools::material_point(pos, vel), mass_{mass, unit} {}
 
                 explicit mass(const double& mass, const units::unit& unit, const std::pair<position, velocity>& pos_vel) noexcept :
-                    material_point(pos_vel), mass_{mass, unit} {}
+                    tools::material_point(pos_vel), mass_{mass, unit} {}
 
-                explicit mass(const measurements::measurement& mass, const position& pos = position(), const velocity& vel = velocity()) noexcept :
-                    material_point(pos, vel), mass_{mass} {}
+                explicit mass(const measurements::measurement& mass, const tools::position& pos = position(), const tools::velocity& vel = velocity()) noexcept :
+                    tools::material_point(pos, vel), mass_{mass} {}
 
-                explicit mass(const measurements::measurement& mass, const std::pair<position, velocity>& pos_vel) noexcept :
-                    material_point(pos_vel), mass_{mass} {}
+                explicit mass(const measurements::measurement& mass, const std::pair<tools::position, tools::velocity>& pos_vel) noexcept :
+                    tools::material_point(pos_vel), mass_{mass} {}
 
-                mass(const mass& mass) noexcept : material_point(mass.get_pos_vel()), mass_{mass.mass_} {}
+                mass(const mass& mass) noexcept : tools::material_point(mass.get_pos_vel()), mass_{mass.mass_} {}
 
                 ~mass() = default; 
 
@@ -3170,7 +3317,7 @@ namespace physics {
         }; // class mass
 
 
-        class charge : virtual public material_point {
+        class charge : virtual public tools::material_point {
 
             protected: 
 
@@ -3187,13 +3334,13 @@ namespace physics {
                 // constructors and destructor
                 // =============================================
                 
-                explicit charge(const double& charge = 0., const units::unit& unit = units::SI::derived::C, const position& pos = position(), const velocity& vel = velocity()) noexcept : 
+                explicit charge(const double& charge = 0., const units::unit& unit = units::SI::derived::C, const tools::position& pos = position(), const tools::velocity& vel = velocity()) noexcept : 
                     material_point(pos, vel), charge_{charge, unit} {}
 
-                explicit charge(const double& charge, const units::unit& unit, const std::pair<position, velocity>& pos_vel) noexcept :
+                explicit charge(const double& charge, const units::unit& unit, const std::pair<tools::position, tools::velocity>& pos_vel) noexcept :
                     material_point(pos_vel), charge_{charge, unit} {}
 
-                explicit charge(const measurements::measurement& charge, const position& pos = position(), const velocity& vel = velocity()) noexcept :
+                explicit charge(const measurements::measurement& charge, const tools::position& pos = position(), const tools::velocity& vel = velocity()) noexcept :
                     material_point(pos, vel), charge_{charge} {}
 
                 explicit charge(const measurements::measurement& charge, const std::pair<position, velocity>& pos_vel) noexcept :
@@ -3255,7 +3402,7 @@ namespace physics {
                 explicit particle(const mass& mass = mass(), const charge& charge = charge(), const material_point& pos_vel = material_point()) noexcept : 
                     material_point(pos_vel), mass::mass(mass), charge::charge(charge) {}
 
-                explicit particle(const mass& mass, const charge& charge, const position& pos, const velocity& vel) noexcept : 
+                explicit particle(const mass& mass, const charge& charge, const tools::position& pos, const tools::velocity& vel) noexcept : 
                     material_point(pos, vel), mass::mass(mass), charge::charge(charge) {}
 
                 explicit particle(const mass& mass, const charge& charge, const std::pair<position, velocity>& pos_vel) noexcept : 
@@ -3264,7 +3411,7 @@ namespace physics {
                 explicit particle(const measurements::measurement& mass, const measurements::measurement& charge, const material_point& pos_vel = material_point()) noexcept : 
                     material_point(pos_vel), mass::mass(mass), charge::charge(charge) {}
 
-                explicit particle(const measurements::measurement& mass, const measurements::measurement& charge, const position& pos, const velocity& vel) noexcept : 
+                explicit particle(const measurements::measurement& mass, const measurements::measurement& charge, const tools::position& pos, const tools::velocity& vel) noexcept : 
                     material_point(pos, vel), mass::mass(mass), charge::charge(charge) {}
 
                 explicit particle(const measurements::measurement& mass, const measurements::measurement& charge, const std::pair<position, velocity>& pos_vel) noexcept : 
@@ -3291,8 +3438,171 @@ namespace physics {
 
         }; // class particle
 
+
+        class celestial_body : public mass {
+
+            protected: 
+
+                // =============================================
+                // class members
+                // =============================================
+
+                const char* name_; 
+
+                const char* celestial_type_; 
+
+
+            public: 
+
+                // =============================================
+                // constructors and destructor
+                // =============================================
+                
+                celestial_body(const char* type, const char* name, const mass& mass) : 
+                    mass::mass(mass), name_{name}, celestial_type_{type} {}
+
+                ~celestial_body() {}
+
+
+                // =============================================
+                // set and get methods
+                // =============================================
+
+                constexpr void name(const char* name) { name_ = name; }
+
+                const char* name() const { return name_; }
+
+                const char* celestial_type() const { return celestial_type_; }
+
+                
+                // =============================================
+                // print methods
+                // =============================================
+
+                void print_name() const { std::cout << "name = " << name() << "\n"; }
+                
+                void print_celestial_type() const { std::cout << "type = " << celestial_type() << "\n"; }
+
+                void print_celestial_body() const {
+                    std::cout << "Celestial body :\n"; 
+                    print_celestial_type(); 
+                    print_name(); 
+                    print_mass();
+                    print_position();
+                }
+
+        }; // class celestial_body
+
+
+        class planet : public celestial_body, public tools::sphere {
+
+            protected:
+
+                // =============================================
+                // class members
+                // =============================================
+                
+                position aphelion_pos_{}, perihelion_pos_{}; 
+                velocity aphelion_vel_{}, perihelion_vel_{}; 
+                measurements::measurement period_{};
+
+            public: 
+
+                // =============================================
+                // constructors and destructor
+                // =============================================
+
+                planet(const char* name, const mass& mass, const measurements::measurement& radius) : celestial_body("planet", name, mass), tools::sphere(radius) {}
+
+                planet(const char* name, const mass& mass, 
+                       const measurements::measurement& radius, const measurements::measurement& period,
+                       const position& aphelion_pos = position(), const position& perihelion_pos = position(), 
+                       const tools::velocity& aphelion_vel = velocity(), const tools::velocity& perihelion_vel = velocity()) :
+                    celestial_body("planet", name, mass), tools::sphere(radius),
+                    aphelion_pos_{aphelion_pos}, perihelion_pos_{perihelion_pos}, 
+                    aphelion_vel_{aphelion_vel}, perihelion_vel_{perihelion_vel}, 
+                    period_{period} {}
+
+                
+                // =============================================
+                // get methods
+                // =============================================
+
+                inline position pos_aphelion() { return aphelion_pos_; }
+
+                inline position pos_perihelion() { return perihelion_pos_; }                
+                
+                inline velocity vel_aphelion() { return aphelion_vel_; }
+
+                inline velocity vel_perihelion() { return perihelion_vel_; }
+
+                inline measurements::measurement period() const { return period_; }
+
+
+                // =============================================
+                // print methods
+                // =============================================
+
+                void print_period() const { 
+                    std::cout << "period = "; 
+                    period_.print_measurement();
+                }
+
+                void print_planet() const {
+                    print_celestial_body(); 
+                    print_radius(); 
+                    print_period(); 
+                }
+
+
+        }; // class planet
     
+
     } // namespace objects
+
+
+    namespace solar_system {
+
+        using objects::planet; 
+        using objects::mass;
+        using namespace measurements;
+
+        planet Sun("Sun", mass(1.98844E30 * kg), 695700 * km, 0.0 * s); 
+        
+        planet Mercury("Mercury", mass(0.33010E24 * kg), 2440.5 * km, 87.969 * day,
+                                    tools::position(69.818E6 * km, 0. * km, 0. * km), tools::position(-46E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 38.86 * kmps, 0. * kmps), tools::velocity(0. * kmps, -58.98 * kmps, 0. * kmps)); 
+
+        planet Venus("Venus", mass(4.8673E24 * kg), 6051.8 * km, 224.701 * day,
+                                    tools::position(108.941E6 * km, 0. * km, 0. * km), tools::position(-107.480E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 34.79 * kmps, 0. * kmps), tools::velocity(0. * kmps, -35.26 * kmps, 0. * kmps)); 
+
+        planet Earth("Earth", mass(5.9722E24 * kg), 6378.137 * km, 365.256 * day,
+                                    tools::position(152.100E6 * km, 0. * km, 0. * km), tools::position(-147.095E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 29.2911 * kmps, 0. * kmps), tools::velocity(0. * kmps, -30.2865 * kmps, 0. * kmps)); 
+       
+        planet Mars("Mars", mass(0.64169E24 * kg), 3396.2 * km, 686.980 * day,
+                                    tools::position(249.261E6 * km, 0. * km, 0. * km), tools::position(-206.650E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 21.97 * kmps, 0. * kmps), tools::velocity(0. * kmps, -26.50 * kmps, 0. * kmps)); 
+
+        planet Jupiter("Jupiter", mass(1898.13E24 * kg), 71492 * km, 4332.589 * day,
+                                    tools::position(816.363E6 * km, 0. * km, 0. * km), tools::position(-740.595E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 12.44 * kmps, 0. * kmps), tools::velocity(0. * kmps, -13.72 * kmps, 0. * kmps)); 
+
+        planet Saturn("Saturn", mass(568.32E24 * kg), 60268 * km, 10759.22 * day,
+                                    tools::position(108.941E6 * km, 0. * km, 0. * km), tools::position(-107.480E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 9.09 * kmps, 0. * kmps), tools::velocity(0. * kmps, -10.18 * kmps, 0. * kmps)); 
+
+        planet Uranus("Uranus", mass(86.811E24 * kg), 25559* km, 30685.4 * day,
+                                    tools::position(3001.390E6 * km, 0. * km, 0. * km), tools::position(-2732.696E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 6.49 * kmps, 0. * kmps), tools::velocity(0. * kmps, -7.11 * kmps, 0. * kmps)); 
+       
+        planet Neptune("Neptune", mass(102.409E24 * kg), 24764 * km, 60189 * day,
+                                    tools::position(4558.857E6 * km, 0. * km, 0. * km), tools::position(-4471.050E6 * km, 0. * km, 0. * km),
+                                    tools::velocity(0 * kmps, 5.37 * kmps, 0. * kmps), tools::velocity(0. * kmps, -5.50 * kmps, 0. * kmps)); 
+
+
+    } // namespace solar_system
 
 
     // namespace defining some usefull constants

@@ -1,4 +1,4 @@
-CXXFLAGS = -g -Wall --pedantic -std=c++17
+CXXFLAGS = -g -Wall --pedantic -std=c++2a
 DIR = -I ../  -I ../../
 
 compile: main.cpp
@@ -7,6 +7,6 @@ compile: main.cpp
 clear: 	
 	rm main
 	
-execute: main
+execute: compile
 	./main
 	rm main
